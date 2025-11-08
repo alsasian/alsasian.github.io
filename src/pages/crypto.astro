@@ -1,0 +1,13 @@
+---
+import Layout from '../layouts/Layout.astro';
+import WebCryptoPlayground from '../components/WebCryptoPlayground';
+---
+
+<Layout
+  title="WebCrypto Playground | alsasian.github.io"
+  description="Interactive playground for experimenting with the Web Cryptography API"
+>
+  <main class="min-h-screen py-12">
+    <WebCryptoPlayground client:load />
+  </main>
+</Layout>

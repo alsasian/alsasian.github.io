@@ -1,75 +1,163 @@
 # alsasian.github.io
 
-Welcome to my GitHub Pages site!
+Personal website and WebCrypto playground built with Astro, React, TypeScript, and Tailwind CSS.
 
-## About
+## Features
 
-This is a personal website hosted on GitHub Pages.
+- **Landing Page**: Beautiful gradient design with responsive layout
+- **WebCrypto Playground**: Interactive tool for experimenting with Web Cryptography API
+  - Hash generation (SHA-1, SHA-256, SHA-384, SHA-512)
+  - AES-GCM encryption
+  - ECDSA digital signatures
+  - All operations run locally in the browser
 
-## Setup
+## Tech Stack
 
-This repository is configured as a **User Pages site**, which means:
+- **Framework**: [Astro](https://astro.build) - Modern static site generator
+- **UI Library**: [React](https://react.dev) - For interactive components
+- **Language**: [TypeScript](https://www.typescriptlang.org) - Type-safe development
+- **Styling**: [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
+- **Deployment**: GitHub Pages with GitHub Actions
 
-- The site is automatically published from the default branch (usually `main` or `master`)
-- The site URL is: `https://alsasian.github.io`
-- Content is served from the root directory
+## Project Structure
 
-## How to Enable GitHub Pages
-
-1. Go to your repository on GitHub: `https://github.com/alsasian/alsasian.github.io`
-2. Click on **Settings** (top right)
-3. Scroll down to the **Pages** section (left sidebar)
-4. Under **Source**, select the branch you want to publish (typically `main`)
-5. Optionally select a folder (`/ (root)` or `/docs`)
-6. Click **Save**
-
-GitHub will automatically build and deploy your site within a few minutes.
-
-## Customization
-
-You can customize your site by:
-
-- Editing `index.html` directly for a simple HTML site
-- Adding CSS files for styling
-- Adding JavaScript for interactivity
-- Using a static site generator like Jekyll (built-in support on GitHub Pages)
-- Adding custom domain (configure in Settings → Pages)
-
-## Jekyll Support (Optional)
-
-GitHub Pages has built-in support for Jekyll. To use Jekyll:
-
-1. Add a `_config.yml` file
-2. Use Jekyll themes and layouts
-3. Write content in Markdown
-
-Example `_config.yml`:
-```yaml
-title: Your Site Title
-description: Your site description
-theme: minima
+```
+/
+├── public/              # Static assets
+│   └── favicon.svg
+├── src/
+│   ├── components/      # React components
+│   │   └── WebCryptoPlayground.tsx
+│   ├── layouts/         # Astro layouts
+│   │   └── Layout.astro
+│   ├── pages/           # Pages (file-based routing)
+│   │   ├── index.astro  # Landing page (/)
+│   │   └── crypto.astro # WebCrypto playground (/crypto)
+│   └── styles/          # Global styles
+│       └── global.css
+├── .github/
+│   └── workflows/
+│       └── deploy.yml   # GitHub Pages deployment
+└── package.json
 ```
 
 ## Local Development
 
-To test your site locally:
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+### Installation
 
 ```bash
-# For simple HTML sites
-python3 -m http.server 8000
+# Clone the repository
+git clone https://github.com/alsasian/alsasian.github.io.git
+cd alsasian.github.io
 
-# For Jekyll sites
-gem install bundler jekyll
-bundle exec jekyll serve
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-Then visit `http://localhost:8000` (or `http://localhost:4000` for Jekyll)
+The site will be available at `http://localhost:4321`
+
+### Available Commands
+
+| Command            | Action                                       |
+|:-------------------|:---------------------------------------------|
+| `npm install`      | Install dependencies                         |
+| `npm run dev`      | Start local dev server at `localhost:4321`   |
+| `npm run build`    | Build production site to `./dist/`           |
+| `npm run preview`  | Preview build locally before deploying       |
+| `npm run astro`    | Run Astro CLI commands                       |
+
+## Deployment to GitHub Pages
+
+### Setup
+
+1. **Enable GitHub Pages**:
+   - Go to your repository settings on GitHub
+   - Navigate to **Settings** → **Pages**
+   - Under **Source**, select **GitHub Actions**
+
+2. **Push to main branch**:
+   ```bash
+   git add .
+   git commit -m "Initial setup"
+   git push origin main
+   ```
+
+3. **Automatic deployment**:
+   - GitHub Actions will automatically build and deploy your site
+   - The workflow is defined in `.github/workflows/deploy.yml`
+   - Your site will be live at `https://alsasian.github.io`
+
+### Workflow
+
+The GitHub Actions workflow automatically:
+1. Checks out the code
+2. Sets up Node.js
+3. Installs dependencies
+4. Builds the Astro site
+5. Deploys to GitHub Pages
+
+Every push to the `main` branch triggers a new deployment.
+
+## Customization
+
+### Modify Pages
+
+- **Landing page**: Edit `src/pages/index.astro`
+- **Crypto playground**: Edit `src/components/WebCryptoPlayground.tsx`
+
+### Change Styling
+
+- **Global styles**: Edit `src/styles/global.css`
+- **Tailwind config**: Edit `tailwind.config.mjs`
+- **Layout colors**: Modify the gradient in `src/layouts/Layout.astro`
+
+### Add New Pages
+
+Create a new `.astro` file in `src/pages/`:
+
+```astro
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="My New Page">
+  <main class="min-h-screen">
+    <h1>Hello World</h1>
+  </main>
+</Layout>
+```
+
+The file will be automatically available at its path (e.g., `src/pages/about.astro` → `/about`)
+
+### Add React Components
+
+1. Create a new `.tsx` file in `src/components/`
+2. Import it in an Astro page
+3. Use the `client:load` directive for interactivity:
+
+```astro
+---
+import MyComponent from '../components/MyComponent';
+---
+
+<MyComponent client:load />
+```
 
 ## Resources
 
+- [Astro Documentation](https://docs.astro.build)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Web Crypto API Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
 - [GitHub Pages Documentation](https://docs.github.com/en/pages)
-- [Jekyll Documentation](https://jekyllrb.com/docs/)
-- [GitHub Pages Themes](https://pages.github.com/themes/)
 
 ## License
 

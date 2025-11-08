@@ -1,13 +1,11 @@
 ---
 title: 'I Ride Fire Train Everyday'
-description: 'Learning Chinese on Duolingo - not sure if it helps me converse, but discovering compound characters is surprisingly fun'
+description: 'Learning Chinese on Duolingo - discovering the logic and fun in compound characters'
 date: 2025-11-08
 tags: ['language-learning', 'chinese', 'personal']
 ---
 
-I recently started learning Chinese on Duolingo. To be honest, I'm not sure if it will actually help me use Chinese or even hold a conversation. But it can be fun, and I'm hopeful that it'll be useful little by little.
-
-What I _have_ discovered is that once you start seeing the patterns in how characters combine, it becomes surprisingly logical and entertaining.
+I recently started learning Chinese on Duolingo, and I have to admit—it's not as hard as I thought it would be. Sure, the tones are tricky and there are thousands of characters to memorize, but once you start seeing the patterns, it becomes surprisingly logical and even fun.
 
 ## The Joy of Compound Characters
 
@@ -30,8 +28,8 @@ Literally, it means "wash hand room"—not "toilet" or "bathroom" in the crude s
 
 ## The Learning Curve
 
-Duolingo's approach of introducing characters gradually and building vocabulary through repetition has been working well for me. Each lesson reveals new patterns and connections between characters. What seemed like an insurmountable mountain of memorization is starting to feel more like learning a visual logic system.
+To be honest, I'm not sure if Duolingo will actually help me use Chinese or even hold a conversation. The app introduces characters gradually and builds vocabulary through repetition, which can be fun. Each lesson reveals new patterns and connections between characters—what seemed like an insurmountable mountain of memorization is starting to feel more like learning a visual logic system.
 
-I'm still very much a beginner, but I'm excited to keep going. The more I learn, the more I appreciate the elegance of how Chinese conveys meaning through character composition.
+But will it be useful? I'm hopeful it'll help little by little. I'm still very much a beginner, and I appreciate the elegance of how Chinese conveys meaning through character composition. Whether that translates to real-world usage remains to be seen.
 
 **加油!** (jiā yóu - literally "add oil," meaning "keep going" or "you got this!")

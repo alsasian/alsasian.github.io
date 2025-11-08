@@ -276,7 +276,7 @@ export default function WebCryptoPlayground() {
 
   const EncodingSelect = ({ value, onChange, label }: { value: Encoding; onChange: (e: Encoding) => void; label: string }) => (
     <div className="inline-block">
-      <label className="block text-xs text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-bold mb-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Encoding)}

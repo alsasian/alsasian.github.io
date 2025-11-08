@@ -127,8 +127,11 @@ export default function WebCryptoPlayground() {
 
   // Section 3: Decrypt
   const [decryptData, setDecryptData] = useState('');
+  const [decryptDataEncoding, setDecryptDataEncoding] = useState<Encoding>('base64');
   const [decryptKey, setDecryptKey] = useState('');
+  const [decryptKeyEncoding, setDecryptKeyEncoding] = useState<Encoding>('hex');
   const [decryptIv, setDecryptIv] = useState('');
+  const [decryptIvEncoding, setDecryptIvEncoding] = useState<Encoding>('hex');
   const [decryptOutputEncoding, setDecryptOutputEncoding] = useState<Encoding>('utf8');
   const [decryptOutput, setDecryptOutput] = useState('');
   const [decryptLoading, setDecryptLoading] = useState(false);
@@ -137,9 +140,9 @@ export default function WebCryptoPlayground() {
     if (!decryptData || !decryptKey || !decryptIv) return;
     setDecryptLoading(true);
     try {
-      const encrypted = textToBytes(decryptData, 'base64');
-      const keyData = textToBytes(decryptKey, 'hex');
-      const iv = textToBytes(decryptIv, 'hex');
+      const encrypted = textToBytes(decryptData, decryptDataEncoding);
+      const keyData = textToBytes(decryptKey, decryptKeyEncoding);
+      const iv = textToBytes(decryptIv, decryptIvEncoding);
 
       const key = await crypto.subtle.importKey(
         'raw',
@@ -423,7 +426,7 @@ export default function WebCryptoPlayground() {
             <button onClick={() => setEncryptInput('secret message')} className="mt-1 text-xs underline">Example: "secret message"</button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex gap-2">
             <EncodingSelect value={encryptKeyEncoding} onChange={setEncryptKeyEncoding} label="Key Input Encoding" />
             <EncodingSelect value={encryptIvEncoding} onChange={setEncryptIvEncoding} label="IV Input Encoding" />
           </div>
@@ -450,7 +453,7 @@ export default function WebCryptoPlayground() {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex gap-2">
             <EncodingSelect value={encryptOutputEncoding} onChange={setEncryptOutputEncoding} label="Data Output" />
             <EncodingSelect value={encryptKeyOutputEncoding} onChange={setEncryptKeyOutputEncoding} label="Key Output" />
             <EncodingSelect value={encryptIvOutputEncoding} onChange={setEncryptIvOutputEncoding} label="IV Output" />
@@ -485,12 +488,18 @@ export default function WebCryptoPlayground() {
       <section className="border-l-4 border-gray-900 pl-4">
         <h2 className="text-2xl font-bold mb-2">3. Decrypt (AES-GCM)</h2>
         <p className="text-sm text-gray-700 mb-3">
-          Decrypt data encrypted with AES-GCM. You need the encrypted data (Base64), key (Hex), and IV (Hex).
+          Decrypt data encrypted with AES-GCM. Paste the encrypted data, key, and IV from the Encrypt section.
         </p>
 
         <div className="border border-gray-300 p-3 space-y-3">
+          <div className="flex gap-2">
+            <EncodingSelect value={decryptDataEncoding} onChange={setDecryptDataEncoding} label="Data Encoding" />
+            <EncodingSelect value={decryptKeyEncoding} onChange={setDecryptKeyEncoding} label="Key Encoding" />
+            <EncodingSelect value={decryptIvEncoding} onChange={setDecryptIvEncoding} label="IV Encoding" />
+          </div>
+
           <div>
-            <label className="block text-sm font-bold mb-1">Encrypted Data (Base64)</label>
+            <label className="block text-sm font-bold mb-1">Encrypted Data</label>
             <textarea
               value={decryptData}
               onChange={(e) => setDecryptData(e.target.value)}
@@ -501,7 +510,7 @@ export default function WebCryptoPlayground() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Key (Hex)</label>
+            <label className="block text-sm font-bold mb-1">Key</label>
             <input
               type="text"
               value={decryptKey}
@@ -512,7 +521,7 @@ export default function WebCryptoPlayground() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">IV (Hex)</label>
+            <label className="block text-sm font-bold mb-1">IV</label>
             <input
               type="text"
               value={decryptIv}

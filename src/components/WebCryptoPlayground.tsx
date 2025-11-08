@@ -162,6 +162,8 @@ export default function WebCryptoPlayground() {
   // Section 4: Sign
   const [signInput, setSignInput] = useState('');
   const [signInputEncoding, setSignInputEncoding] = useState<Encoding>('utf8');
+  const [signPrivateKey, setSignPrivateKey] = useState('');
+  const [signPrivateKeyEncoding, setSignPrivateKeyEncoding] = useState<Encoding>('base64');
   const [signOutput, setSignOutput] = useState('');
   const [signLoading, setSignLoading] = useState(false);
 
@@ -170,22 +172,52 @@ export default function WebCryptoPlayground() {
     setSignLoading(true);
     try {
       const data = textToBytes(signInput, signInputEncoding);
-      const keyPair = await crypto.subtle.generateKey(
-        { name: 'ECDSA', namedCurve: 'P-256' },
-        true,
-        ['sign', 'verify']
-      );
+
+      let privateKey: CryptoKey;
+      let publicKeyBytes: Uint8Array;
+
+      if (signPrivateKey) {
+        // Use provided private key
+        const privateKeyData = textToBytes(signPrivateKey, signPrivateKeyEncoding);
+        privateKey = await crypto.subtle.importKey(
+          'pkcs8',
+          privateKeyData as BufferSource,
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          true,
+          ['sign']
+        );
+        // For imported private key, we need to derive or have the public key separately
+        // For now, we'll skip exporting public key if using imported private key
+        publicKeyBytes = new Uint8Array(0);
+      } else {
+        // Generate new key pair
+        const keyPair = await crypto.subtle.generateKey(
+          { name: 'ECDSA', namedCurve: 'P-256' },
+          true,
+          ['sign', 'verify']
+        );
+        privateKey = keyPair.privateKey;
+        const exportedPublicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+        publicKeyBytes = new Uint8Array(exportedPublicKey);
+      }
+
       const signature = await crypto.subtle.sign(
         { name: 'ECDSA', hash: { name: 'SHA-256' } },
-        keyPair.privateKey,
+        privateKey,
         data as BufferSource
       );
-      const exportedPublicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
 
-      setSignOutput(
-        `Signature: ${bytesToText(new Uint8Array(signature), 'hex')}\n\n` +
-        `Public Key: ${bytesToText(new Uint8Array(exportedPublicKey), 'base64')}`
-      );
+      if (signPrivateKey) {
+        setSignOutput(
+          `Signature: ${bytesToText(new Uint8Array(signature), 'hex')}\n\n` +
+          `Note: Using imported private key. Public key not exported.`
+        );
+      } else {
+        setSignOutput(
+          `Signature: ${bytesToText(new Uint8Array(signature), 'hex')}\n\n` +
+          `Public Key: ${bytesToText(publicKeyBytes, 'base64')}`
+        );
+      }
     } catch (error) {
       setSignOutput(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -196,7 +228,9 @@ export default function WebCryptoPlayground() {
   const [verifyData, setVerifyData] = useState('');
   const [verifyDataEncoding, setVerifyDataEncoding] = useState<Encoding>('utf8');
   const [verifySignature, setVerifySignature] = useState('');
+  const [verifySignatureEncoding, setVerifySignatureEncoding] = useState<Encoding>('hex');
   const [verifyPublicKey, setVerifyPublicKey] = useState('');
+  const [verifyPublicKeyEncoding, setVerifyPublicKeyEncoding] = useState<Encoding>('base64');
   const [verifyOutput, setVerifyOutput] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
 
@@ -205,8 +239,8 @@ export default function WebCryptoPlayground() {
     setVerifyLoading(true);
     try {
       const data = textToBytes(verifyData, verifyDataEncoding);
-      const signature = textToBytes(verifySignature, 'hex');
-      const publicKeyData = textToBytes(verifyPublicKey, 'base64');
+      const signature = textToBytes(verifySignature, verifySignatureEncoding);
+      const publicKeyData = textToBytes(verifyPublicKey, verifyPublicKeyEncoding);
 
       const publicKey = await crypto.subtle.importKey(
         'spki',
@@ -262,6 +296,7 @@ export default function WebCryptoPlayground() {
   // Section 7: PBKDF2
   const [pbkdf2Password, setPbkdf2Password] = useState('');
   const [pbkdf2Salt, setPbkdf2Salt] = useState('');
+  const [pbkdf2SaltEncoding, setPbkdf2SaltEncoding] = useState<Encoding>('utf8');
   const [pbkdf2Iterations, setPbkdf2Iterations] = useState('100000');
   const [pbkdf2OutputEncoding, setPbkdf2OutputEncoding] = useState<Encoding>('hex');
   const [pbkdf2Output, setPbkdf2Output] = useState('');
@@ -272,7 +307,7 @@ export default function WebCryptoPlayground() {
     setPbkdf2Loading(true);
     try {
       const passwordData = new TextEncoder().encode(pbkdf2Password);
-      const saltData = new TextEncoder().encode(pbkdf2Salt);
+      const saltData = textToBytes(pbkdf2Salt, pbkdf2SaltEncoding);
 
       const baseKey = await crypto.subtle.importKey(
         'raw',
@@ -284,7 +319,7 @@ export default function WebCryptoPlayground() {
       const derivedBits = await crypto.subtle.deriveBits(
         {
           name: 'PBKDF2',
-          salt: saltData,
+          salt: saltData as BufferSource,
           iterations: parseInt(pbkdf2Iterations),
           hash: 'SHA-256'
         },
@@ -423,7 +458,6 @@ export default function WebCryptoPlayground() {
               rows={3}
               className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
             />
-            <button onClick={() => setEncryptInput('secret message')} className="mt-1 text-xs underline">Example: "secret message"</button>
           </div>
 
           <div className="flex gap-2">
@@ -458,6 +492,8 @@ export default function WebCryptoPlayground() {
             <EncodingSelect value={encryptKeyOutputEncoding} onChange={setEncryptKeyOutputEncoding} label="Key Output" />
             <EncodingSelect value={encryptIvOutputEncoding} onChange={setEncryptIvOutputEncoding} label="IV Output" />
           </div>
+
+          <button onClick={() => setEncryptInput('secret message')} className="text-xs underline">Example: "secret message"</button>
 
           <button
             onClick={handleEncrypt}
@@ -562,7 +598,8 @@ export default function WebCryptoPlayground() {
       <section className="border-l-4 border-gray-900 pl-4">
         <h2 className="text-2xl font-bold mb-2">4. Sign (ECDSA)</h2>
         <p className="text-sm text-gray-700 mb-3">
-          Create a digital signature using ECDSA with P-256 curve. Generates a new key pair each time.
+          Create a digital signature using ECDSA with P-256 curve. Optionally provide your own private key (PKCS#8 format), or leave blank to generate a new key pair.
+          <span className="block mt-1 text-xs text-gray-600">Note: If private key field is empty, a new key pair will be generated.</span>
         </p>
 
         <div className="border border-gray-300 p-3 space-y-3">
@@ -577,8 +614,22 @@ export default function WebCryptoPlayground() {
               rows={3}
               className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
             />
-            <button onClick={() => setSignInput('message to sign')} className="mt-1 text-xs underline">Example: "message to sign"</button>
           </div>
+
+          <EncodingSelect value={signPrivateKeyEncoding} onChange={setSignPrivateKeyEncoding} label="Private Key Encoding" />
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Private Key (optional - PKCS#8 format)</label>
+            <textarea
+              value={signPrivateKey}
+              onChange={(e) => setSignPrivateKey(e.target.value)}
+              placeholder="Leave blank to generate new key pair..."
+              rows={3}
+              className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
+            />
+          </div>
+
+          <button onClick={() => setSignInput('message to sign')} className="text-xs underline">Example: "message to sign"</button>
 
           <button
             onClick={handleSign}
@@ -609,11 +660,15 @@ export default function WebCryptoPlayground() {
       <section className="border-l-4 border-gray-900 pl-4">
         <h2 className="text-2xl font-bold mb-2">5. Verify Signature (ECDSA)</h2>
         <p className="text-sm text-gray-700 mb-3">
-          Verify a digital signature. You need the original data, signature (Hex), and public key (Base64).
+          Verify a digital signature. You need the original data, signature, and public key from the Sign section.
         </p>
 
         <div className="border border-gray-300 p-3 space-y-3">
-          <EncodingSelect value={verifyDataEncoding} onChange={setVerifyDataEncoding} label="Data Encoding" />
+          <div className="flex gap-2">
+            <EncodingSelect value={verifyDataEncoding} onChange={setVerifyDataEncoding} label="Data Encoding" />
+            <EncodingSelect value={verifySignatureEncoding} onChange={setVerifySignatureEncoding} label="Signature Encoding" />
+            <EncodingSelect value={verifyPublicKeyEncoding} onChange={setVerifyPublicKeyEncoding} label="Public Key Encoding" />
+          </div>
 
           <div>
             <label className="block text-sm font-bold mb-1">Original Data</label>
@@ -627,7 +682,7 @@ export default function WebCryptoPlayground() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Signature (Hex)</label>
+            <label className="block text-sm font-bold mb-1">Signature</label>
             <textarea
               value={verifySignature}
               onChange={(e) => setVerifySignature(e.target.value)}
@@ -638,7 +693,7 @@ export default function WebCryptoPlayground() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Public Key (Base64)</label>
+            <label className="block text-sm font-bold mb-1">Public Key</label>
             <textarea
               value={verifyPublicKey}
               onChange={(e) => setVerifyPublicKey(e.target.value)}
@@ -746,6 +801,8 @@ export default function WebCryptoPlayground() {
               className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
             />
           </div>
+
+          <EncodingSelect value={pbkdf2SaltEncoding} onChange={setPbkdf2SaltEncoding} label="Salt Encoding" />
 
           <div>
             <label className="block text-sm font-bold mb-1">Salt</label>

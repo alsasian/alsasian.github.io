@@ -30,6 +30,13 @@
           "type": "boolean",
           "default": false
         },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "$schema": {
           "type": "string"
         }

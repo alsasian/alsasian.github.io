@@ -24,9 +24,9 @@ const { Content } = await post.render();
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-6">
     <article>
-      <header class="mb-6 border-b-2 border-gray-900 pb-4">
+      <header class="mb-6 border-b-2 border-gray-900 pb-4 dark:border-gray-100">
         <h1 class="mb-2 text-4xl">{post.data.title}</h1>
-        <p class="mb-2 text-sm text-gray-600">
+        <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">
           {
             post.data.date.toLocaleDateString('en-US', {
               year: 'numeric',
@@ -39,7 +39,7 @@ const { Content } = await post.render();
           post.data.tags && post.data.tags.length > 0 && (
             <div class="flex flex-wrap gap-2">
               {post.data.tags.map((tag) => (
-                <span class="rounded bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                <span class="rounded bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                   {tag}
                 </span>
               ))}
@@ -49,12 +49,12 @@ const { Content } = await post.render();
       </header>
 
       <div
-        class="prose prose-sm max-w-none prose-headings:font-sans prose-headings:font-bold prose-h1:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:text-2xl prose-h3:mb-3 prose-h3:mt-6 prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-gray-900 prose-a:underline prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-4 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:p-4 prose-ol:list-decimal prose-ul:list-disc"
+        class="prose prose-sm max-w-none dark:prose-invert prose-headings:font-sans prose-headings:font-bold prose-h1:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:text-2xl prose-h3:mb-3 prose-h3:mt-6 prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-gray-900 prose-a:underline prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-4 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:p-4 prose-ol:list-decimal prose-ul:list-disc dark:prose-a:text-gray-100 dark:prose-blockquote:border-gray-100 dark:prose-code:bg-gray-800"
       >
         <Content />
       </div>
 
-      <footer class="mt-8 border-t border-gray-300 pt-4">
+      <footer class="mt-8 border-t border-gray-300 pt-4 dark:border-gray-700">
         <a href="/blog" class="text-sm font-bold">← Back to blog</a>
       </footer>
     </article>

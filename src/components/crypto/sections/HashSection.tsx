@@ -32,8 +32,11 @@ export function HashSection() {
     >
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="mb-1 block text-sm font-bold">Algorithm</label>
+          <label htmlFor="hash-algorithm" className="mb-1 block text-sm font-bold">
+            Algorithm
+          </label>
           <select
+            id="hash-algorithm"
             value={algorithm}
             onChange={(e) => setAlgorithm(e.target.value)}
             className="w-full border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"

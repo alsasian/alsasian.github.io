@@ -57,6 +57,13 @@ export default function WebCryptoPlayground() {
   // Section 2: Encrypt
   const [encryptInput, setEncryptInput] = useState('');
   const [encryptInputEncoding, setEncryptInputEncoding] = useState<Encoding>('utf8');
+  const [encryptKey, setEncryptKey] = useState('');
+  const [encryptKeyEncoding, setEncryptKeyEncoding] = useState<Encoding>('hex');
+  const [encryptIv, setEncryptIv] = useState('');
+  const [encryptIvEncoding, setEncryptIvEncoding] = useState<Encoding>('hex');
+  const [encryptOutputEncoding, setEncryptOutputEncoding] = useState<Encoding>('base64');
+  const [encryptKeyOutputEncoding, setEncryptKeyOutputEncoding] = useState<Encoding>('hex');
+  const [encryptIvOutputEncoding, setEncryptIvOutputEncoding] = useState<Encoding>('hex');
   const [encryptOutput, setEncryptOutput] = useState('');
   const [encryptLoading, setEncryptLoading] = useState(false);
 
@@ -65,19 +72,52 @@ export default function WebCryptoPlayground() {
     setEncryptLoading(true);
     try {
       const data = textToBytes(encryptInput, encryptInputEncoding);
-      const key = await crypto.subtle.generateKey(
-        { name: 'AES-GCM', length: 256 },
-        true,
-        ['encrypt', 'decrypt']
-      );
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data as BufferSource);
-      const exportedKey = await crypto.subtle.exportKey('raw', key);
+
+      let key: CryptoKey;
+      let keyBytes: Uint8Array;
+
+      if (encryptKey) {
+        // Use provided key
+        keyBytes = textToBytes(encryptKey, encryptKeyEncoding);
+        if (keyBytes.length !== 32) {
+          throw new Error('Key must be 32 bytes (256 bits) for AES-256');
+        }
+        key = await crypto.subtle.importKey(
+          'raw',
+          keyBytes as BufferSource,
+          { name: 'AES-GCM' },
+          true,
+          ['encrypt']
+        );
+      } else {
+        // Generate random key
+        key = await crypto.subtle.generateKey(
+          { name: 'AES-GCM', length: 256 },
+          true,
+          ['encrypt', 'decrypt']
+        );
+        const exportedKey = await crypto.subtle.exportKey('raw', key);
+        keyBytes = new Uint8Array(exportedKey);
+      }
+
+      let iv: Uint8Array;
+      if (encryptIv) {
+        // Use provided IV
+        iv = textToBytes(encryptIv, encryptIvEncoding);
+        if (iv.length !== 12) {
+          throw new Error('IV must be 12 bytes for AES-GCM');
+        }
+      } else {
+        // Generate random IV
+        iv = crypto.getRandomValues(new Uint8Array(12));
+      }
+
+      const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, data as BufferSource);
 
       setEncryptOutput(
-        `Encrypted: ${bytesToText(new Uint8Array(encrypted), 'base64')}\n\n` +
-        `Key: ${bytesToText(new Uint8Array(exportedKey), 'hex')}\n\n` +
-        `IV: ${bytesToText(iv, 'hex')}`
+        `Encrypted: ${bytesToText(new Uint8Array(encrypted), encryptOutputEncoding)}\n\n` +
+        `Key: ${bytesToText(keyBytes, encryptKeyOutputEncoding)}\n\n` +
+        `IV: ${bytesToText(iv, encryptIvOutputEncoding)}`
       );
     } catch (error) {
       setEncryptOutput(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -364,8 +404,8 @@ export default function WebCryptoPlayground() {
       <section className="border-l-4 border-gray-900 pl-4">
         <h2 className="text-2xl font-bold mb-2">2. Encrypt (AES-GCM)</h2>
         <p className="text-sm text-gray-700 mb-3">
-          Encrypt data using AES-GCM with a randomly generated 256-bit key. Save the key and IV to decrypt later.
-          <span className="block mt-1 text-xs text-gray-600">Note: Each encryption generates a new random key and IV.</span>
+          Encrypt data using AES-GCM. Optionally provide your own 256-bit key and IV, or leave blank to generate random values.
+          <span className="block mt-1 text-xs text-gray-600">Note: If key/IV fields are empty, random values will be generated.</span>
         </p>
 
         <div className="border border-gray-300 p-3 space-y-3">
@@ -383,6 +423,39 @@ export default function WebCryptoPlayground() {
             <button onClick={() => setEncryptInput('secret message')} className="mt-1 text-xs underline">Example: "secret message"</button>
           </div>
 
+          <div className="grid grid-cols-2 gap-2">
+            <EncodingSelect value={encryptKeyEncoding} onChange={setEncryptKeyEncoding} label="Key Input Encoding" />
+            <EncodingSelect value={encryptIvEncoding} onChange={setEncryptIvEncoding} label="IV Input Encoding" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Key (optional - 32 bytes for AES-256)</label>
+            <input
+              type="text"
+              value={encryptKey}
+              onChange={(e) => setEncryptKey(e.target.value)}
+              placeholder="Leave blank to generate random..."
+              className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">IV (optional - 12 bytes for AES-GCM)</label>
+            <input
+              type="text"
+              value={encryptIv}
+              onChange={(e) => setEncryptIv(e.target.value)}
+              placeholder="Leave blank to generate random..."
+              className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <EncodingSelect value={encryptOutputEncoding} onChange={setEncryptOutputEncoding} label="Data Output" />
+            <EncodingSelect value={encryptKeyOutputEncoding} onChange={setEncryptKeyOutputEncoding} label="Key Output" />
+            <EncodingSelect value={encryptIvOutputEncoding} onChange={setEncryptIvOutputEncoding} label="IV Output" />
+          </div>
+
           <button
             onClick={handleEncrypt}
             disabled={!encryptInput || encryptLoading}
@@ -393,7 +466,7 @@ export default function WebCryptoPlayground() {
 
           {encryptOutput && (
             <div className="relative">
-              <label className="block text-sm font-bold mb-1">Output (save all three values)</label>
+              <label className="block text-sm font-bold mb-1">Output</label>
               <pre className="w-full px-2 py-1 bg-gray-100 border border-gray-300 text-gray-900 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">
                 {encryptOutput}
               </pre>

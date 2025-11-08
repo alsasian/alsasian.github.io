@@ -13,9 +13,6 @@ const currentPath = Astro.url.pathname;
         <a href="/blog" class={`py-1 px-2 ${currentPath.startsWith('/blog') ? 'font-bold' : ''}`}>
           Blog
         </a>
-        <a href="/crypto" class={`py-1 px-2 ${currentPath === '/crypto' ? 'font-bold' : ''}`}>
-          Crypto
-        </a>
       </nav>
     </div>
   </div>

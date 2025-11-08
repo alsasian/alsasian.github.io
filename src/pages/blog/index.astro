@@ -41,6 +41,15 @@ const posts = (await getCollection('blog')).sort(
                   day: 'numeric',
                 })}
               </p>
+              {post.data.tags && post.data.tags.length > 0 && (
+                <div class="mb-2 flex flex-wrap gap-2">
+                  {post.data.tags.map((tag) => (
+                    <span class="rounded bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
               {post.data.description && <p class="mb-2 text-sm">{post.data.description}</p>}
               <a href={`/blog/${post.slug}`} class="text-sm font-bold">
                 Read more →

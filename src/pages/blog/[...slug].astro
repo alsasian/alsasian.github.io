@@ -20,33 +20,28 @@ const { Content } = await post.render();
   description={post.data.description || post.data.title}
 >
   <Header />
-  <main class="max-w-5xl mx-auto px-4 py-6">
+  <main class="mx-auto max-w-5xl px-4 py-6">
     <article>
-      <header class="border-b-2 border-gray-900 pb-4 mb-6">
-        <h1 class="text-4xl mb-2">{post.data.title}</h1>
+      <header class="mb-6 border-b-2 border-gray-900 pb-4">
+        <h1 class="mb-2 text-4xl">{post.data.title}</h1>
         <p class="text-sm text-gray-600">
-          {post.data.date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
+          {
+            post.data.date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          }
         </p>
       </header>
 
-      <div class="prose prose-sm max-w-none
-        prose-headings:font-sans prose-headings:font-bold
-        prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
-        prose-p:text-base prose-p:leading-relaxed
-        prose-a:text-gray-900 prose-a:underline
-        prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-        prose-pre:bg-gray-100 prose-pre:border prose-pre:border-gray-300
-        prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-4
-        prose-ul:list-disc prose-ol:list-decimal
-      ">
+      <div
+        class="prose prose-sm prose-headings:font-sans prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-gray-900 prose-a:underline prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:border prose-pre:border-gray-300 prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-4 prose-ul:list-disc prose-ol:list-decimal max-w-none"
+      >
         <Content />
       </div>
 
-      <footer class="border-t border-gray-300 mt-8 pt-4">
+      <footer class="mt-8 border-t border-gray-300 pt-4">
         <a href="/blog" class="text-sm font-bold">← Back to blog</a>
       </footer>
     </article>

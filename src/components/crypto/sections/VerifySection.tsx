@@ -18,14 +18,15 @@ export function VerifySection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleVerify = () => execute(async () => {
-    const dataBytes = textToBytes(data, dataEncoding);
-    const signatureBytes = textToBytes(signature, signatureEncoding);
-    const publicKeyBytes = textToBytes(publicKey, publicKeyEncoding);
+  const handleVerify = () =>
+    execute(async () => {
+      const dataBytes = textToBytes(data, dataEncoding);
+      const signatureBytes = textToBytes(signature, signatureEncoding);
+      const publicKeyBytes = textToBytes(publicKey, publicKeyEncoding);
 
-    const valid = await verifySignature(dataBytes, signatureBytes, publicKeyBytes);
-    return valid ? '✓ Signature is VALID' : '✗ Signature is INVALID';
-  });
+      const valid = await verifySignature(dataBytes, signatureBytes, publicKeyBytes);
+      return valid ? '✓ Signature is VALID' : '✗ Signature is INVALID';
+    });
 
   const isValid = output.includes('VALID');
   const isInvalid = output.includes('INVALID');
@@ -38,8 +39,16 @@ export function VerifySection() {
     >
       <div className="flex gap-2">
         <EncodingSelect value={dataEncoding} onChange={setDataEncoding} label="Data Encoding" />
-        <EncodingSelect value={signatureEncoding} onChange={setSignatureEncoding} label="Signature Encoding" />
-        <EncodingSelect value={publicKeyEncoding} onChange={setPublicKeyEncoding} label="Public Key Encoding" />
+        <EncodingSelect
+          value={signatureEncoding}
+          onChange={setSignatureEncoding}
+          label="Signature Encoding"
+        />
+        <EncodingSelect
+          value={publicKeyEncoding}
+          onChange={setPublicKeyEncoding}
+          label="Public Key Encoding"
+        />
       </div>
 
       <TextInput
@@ -66,7 +75,12 @@ export function VerifySection() {
         rows={2}
       />
 
-      <ActionButton onClick={handleVerify} loading={loading} loadingText="Verifying..." disabled={!data || !signature || !publicKey}>
+      <ActionButton
+        onClick={handleVerify}
+        loading={loading}
+        loadingText="Verifying..."
+        disabled={!data || !signature || !publicKey}
+      >
         Verify
       </ActionButton>
 

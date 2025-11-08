@@ -9,11 +9,11 @@ interface EncodingSelectProps {
 export function EncodingSelect({ value, onChange, label }: EncodingSelectProps) {
   return (
     <div>
-      <label className="block text-sm font-bold mb-1">{label}</label>
+      <label className="mb-1 block text-sm font-bold">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Encoding)}
-        className="px-2 py-1 border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none focus:border-gray-900"
+        className="border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 focus:border-gray-900 focus:outline-none"
       >
         <option value="utf8">UTF-8</option>
         <option value="hex">Hex</option>

@@ -13,15 +13,15 @@ export function ActionButton({
   loading = false,
   loadingText,
   disabled = false,
-  children
+  children,
 }: ActionButtonProps) {
   return (
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className="w-full px-3 py-2 bg-gray-900 text-white font-bold text-sm hover:bg-gray-700 disabled:opacity-50"
+      className="w-full bg-gray-900 px-3 py-2 text-sm font-bold text-white hover:bg-gray-700 disabled:opacity-50"
     >
-      {loading ? (loadingText || 'Loading...') : children}
+      {loading ? loadingText || 'Loading...' : children}
     </button>
   );
 }

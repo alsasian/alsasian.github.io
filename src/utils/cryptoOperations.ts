@@ -1,10 +1,7 @@
 /**
  * Hash data using the specified algorithm
  */
-export async function hashData(
-  data: Uint8Array,
-  algorithm: string
-): Promise<Uint8Array> {
+export async function hashData(data: Uint8Array, algorithm: string): Promise<Uint8Array> {
   const hashBuffer = await crypto.subtle.digest(algorithm, data as BufferSource);
   return new Uint8Array(hashBuffer);
 }
@@ -40,11 +37,10 @@ export async function encryptAES(
       ['encrypt']
     );
   } else {
-    cryptoKey = await crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
+    cryptoKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+      'encrypt',
+      'decrypt',
+    ]);
     const exportedKey = await crypto.subtle.exportKey('raw', cryptoKey);
     keyBytes = new Uint8Array(exportedKey);
   }
@@ -68,7 +64,7 @@ export async function encryptAES(
   return {
     encrypted: new Uint8Array(encrypted),
     key: keyBytes,
-    iv: ivBytes
+    iv: ivBytes,
   };
 }
 
@@ -106,10 +102,7 @@ export interface SignResult {
  * Sign data using ECDSA
  * If privateKey is not provided, a new key pair will be generated
  */
-export async function signData(
-  data: Uint8Array,
-  privateKey?: Uint8Array
-): Promise<SignResult> {
+export async function signData(data: Uint8Array, privateKey?: Uint8Array): Promise<SignResult> {
   let cryptoPrivateKey: CryptoKey;
   let publicKeyBytes: Uint8Array | undefined;
 
@@ -124,11 +117,10 @@ export async function signData(
     // For imported private key, we don't export public key
     publicKeyBytes = undefined;
   } else {
-    const keyPair = await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify']
-    );
+    const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+      'verify',
+    ]);
     cryptoPrivateKey = keyPair.privateKey;
     const exportedPublicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
     publicKeyBytes = new Uint8Array(exportedPublicKey);
@@ -142,7 +134,7 @@ export async function signData(
 
   return {
     signature: new Uint8Array(signature),
-    publicKey: publicKeyBytes
+    publicKey: publicKeyBytes,
   };
 }
 
@@ -173,10 +165,7 @@ export async function verifySignature(
 /**
  * Compute HMAC
  */
-export async function computeHMAC(
-  data: Uint8Array,
-  key: Uint8Array
-): Promise<Uint8Array> {
+export async function computeHMAC(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
     key as BufferSource,
@@ -199,20 +188,16 @@ export async function derivePBKDF2(
 ): Promise<Uint8Array> {
   const passwordData = new TextEncoder().encode(password);
 
-  const baseKey = await crypto.subtle.importKey(
-    'raw',
-    passwordData,
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits']
-  );
+  const baseKey = await crypto.subtle.importKey('raw', passwordData, { name: 'PBKDF2' }, false, [
+    'deriveBits',
+  ]);
 
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
       salt: salt as BufferSource,
       iterations,
-      hash: 'SHA-256'
+      hash: 'SHA-256',
     },
     baseKey,
     256

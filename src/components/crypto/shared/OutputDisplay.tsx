@@ -26,13 +26,11 @@ export function OutputDisplay({ label, value, success, error }: OutputDisplayPro
   // For normal output, use pre with copy button
   return (
     <div className="relative">
-      <label className="block text-sm font-bold mb-1">{label}</label>
-      <pre className={getClassName()}>
-        {value}
-      </pre>
+      <label className="mb-1 block text-sm font-bold">{label}</label>
+      <pre className={getClassName()}>{value}</pre>
       <button
         onClick={() => copyToClipboard(value)}
-        className="absolute top-6 right-2 px-2 py-1 bg-white hover:bg-gray-200 text-gray-900 text-xs border border-gray-300"
+        className="absolute right-2 top-6 border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 hover:bg-gray-200"
       >
         Copy
       </button>

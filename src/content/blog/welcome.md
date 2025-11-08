@@ -1,6 +1,6 @@
 ---
-title: "Welcome to the Blog"
-description: "First post introducing the blog and its purpose"
+title: 'Welcome to the Blog'
+description: 'First post introducing the blog and its purpose'
 date: 2025-11-08
 ---
 
@@ -12,8 +12,8 @@ To create a new blog post, simply add a new Markdown file to `src/content/blog/`
 
 ```markdown
 ---
-title: "Your Post Title"
-description: "Brief description of the post"
+title: 'Your Post Title'
+description: 'Brief description of the post'
 date: 2025-11-08
 ---
 

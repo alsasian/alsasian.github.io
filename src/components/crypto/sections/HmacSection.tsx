@@ -17,13 +17,14 @@ export function HmacSection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleHmac = () => execute(async () => {
-    const data = textToBytes(input, inputEncoding);
-    const keyData = textToBytes(key, keyEncoding);
+  const handleHmac = () =>
+    execute(async () => {
+      const data = textToBytes(input, inputEncoding);
+      const keyData = textToBytes(key, keyEncoding);
 
-    const hmac = await computeHMAC(data, keyData);
-    return bytesToText(hmac, outputEncoding);
-  });
+      const hmac = await computeHMAC(data, keyData);
+      return bytesToText(hmac, outputEncoding);
+    });
 
   const handleExample = () => {
     setInput('message');
@@ -59,10 +60,17 @@ export function HmacSection() {
           placeholder="Enter secret key..."
           type="text"
         />
-        <button onClick={handleExample} className="mt-1 text-xs underline">Example</button>
+        <button onClick={handleExample} className="mt-1 text-xs underline">
+          Example
+        </button>
       </div>
 
-      <ActionButton onClick={handleHmac} loading={loading} loadingText="Computing..." disabled={!input || !key}>
+      <ActionButton
+        onClick={handleHmac}
+        loading={loading}
+        loadingText="Computing..."
+        disabled={!input || !key}
+      >
         Compute HMAC
       </ActionButton>
 

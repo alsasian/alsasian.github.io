@@ -17,14 +17,15 @@ export function TextInput({
   rows = 3,
   type = 'textarea',
   min,
-  max
+  max,
 }: TextInputProps) {
-  const baseClassName = "w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono";
+  const baseClassName =
+    'w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono';
 
   if (type === 'textarea') {
     return (
       <div>
-        <label className="block text-sm font-bold mb-1">{label}</label>
+        <label className="mb-1 block text-sm font-bold">{label}</label>
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -38,7 +39,7 @@ export function TextInput({
 
   return (
     <div>
-      <label className="block text-sm font-bold mb-1">{label}</label>
+      <label className="mb-1 block text-sm font-bold">{label}</label>
       <input
         type={type}
         value={value}

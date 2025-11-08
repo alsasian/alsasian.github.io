@@ -19,14 +19,15 @@ export function DecryptSection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleDecrypt = () => execute(async () => {
-    const encrypted = textToBytes(data, dataEncoding);
-    const keyData = textToBytes(key, keyEncoding);
-    const ivData = textToBytes(iv, ivEncoding);
+  const handleDecrypt = () =>
+    execute(async () => {
+      const encrypted = textToBytes(data, dataEncoding);
+      const keyData = textToBytes(key, keyEncoding);
+      const ivData = textToBytes(iv, ivEncoding);
 
-    const decrypted = await decryptAES(encrypted, keyData, ivData);
-    return bytesToText(decrypted, outputEncoding);
-  });
+      const decrypted = await decryptAES(encrypted, keyData, ivData);
+      return bytesToText(decrypted, outputEncoding);
+    });
 
   return (
     <CryptoSection
@@ -48,25 +49,18 @@ export function DecryptSection() {
         rows={2}
       />
 
-      <TextInput
-        label="Key"
-        value={key}
-        onChange={setKey}
-        placeholder="Paste key..."
-        type="text"
-      />
+      <TextInput label="Key" value={key} onChange={setKey} placeholder="Paste key..." type="text" />
 
-      <TextInput
-        label="IV"
-        value={iv}
-        onChange={setIv}
-        placeholder="Paste IV..."
-        type="text"
-      />
+      <TextInput label="IV" value={iv} onChange={setIv} placeholder="Paste IV..." type="text" />
 
       <EncodingSelect value={outputEncoding} onChange={setOutputEncoding} label="Output Encoding" />
 
-      <ActionButton onClick={handleDecrypt} loading={loading} loadingText="Decrypting..." disabled={!data || !key || !iv}>
+      <ActionButton
+        onClick={handleDecrypt}
+        loading={loading}
+        loadingText="Decrypting..."
+        disabled={!data || !key || !iv}
+      >
         Decrypt
       </ActionButton>
 

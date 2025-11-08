@@ -43,14 +43,18 @@ export function RandomSection() {
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setLength('16')} className="text-xs underline">16 bytes (IV)</button>
-        <button onClick={() => setLength('32')} className="text-xs underline">32 bytes (key)</button>
-        <button onClick={() => setLength('64')} className="text-xs underline">64 bytes</button>
+        <button onClick={() => setLength('16')} className="text-xs underline">
+          16 bytes (IV)
+        </button>
+        <button onClick={() => setLength('32')} className="text-xs underline">
+          32 bytes (key)
+        </button>
+        <button onClick={() => setLength('64')} className="text-xs underline">
+          64 bytes
+        </button>
       </div>
 
-      <ActionButton onClick={handleRandom}>
-        Generate Random Bytes
-      </ActionButton>
+      <ActionButton onClick={handleRandom}>Generate Random Bytes</ActionButton>
 
       {output && <OutputDisplay label="Random Output" value={output} />}
     </CryptoSection>

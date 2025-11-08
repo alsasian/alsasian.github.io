@@ -16,24 +16,25 @@ export function SignSection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleSign = () => execute(async () => {
-    const data = textToBytes(input, inputEncoding);
-    const privateKeyBytes = privateKey ? textToBytes(privateKey, privateKeyEncoding) : undefined;
+  const handleSign = () =>
+    execute(async () => {
+      const data = textToBytes(input, inputEncoding);
+      const privateKeyBytes = privateKey ? textToBytes(privateKey, privateKeyEncoding) : undefined;
 
-    const result = await signData(data, privateKeyBytes);
+      const result = await signData(data, privateKeyBytes);
 
-    if (privateKey) {
-      return (
-        `Signature: ${bytesToText(result.signature, 'hex')}\n\n` +
-        `Note: Using imported private key. Public key not exported.`
-      );
-    } else {
-      return (
-        `Signature: ${bytesToText(result.signature, 'hex')}\n\n` +
-        `Public Key: ${bytesToText(result.publicKey!, 'base64')}`
-      );
-    }
-  });
+      if (privateKey) {
+        return (
+          `Signature: ${bytesToText(result.signature, 'hex')}\n\n` +
+          `Note: Using imported private key. Public key not exported.`
+        );
+      } else {
+        return (
+          `Signature: ${bytesToText(result.signature, 'hex')}\n\n` +
+          `Public Key: ${bytesToText(result.publicKey!, 'base64')}`
+        );
+      }
+    });
 
   return (
     <CryptoSection
@@ -52,7 +53,11 @@ export function SignSection() {
         rows={3}
       />
 
-      <EncodingSelect value={privateKeyEncoding} onChange={setPrivateKeyEncoding} label="Private Key Encoding" />
+      <EncodingSelect
+        value={privateKeyEncoding}
+        onChange={setPrivateKeyEncoding}
+        label="Private Key Encoding"
+      />
 
       <TextInput
         label="Private Key (optional - PKCS#8 format)"
@@ -62,9 +67,16 @@ export function SignSection() {
         rows={3}
       />
 
-      <button onClick={() => setInput('message to sign')} className="text-xs underline">Example: "message to sign"</button>
+      <button onClick={() => setInput('message to sign')} className="text-xs underline">
+        Example: "message to sign"
+      </button>
 
-      <ActionButton onClick={handleSign} loading={loading} loadingText="Signing..." disabled={!input}>
+      <ActionButton
+        onClick={handleSign}
+        loading={loading}
+        loadingText="Signing..."
+        disabled={!input}
+      >
         Sign
       </ActionButton>
 

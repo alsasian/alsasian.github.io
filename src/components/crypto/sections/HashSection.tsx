@@ -16,11 +16,12 @@ export function HashSection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleHash = () => execute(async () => {
-    const data = textToBytes(input, inputEncoding);
-    const hash = await hashData(data, algorithm);
-    return bytesToText(hash, outputEncoding);
-  });
+  const handleHash = () =>
+    execute(async () => {
+      const data = textToBytes(input, inputEncoding);
+      const hash = await hashData(data, algorithm);
+      return bytesToText(hash, outputEncoding);
+    });
 
   return (
     <CryptoSection
@@ -31,11 +32,11 @@ export function HashSection() {
     >
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-sm font-bold mb-1">Algorithm</label>
+          <label className="mb-1 block text-sm font-bold">Algorithm</label>
           <select
             value={algorithm}
             onChange={(e) => setAlgorithm(e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 text-sm"
+            className="w-full border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
           >
             <option value="SHA-1">SHA-1 (deprecated)</option>
             <option value="SHA-256">SHA-256</option>
@@ -58,11 +59,20 @@ export function HashSection() {
       />
 
       <div className="flex gap-2">
-        <button onClick={() => setInput('hello world')} className="text-xs underline">Example: "hello world"</button>
-        <button onClick={() => setInput('abc')} className="text-xs underline">Test Vector: "abc"</button>
+        <button onClick={() => setInput('hello world')} className="text-xs underline">
+          Example: "hello world"
+        </button>
+        <button onClick={() => setInput('abc')} className="text-xs underline">
+          Test Vector: "abc"
+        </button>
       </div>
 
-      <ActionButton onClick={handleHash} loading={loading} loadingText="Hashing..." disabled={!input}>
+      <ActionButton
+        onClick={handleHash}
+        loading={loading}
+        loadingText="Hashing..."
+        disabled={!input}
+      >
         Hash
       </ActionButton>
 

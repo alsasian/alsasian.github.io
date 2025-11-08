@@ -21,19 +21,20 @@ export function EncryptSection() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handleEncrypt = () => execute(async () => {
-    const data = textToBytes(input, inputEncoding);
-    const keyBytes = key ? textToBytes(key, keyEncoding) : undefined;
-    const ivBytes = iv ? textToBytes(iv, ivEncoding) : undefined;
+  const handleEncrypt = () =>
+    execute(async () => {
+      const data = textToBytes(input, inputEncoding);
+      const keyBytes = key ? textToBytes(key, keyEncoding) : undefined;
+      const ivBytes = iv ? textToBytes(iv, ivEncoding) : undefined;
 
-    const result = await encryptAES(data, keyBytes, ivBytes);
+      const result = await encryptAES(data, keyBytes, ivBytes);
 
-    return (
-      `Encrypted: ${bytesToText(result.encrypted, outputEncoding)}\n\n` +
-      `Key: ${bytesToText(result.key, keyOutputEncoding)}\n\n` +
-      `IV: ${bytesToText(result.iv, ivOutputEncoding)}`
-    );
-  });
+      return (
+        `Encrypted: ${bytesToText(result.encrypted, outputEncoding)}\n\n` +
+        `Key: ${bytesToText(result.key, keyOutputEncoding)}\n\n` +
+        `IV: ${bytesToText(result.iv, ivOutputEncoding)}`
+      );
+    });
 
   return (
     <CryptoSection
@@ -75,13 +76,24 @@ export function EncryptSection() {
 
       <div className="flex gap-2">
         <EncodingSelect value={outputEncoding} onChange={setOutputEncoding} label="Data Output" />
-        <EncodingSelect value={keyOutputEncoding} onChange={setKeyOutputEncoding} label="Key Output" />
+        <EncodingSelect
+          value={keyOutputEncoding}
+          onChange={setKeyOutputEncoding}
+          label="Key Output"
+        />
         <EncodingSelect value={ivOutputEncoding} onChange={setIvOutputEncoding} label="IV Output" />
       </div>
 
-      <button onClick={() => setInput('secret message')} className="text-xs underline">Example: "secret message"</button>
+      <button onClick={() => setInput('secret message')} className="text-xs underline">
+        Example: "secret message"
+      </button>
 
-      <ActionButton onClick={handleEncrypt} loading={loading} loadingText="Encrypting..." disabled={!input}>
+      <ActionButton
+        onClick={handleEncrypt}
+        loading={loading}
+        loadingText="Encrypting..."
+        disabled={!input}
+      >
         Encrypt
       </ActionButton>
 

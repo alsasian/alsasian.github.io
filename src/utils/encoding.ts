@@ -10,9 +10,10 @@ export function textToBytes(text: string, encoding: Encoding): Uint8Array {
     const matches = text.replace(/\s/g, '').match(/.{1,2}/g);
     if (!matches) throw new Error('Invalid hex string');
     const arr = new Uint8Array(matches.length);
-    matches.forEach((byte, i) => arr[i] = parseInt(byte, 16));
+    matches.forEach((byte, i) => (arr[i] = parseInt(byte, 16)));
     return arr;
-  } else { // base64
+  } else {
+    // base64
     const binary = atob(text);
     const arr = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
@@ -29,8 +30,11 @@ export function bytesToText(bytes: Uint8Array, encoding: Encoding): string {
   if (encoding === 'utf8') {
     return new TextDecoder().decode(bytes);
   } else if (encoding === 'hex') {
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  } else { // base64
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } else {
+    // base64
     return btoa(String.fromCharCode(...bytes));
   }
 }

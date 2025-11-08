@@ -17,13 +17,14 @@ export function Pbkdf2Section() {
 
   const { output, loading, execute } = useCryptoOperation();
 
-  const handlePbkdf2 = () => execute(async () => {
-    const saltBytes = textToBytes(salt, saltEncoding);
-    const iterationsNum = parseInt(iterations);
+  const handlePbkdf2 = () =>
+    execute(async () => {
+      const saltBytes = textToBytes(salt, saltEncoding);
+      const iterationsNum = parseInt(iterations);
 
-    const derived = await derivePBKDF2(password, saltBytes, iterationsNum);
-    return bytesToText(derived, outputEncoding);
-  });
+      const derived = await derivePBKDF2(password, saltBytes, iterationsNum);
+      return bytesToText(derived, outputEncoding);
+    });
 
   const handleExample = () => {
     setPassword('mypassword');
@@ -56,18 +57,20 @@ export function Pbkdf2Section() {
       />
 
       <div className="grid grid-cols-2 gap-2">
-        <TextInput
-          label="Iterations"
-          value={iterations}
-          onChange={setIterations}
-          type="number"
-        />
+        <TextInput label="Iterations" value={iterations} onChange={setIterations} type="number" />
         <EncodingSelect value={outputEncoding} onChange={setOutputEncoding} label="Output" />
       </div>
 
-      <button onClick={handleExample} className="text-xs underline">Example</button>
+      <button onClick={handleExample} className="text-xs underline">
+        Example
+      </button>
 
-      <ActionButton onClick={handlePbkdf2} loading={loading} loadingText="Deriving..." disabled={!password || !salt}>
+      <ActionButton
+        onClick={handlePbkdf2}
+        loading={loading}
+        loadingText="Deriving..."
+        disabled={!password || !salt}
+      >
         Derive Key
       </ActionButton>
 

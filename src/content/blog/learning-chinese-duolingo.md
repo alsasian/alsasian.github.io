@@ -1,11 +1,13 @@
 ---
-title: "Learning Chinese on Duolingo: It's Not As Hard As I Thought"
-description: 'Discovering the logic and beauty of Chinese characters through Duolingo, one fire-vehicle at a time'
+title: 'I Ride Fire Train Everyday'
+description: 'Learning Chinese on Duolingo - not sure if it helps me converse, but discovering compound characters is surprisingly fun'
 date: 2025-11-08
 tags: ['language-learning', 'chinese', 'personal']
 ---
 
-I recently started learning Chinese on Duolingo, and I have to admit—it's not as hard as I thought it would be. Sure, the tones are tricky and there are thousands of characters to memorize, but once you start seeing the patterns, it becomes surprisingly logical and even fun.
+I recently started learning Chinese on Duolingo. To be honest, I'm not sure if it will actually help me use Chinese or even hold a conversation. But it can be fun, and I'm hopeful that it'll be useful little by little.
+
+What I _have_ discovered is that once you start seeing the patterns in how characters combine, it becomes surprisingly logical and entertaining.
 
 ## The Joy of Compound Characters
 

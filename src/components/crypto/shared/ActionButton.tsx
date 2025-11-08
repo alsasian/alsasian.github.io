@@ -19,7 +19,7 @@ export function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className="w-full bg-gray-900 px-3 py-2 text-sm font-bold text-white hover:bg-gray-700 disabled:opacity-50"
+      className="w-full bg-gray-900 px-3 py-2 text-sm font-bold text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
     >
       {loading ? loadingText || 'Loading...' : children}
     </button>

@@ -20,7 +20,7 @@ export function TextInput({
   max,
 }: TextInputProps) {
   const baseClassName =
-    'w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono';
+    'w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500';
 
   if (type === 'textarea') {
     return (

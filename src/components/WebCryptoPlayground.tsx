@@ -20,8 +20,8 @@ export default function WebCryptoPlayground() {
       <RandomSection />
 
       {/* Info */}
-      <div className="border border-gray-300 bg-gray-100 p-3">
-        <p className="text-xs text-gray-700">
+      <div className="border border-gray-300 bg-gray-100 p-3 dark:border-gray-600 dark:bg-gray-800">
+        <p className="text-xs text-gray-700 dark:text-gray-300">
           <strong>Note:</strong> All cryptographic operations happen locally in your browser using
           the Web Cryptography API. No data is sent to any server.
         </p>

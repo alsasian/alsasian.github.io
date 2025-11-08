@@ -31,4 +31,11 @@
   a:hover {
     @apply decoration-2;
   }
+
+  /* Override prose code styles for code inside pre blocks */
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
 }

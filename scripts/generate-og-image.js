@@ -7,7 +7,7 @@
  *
  * Usage:
  *   npm install sharp
- *   node generate-og-image.js
+ *   node scripts/generate-og-image.js
  */
 
 import { readFileSync } from 'fs';
@@ -27,17 +27,19 @@ async function generateOGImage() {
       console.log('');
       console.log('To generate the PNG automatically:');
       console.log('  1. Run: npm install -D sharp');
-      console.log('  2. Run: node generate-og-image.js');
+      console.log('  2. Run: node scripts/generate-og-image.js');
       console.log('');
       console.log('Alternative methods:');
-      console.log('  • Open og-image-generator.html in your browser and use the download button');
+      console.log(
+        '  • Open scripts/og-image-generator.html in your browser and use the download button'
+      );
       console.log('  • Use an online converter: https://cloudconvert.com/svg-to-png');
       console.log('  • Open public/og-image.svg in a browser and take a 1200x630 screenshot');
       return;
     }
 
-    const svgPath = join(__dirname, 'public', 'og-image.svg');
-    const pngPath = join(__dirname, 'public', 'og-image.png');
+    const svgPath = join(__dirname, '..', 'public', 'og-image.svg');
+    const pngPath = join(__dirname, '..', 'public', 'og-image.png');
 
     const svgBuffer = readFileSync(svgPath);
 
@@ -49,7 +51,7 @@ async function generateOGImage() {
     console.error('❌ Error generating image:', error.message);
     console.log('');
     console.log('Please use one of the alternative methods:');
-    console.log('  • Open og-image-generator.html in your browser');
+    console.log('  • Open scripts/og-image-generator.html in your browser');
     console.log('  • Use https://cloudconvert.com/svg-to-png');
   }
 }

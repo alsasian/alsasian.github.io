@@ -1,57 +1,62 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 ---
 
-<Layout title="Welcome | alsasian.github.io">
-  <main class="min-h-screen flex items-center justify-center px-4 py-12">
-    <div class="max-w-4xl w-full">
-      <div class="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 md:p-12 border border-white/20">
-        <div class="text-center">
-          <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
-            Welcome
-          </h1>
-          <p class="text-xl md:text-2xl text-purple-200 mb-8">
-            Personal website and WebCrypto playground
-          </p>
-          <div class="w-20 h-1 bg-gradient-to-r from-purple-400 to-pink-400 mx-auto mb-12"></div>
-        </div>
+<Layout title="alsasian.github.io">
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-6">
+    <article class="mb-4 border-b border-gray-300 pb-4">
+      <h1 class="mb-2 text-4xl">alsasian.github.io</h1>
+      <p class="mb-3 text-sm text-gray-600">Personal website and technical experiments</p>
+      <p class="mb-2">
+        This site serves as a personal space for technical writing, experiments, and projects. Built
+        with Astro, React, TypeScript, and Tailwind CSS. Deployed on GitHub Pages.
+      </p>
+    </article>
 
-        <div class="grid md:grid-cols-2 gap-6 mb-12">
-          <div class="bg-white/5 rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all">
-            <h2 class="text-2xl font-semibold text-white mb-3">🔐 WebCrypto Playground</h2>
-            <p class="text-purple-200 mb-4">
-              Experiment with the Web Cryptography API. Hash, encrypt, decrypt, and generate keys.
-            </p>
-            <a
-              href="/crypto"
-              class="inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl"
-            >
-              Launch Playground →
-            </a>
-          </div>
+    <div class="mb-6 grid gap-6 md:grid-cols-2">
+      <section class="border-l-4 border-gray-900 pl-3">
+        <h2 class="mb-2 text-2xl">WebCrypto Playground</h2>
+        <p class="mb-2 text-sm">
+          An interactive playground for experimenting with the Web Cryptography API. Hash, encrypt,
+          decrypt, and generate cryptographic keys directly in the browser.
+        </p>
+        <a href="/crypto" class="text-sm font-bold"> Visit Playground → </a>
+      </section>
 
-          <div class="bg-white/5 rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all">
-            <h2 class="text-2xl font-semibold text-white mb-3">💻 About</h2>
-            <p class="text-purple-200 mb-4">
-              Built with Astro, React, TypeScript, and Tailwind CSS. Deployed on GitHub Pages.
-            </p>
-            <a
-              href="https://github.com/alsasian"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-block px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-all border border-white/20"
-            >
-              GitHub Profile →
-            </a>
-          </div>
-        </div>
-
-        <div class="text-center">
-          <p class="text-purple-300 text-sm">
-            Made with ❤️ using modern web technologies
-          </p>
-        </div>
-      </div>
+      <section class="border-l-4 border-gray-900 pl-3">
+        <h2 class="mb-2 text-2xl">Blog</h2>
+        <p class="mb-2 text-sm">
+          Technical writing, notes, and thoughts on software engineering, cryptography, and web
+          technologies.
+        </p>
+        <a href="/blog" class="text-sm font-bold"> Read Blog → </a>
+      </section>
     </div>
+
+    <section class="mt-6 border-t border-gray-300 pt-4">
+      <h2 class="mb-2 text-xl">Recent Updates</h2>
+      <ul class="space-y-1 text-sm">
+        <li>
+          <span class="text-gray-600">2025-11-08</span> —
+          <span>Site redesigned with newspaper-inspired layout</span>
+        </li>
+        <li>
+          <span class="text-gray-600">2025-11-08</span> —
+          <a href="/crypto">WebCrypto Playground launched</a>
+        </li>
+        <li>
+          <span class="text-gray-600">2025-11-08</span> —
+          <span>Initial site setup with Astro</span>
+        </li>
+      </ul>
+    </section>
+
+    <footer class="mt-8 border-t border-gray-300 pt-4 text-sm text-gray-600">
+      <p>
+        <a href="https://github.com/alsasian" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </p>
+    </footer>
   </main>
 </Layout>

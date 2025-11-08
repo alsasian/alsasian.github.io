@@ -4,22 +4,74 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  publishedTime?: Date;
 }
 
-const { title, description = 'Personal website and WebCrypto playground' } = Astro.props;
+const {
+  title,
+  description = 'Personal website and WebCrypto playground',
+  image = '/og-image.png',
+  type = 'website',
+  publishedTime,
+} = Astro.props;
+
+// Canonical URL for this page
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// Full URL for social share image
+const socialImageURL = new URL(image, Astro.site);
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary Meta Tags -->
     <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta name="author" content="alsasian" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImageURL} />
+    <meta property="og:site_name" content="alsasian.github.io" />
+    {
+      publishedTime && (
+        <meta property="article:published_time" content={publishedTime.toISOString()} />
+      )
+    }
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageURL} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Generator -->
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
   </head>
-  <body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+  <body class="min-h-screen">
     <slot />
   </body>
 </html>

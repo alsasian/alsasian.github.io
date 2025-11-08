@@ -66,13 +66,13 @@ The site will be available at `http://localhost:4321`
 
 ### Available Commands
 
-| Command            | Action                                       |
-|:-------------------|:---------------------------------------------|
-| `npm install`      | Install dependencies                         |
-| `npm run dev`      | Start local dev server at `localhost:4321`   |
-| `npm run build`    | Build production site to `./dist/`           |
-| `npm run preview`  | Preview build locally before deploying       |
-| `npm run astro`    | Run Astro CLI commands                       |
+| Command           | Action                                     |
+| :---------------- | :----------------------------------------- |
+| `npm install`     | Install dependencies                       |
+| `npm run dev`     | Start local dev server at `localhost:4321` |
+| `npm run build`   | Build production site to `./dist/`         |
+| `npm run preview` | Preview build locally before deploying     |
+| `npm run astro`   | Run Astro CLI commands                     |
 
 ## Deployment to GitHub Pages
 
@@ -84,6 +84,7 @@ The site will be available at `http://localhost:4321`
    - Under **Source**, select **GitHub Actions**
 
 2. **Push to main branch**:
+
    ```bash
    git add .
    git commit -m "Initial setup"
@@ -98,6 +99,7 @@ The site will be available at `http://localhost:4321`
 ### Workflow
 
 The GitHub Actions workflow automatically:
+
 1. Checks out the code
 2. Sets up Node.js
 3. Installs dependencies

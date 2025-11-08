@@ -1,0 +1,22 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
+<header class="border-b border-dotted border-gray-400">
+  <div class="mx-auto max-w-5xl px-4 py-3">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">
+        <a href="/" class="no-underline hover:no-underline">alsasian</a>
+      </h1>
+      <nav class="flex gap-2 text-sm sm:gap-4">
+        <a href="/" class={`py-1 px-2 ${currentPath === '/' ? 'font-bold' : ''}`}> Home </a>
+        <a href="/blog" class={`py-1 px-2 ${currentPath.startsWith('/blog') ? 'font-bold' : ''}`}>
+          Blog
+        </a>
+        <a href="/crypto" class={`py-1 px-2 ${currentPath === '/crypto' ? 'font-bold' : ''}`}>
+          Crypto
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>

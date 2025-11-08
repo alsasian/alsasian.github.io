@@ -39,7 +39,7 @@ export function HashSection() {
             id="hash-algorithm"
             value={algorithm}
             onChange={(e) => setAlgorithm(e.target.value)}
-            className="w-full border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+            className="w-full border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           >
             <option value="SHA-1">SHA-1 (deprecated)</option>
             <option value="SHA-256">SHA-256</option>

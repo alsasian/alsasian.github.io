@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply text-gray-900 bg-white;
     font-family: Georgia, 'Times New Roman', serif;

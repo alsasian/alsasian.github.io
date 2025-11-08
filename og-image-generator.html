@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OG Image Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+
+    .og-image {
+      width: 1200px;
+      height: 630px;
+      background: white;
+      border: 2px solid #333;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .top-border {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: #111;
+    }
+
+    .bottom-border {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: #111;
+    }
+
+    .site-name {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 120px;
+      font-weight: 700;
+      color: #111;
+      margin: 0;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    .tagline {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 42px;
+      color: #666;
+      margin: 30px 0 0 0;
+      text-align: center;
+      font-style: italic;
+      max-width: 900px;
+    }
+
+    .url {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      font-size: 32px;
+      color: #999;
+      margin: 40px 0 0 0;
+      letter-spacing: 0.5px;
+    }
+
+    .decorative-line {
+      width: 200px;
+      height: 4px;
+      background: #111;
+      margin: 40px 0;
+    }
+
+    .instructions {
+      margin-top: 20px;
+      padding: 20px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      max-width: 1200px;
+    }
+
+    .instructions h2 {
+      margin-top: 0;
+      color: #856404;
+    }
+
+    .instructions code {
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="og-image" id="ogImage">
+    <div class="top-border"></div>
+
+    <h1 class="site-name">alsasian</h1>
+    <div class="decorative-line"></div>
+    <p class="tagline">WebCrypto Playground & Technical Writing</p>
+    <p class="url">alsasian.github.io</p>
+
+    <div class="bottom-border"></div>
+  </div>
+
+  <div class="instructions">
+    <h2>📸 How to Generate Your OG Image</h2>
+    <p><strong>Option 1: Screenshot (Recommended)</strong></p>
+    <ol>
+      <li>Open your browser's developer tools (F12)</li>
+      <li>Use "Device Toolbar" or "Responsive Design Mode"</li>
+      <li>Set viewport to exactly <code>1200 x 630</code> pixels</li>
+      <li>Take a screenshot of just the white box above</li>
+      <li>Save as <code>og-image.png</code> in the <code>public/</code> folder</li>
+    </ol>
+
+    <p><strong>Option 2: Browser Screenshot Tool</strong></p>
+    <ol>
+      <li>Right-click the white box above</li>
+      <li>Select "Inspect Element"</li>
+      <li>Right-click the <code>&lt;div class="og-image"&gt;</code> in DevTools</li>
+      <li>Select "Capture node screenshot" (Chrome/Edge) or "Screenshot Node" (Firefox)</li>
+      <li>Save as <code>og-image.png</code> in the <code>public/</code> folder</li>
+    </ol>
+
+    <p><strong>Option 3: Use the JavaScript Generator Below</strong></p>
+    <button onclick="downloadAsImage()" style="padding: 10px 20px; font-size: 16px; background: #111; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      Download as PNG
+    </button>
+    <p style="margin-top: 10px; color: #666; font-size: 14px;">
+      (Requires html2canvas library - click to install and download)
+    </p>
+  </div>
+
+  <script>
+    function downloadAsImage() {
+      // Check if html2canvas is loaded
+      if (typeof html2canvas === 'undefined') {
+        // Load html2canvas from CDN
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = function() {
+          generateImage();
+        };
+        document.head.appendChild(script);
+      } else {
+        generateImage();
+      }
+    }
+
+    function generateImage() {
+      const element = document.getElementById('ogImage');
+
+      html2canvas(element, {
+        width: 1200,
+        height: 630,
+        scale: 2, // Higher quality
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        // Convert to blob and download
+        canvas.toBlob(function(blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = 'og-image.png';
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

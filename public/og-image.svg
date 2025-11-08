@@ -1,0 +1,56 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#ffffff"/>
+
+  <!-- Top border -->
+  <rect width="1200" height="8" fill="#111111"/>
+
+  <!-- Bottom border -->
+  <rect y="622" width="1200" height="8" fill="#111111"/>
+
+  <!-- Main title -->
+  <text
+    x="600"
+    y="260"
+    font-family="Georgia, Times New Roman, serif"
+    font-size="120"
+    font-weight="700"
+    fill="#111111"
+    text-anchor="middle"
+  >alsasian</text>
+
+  <!-- Decorative line -->
+  <rect x="500" y="290" width="200" height="4" fill="#111111"/>
+
+  <!-- Tagline -->
+  <text
+    x="600"
+    y="370"
+    font-family="Georgia, Times New Roman, serif"
+    font-size="42"
+    font-style="italic"
+    fill="#666666"
+    text-anchor="middle"
+  >WebCrypto Playground &amp;</text>
+
+  <text
+    x="600"
+    y="425"
+    font-family="Georgia, Times New Roman, serif"
+    font-size="42"
+    font-style="italic"
+    fill="#666666"
+    text-anchor="middle"
+  >Technical Writing</text>
+
+  <!-- URL -->
+  <text
+    x="600"
+    y="500"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="32"
+    fill="#999999"
+    text-anchor="middle"
+    letter-spacing="0.5"
+  >alsasian.github.io</text>
+</svg>

@@ -134,120 +134,99 @@ export default function WebCryptoPlayground() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 md:p-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            WebCrypto API Playground
-          </h1>
-          <p className="text-purple-100">
-            Experiment with browser-native cryptography
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-white/10 bg-white/5">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-4 py-4 font-semibold transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-white/10 text-white border-b-2 border-purple-400'
-                  : 'text-purple-200 hover:bg-white/5'
-              }`}
-            >
-              <div className="text-sm md:text-base">{tab.label}</div>
-              <div className="text-xs text-purple-300 mt-1 hidden md:block">
-                {tab.description}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="p-6 md:p-8 space-y-6">
-          {/* Algorithm selection for hashing */}
-          {activeTab === 'hash' && (
-            <div>
-              <label className="block text-sm font-medium text-purple-200 mb-2">
-                Hash Algorithm
-              </label>
-              <select
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="SHA-1">SHA-1</option>
-                <option value="SHA-256">SHA-256</option>
-                <option value="SHA-384">SHA-384</option>
-                <option value="SHA-512">SHA-512</option>
-              </select>
-            </div>
-          )}
-
-          {/* Input */}
-          <div>
-            <label className="block text-sm font-medium text-purple-200 mb-2">
-              Input Text
-            </label>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Enter text to process..."
-              rows={4}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm"
-            />
-          </div>
-
-          {/* Execute Button */}
+    <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex border-b-2 border-gray-900">
+        {tabs.map((tab) => (
           <button
-            onClick={handleExecute}
-            disabled={!input || loading}
-            className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 font-sans font-bold text-sm transition-colors ${
+              activeTab === tab.id
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
-            {loading ? 'Processing...' : `Execute ${tabs.find(t => t.id === activeTab)?.label}`}
+            {tab.label}
           </button>
-
-          {/* Output */}
-          {output && (
-            <div>
-              <label className="block text-sm font-medium text-purple-200 mb-2">
-                Output
-              </label>
-              <div className="relative">
-                <pre className="w-full px-4 py-3 bg-black/30 border border-white/20 rounded-lg text-green-300 font-mono text-xs md:text-sm overflow-x-auto whitespace-pre-wrap break-all">
-                  {output}
-                </pre>
-                <button
-                  onClick={() => navigator.clipboard.writeText(output)}
-                  className="absolute top-2 right-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded border border-white/20 transition-colors"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Info */}
-          <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg p-4">
-            <p className="text-sm text-blue-200">
-              <strong>ℹ️ Note:</strong> All cryptographic operations happen locally in your browser.
-              No data is sent to any server.
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Back link */}
-      <div className="mt-8 text-center">
-        <a
-          href="/"
-          className="inline-block px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-all border border-white/20"
+      <div className="text-sm text-gray-600 border-l-4 border-gray-900 pl-3">
+        {tabs.find(t => t.id === activeTab)?.description}
+      </div>
+
+      {/* Content */}
+      <div className="border border-gray-300 p-4 space-y-4">
+        {/* Algorithm selection for hashing */}
+        {activeTab === 'hash' && (
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Hash Algorithm
+            </label>
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none focus:border-gray-900"
+            >
+              <option value="SHA-1">SHA-1</option>
+              <option value="SHA-256">SHA-256</option>
+              <option value="SHA-384">SHA-384</option>
+              <option value="SHA-512">SHA-512</option>
+            </select>
+          </div>
+        )}
+
+        {/* Input */}
+        <div>
+          <label className="block text-sm font-bold mb-1">
+            Input Text
+          </label>
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter text to process..."
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 placeholder-gray-400 text-sm font-mono focus:outline-none focus:border-gray-900"
+          />
+        </div>
+
+        {/* Execute Button */}
+        <button
+          onClick={handleExecute}
+          disabled={!input || loading}
+          className="w-full px-4 py-2 bg-gray-900 text-white font-bold text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          ← Back to Home
-        </a>
+          {loading ? 'Processing...' : `Execute ${tabs.find(t => t.id === activeTab)?.label}`}
+        </button>
+
+        {/* Output */}
+        {output && (
+          <div>
+            <label className="block text-sm font-bold mb-1">
+              Output
+            </label>
+            <div className="relative">
+              <pre className="w-full px-3 py-2 bg-gray-100 border border-gray-300 text-gray-900 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">
+                {output}
+              </pre>
+              <button
+                onClick={() => navigator.clipboard.writeText(output)}
+                className="absolute top-2 right-2 px-2 py-1 bg-white hover:bg-gray-200 text-gray-900 text-xs border border-gray-300 transition-colors"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="bg-gray-100 border border-gray-300 p-3">
+          <p className="text-xs text-gray-700">
+            <strong>Note:</strong> All cryptographic operations happen locally in your browser.
+            No data is sent to any server.
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -10,9 +10,11 @@ import WebCryptoPlayground from '../components/WebCryptoPlayground';
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-6">
-    <article class="mb-6 border-b border-gray-300 pb-4">
+    <article class="mb-6 border-b border-gray-300 pb-4 dark:border-gray-700">
       <h1 class="mb-2 text-4xl">WebCrypto Playground</h1>
-      <p class="text-sm text-gray-600">Interactive experiments with the Web Cryptography API</p>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Interactive experiments with the Web Cryptography API
+      </p>
     </article>
     <WebCryptoPlayground client:load />
   </main>

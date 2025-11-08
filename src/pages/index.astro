@@ -6,17 +6,19 @@ import Header from '../components/Header.astro';
 <Layout title="alsasian.github.io">
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-6">
-    <article class="mb-4 border-b border-gray-300 pb-4">
+    <article class="mb-4 border-b border-gray-300 pb-4 dark:border-gray-700">
       <h1 class="mb-2 text-4xl">alsasian.github.io</h1>
-      <p class="mb-3 text-sm text-gray-600">Personal website and technical experiments</p>
+      <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+        Personal website and technical experiments
+      </p>
       <p class="mb-2">
-        This site serves as a personal space for technical writing, experiments, and projects. It also
-        functions as my learning playground for exploring random technologies and ideas.
+        This site serves as a personal space for technical writing, experiments, and projects. It
+        also functions as my learning playground for exploring random technologies and ideas.
       </p>
     </article>
 
     <div class="mb-6 grid gap-6 md:grid-cols-2">
-      <section class="border-l-4 border-gray-900 pl-3">
+      <section class="border-l-4 border-gray-900 pl-3 dark:border-gray-100">
         <h2 class="mb-2 text-2xl">WebCrypto Playground</h2>
         <p class="mb-2 text-sm">
           An interactive playground for experimenting with the Web Cryptography API. Hash, encrypt,
@@ -25,7 +27,7 @@ import Header from '../components/Header.astro';
         <a href="/crypto" class="text-sm font-bold"> Visit Playground → </a>
       </section>
 
-      <section class="border-l-4 border-gray-900 pl-3">
+      <section class="border-l-4 border-gray-900 pl-3 dark:border-gray-100">
         <h2 class="mb-2 text-2xl">Blog</h2>
         <p class="mb-2 text-sm">
           Technical writing, notes, and thoughts on software engineering, cryptography, and web
@@ -35,25 +37,27 @@ import Header from '../components/Header.astro';
       </section>
     </div>
 
-    <section class="mt-6 border-t border-gray-300 pt-4">
+    <section class="mt-6 border-t border-gray-300 pt-4 dark:border-gray-700">
       <h2 class="mb-2 text-xl">Recent Updates</h2>
       <ul class="space-y-1 text-sm">
         <li>
-          <span class="text-gray-600">2025-11-08</span> —
+          <span class="text-gray-600 dark:text-gray-400">2025-11-08</span> —
           <a href="/blog/claude-code-reality-check">New blog post: Killing My Vibe (Coding)</a>
         </li>
         <li>
-          <span class="text-gray-600">2025-11-08</span> —
+          <span class="text-gray-600 dark:text-gray-400">2025-11-08</span> —
           <a href="/blog/learning-chinese-duolingo">New blog post: Learning Chinese on Duolingo</a>
         </li>
         <li>
-          <span class="text-gray-600">2025-11-08</span> —
+          <span class="text-gray-600 dark:text-gray-400">2025-11-08</span> —
           <a href="/crypto">WebCrypto Playground launched</a>
         </li>
       </ul>
     </section>
 
-    <footer class="mt-8 border-t border-gray-300 pt-4 text-sm text-gray-600">
+    <footer
+      class="mt-8 border-t border-gray-300 pt-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
+    >
       <p>
         <a href="https://github.com/alsasian" target="_blank" rel="noopener noreferrer">GitHub</a>
       </p>

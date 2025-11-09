@@ -137,7 +137,7 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
                 type="time"
                 value={settings.morningReminderTime}
                 onChange={(e) => handleTimeChange('morningReminderTime', e.target.value)}
-                className="w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="max-w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               />
             )}
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -173,7 +173,7 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
                 type="time"
                 value={settings.eveningReminderTime}
                 onChange={(e) => handleTimeChange('eveningReminderTime', e.target.value)}
-                className="w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="max-w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
               />
             )}
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">

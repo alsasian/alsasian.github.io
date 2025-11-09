@@ -1,75 +1,87 @@
 import { useState } from 'react';
-import type { NotificationSettings as NotificationSettingsType } from '../../lib/streak/types';
-import { requestNotificationPermission, canSendNotifications } from '../../lib/streak/notificationManager';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { settingsAtom, updateSettingsAtom } from '@/lib/streak/atoms';
+import {
+  requestNotificationPermission,
+  canSendNotifications,
+} from '@/lib/streak/notificationManager';
+import type { NotificationSettings } from '@/lib/streak/types';
 
-interface NotificationSettingsProps {
-  settings: NotificationSettingsType;
-  onUpdate: (settings: NotificationSettingsType) => void;
-}
-
-export default function NotificationSettings({ settings, onUpdate }: NotificationSettingsProps) {
+export default function NotificationSettingsSection() {
+  const settings = useAtomValue(settingsAtom);
+  const updateSettings = useSetAtom(updateSettingsAtom);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
 
+  const notifSettings = settings.notifications;
+
   const handleEnableToggle = async () => {
-    if (!settings.enabled) {
-      // Trying to enable - request permission first
+    if (!notifSettings.enabled) {
       setIsRequestingPermission(true);
       const granted = await requestNotificationPermission();
       setIsRequestingPermission(false);
 
       if (granted) {
-        onUpdate({
-          ...settings,
-          enabled: true,
-          permissionGranted: true,
+        updateSettings({
+          notifications: {
+            ...notifSettings,
+            enabled: true,
+            permissionGranted: true,
+          },
         });
       } else {
-        // Permission denied or not granted
         alert(
           'Please enable notifications in your browser settings to use this feature. ' +
             'On iOS: Settings > Safari > [This Website] > Notifications'
         );
       }
     } else {
-      // Disabling notifications
-      onUpdate({
-        ...settings,
-        enabled: false,
+      updateSettings({
+        notifications: {
+          ...notifSettings,
+          enabled: false,
+        },
       });
     }
   };
 
-  const handleTimeChange = (field: 'morningReminderTime' | 'eveningReminderTime', value: string) => {
-    onUpdate({
-      ...settings,
-      [field]: value,
+  const handleTimeChange = (
+    field: 'morningReminderTime' | 'eveningReminderTime',
+    value: string
+  ) => {
+    updateSettings({
+      notifications: {
+        ...notifSettings,
+        [field]: value,
+      },
     });
   };
 
-  const handleToggle = (field: keyof NotificationSettingsType) => {
-    onUpdate({
-      ...settings,
-      [field]: !settings[field],
+  const handleToggle = (field: keyof NotificationSettings) => {
+    updateSettings({
+      notifications: {
+        ...notifSettings,
+        [field]: !notifSettings[field],
+      },
     });
   };
 
   const canNotify = canSendNotifications();
-  const showPermissionWarning = settings.enabled && !canNotify;
+  const showPermissionWarning = notifSettings.enabled && !canNotify;
 
   return (
-    <section className="mb-6 border-l-4 border-gray-300 dark:border-gray-700 pl-3 py-4">
-      <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">
+    <section className="border streak-border-subtle p-4 ">
+      <h3 className="mb-3 text-sm font-bold streak-text-primary">
         Notifications & Reminders
       </h3>
 
       {/* Enable notifications toggle */}
       <div className="mb-4">
-        <label className="flex items-center justify-between min-h-[44px] cursor-pointer">
+        <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
           <div className="flex-1">
-            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+            <span className="text-sm font-medium streak-text-primary">
               Enable Notifications
             </span>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <p className="mt-1 text-xs streak-text-secondary">
               Get reminders to maintain your streaks
             </p>
           </div>
@@ -79,15 +91,15 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
               onClick={handleEnableToggle}
               disabled={isRequestingPermission}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.enabled
+                notifSettings.enabled
                   ? 'bg-gray-900 dark:bg-gray-100'
                   : 'bg-gray-300 dark:bg-gray-700'
-              } ${isRequestingPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isRequestingPermission ? 'cursor-not-allowed opacity-50' : ''}`}
               aria-label="Toggle notifications"
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                  settings.enabled
+                  notifSettings.enabled
                     ? 'translate-x-6 bg-gray-100 dark:bg-gray-900'
                     : 'translate-x-1 bg-gray-100 dark:bg-gray-900'
                 }`}
@@ -99,7 +111,7 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
 
       {/* Permission warning */}
       {showPermissionWarning && (
-        <div className="mb-4 p-3 border border-yellow-600 dark:border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+        <div className="mb-4 border border-yellow-600 bg-yellow-50 p-3 dark:border-yellow-500 dark:bg-yellow-950">
           <p className="text-xs text-yellow-800 dark:text-yellow-200">
             ⚠️ Notification permission not granted. Check your browser settings.
           </p>
@@ -107,17 +119,19 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
       )}
 
       {/* Settings only visible when enabled */}
-      {settings.enabled && (
-        <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-800">
+      {notifSettings.enabled && (
+        <div className="space-y-4 border-t border-gray-300 pt-4 dark:border-gray-700">
           {/* Morning reminder */}
           <div>
-            <label className="flex items-center justify-between min-h-[44px] cursor-pointer mb-2">
-              <span className="text-sm text-gray-900 dark:text-gray-100">Morning Reminder</span>
+            <label className="mb-2 flex min-h-[44px] cursor-pointer items-center justify-between">
+              <span className="text-sm streak-text-primary">
+                Morning Reminder
+              </span>
               <button
                 type="button"
                 onClick={() => handleToggle('morningReminderEnabled')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.morningReminderEnabled
+                  notifSettings.morningReminderEnabled
                     ? 'bg-gray-900 dark:bg-gray-100'
                     : 'bg-gray-300 dark:bg-gray-700'
                 }`}
@@ -125,35 +139,37 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                    settings.morningReminderEnabled
+                    notifSettings.morningReminderEnabled
                       ? 'translate-x-6 bg-gray-100 dark:bg-gray-900'
                       : 'translate-x-1 bg-gray-100 dark:bg-gray-900'
                   }`}
                 />
               </button>
             </label>
-            {settings.morningReminderEnabled && (
+            {notifSettings.morningReminderEnabled && (
               <input
                 type="time"
-                value={settings.morningReminderTime}
+                value={notifSettings.morningReminderTime}
                 onChange={(e) => handleTimeChange('morningReminderTime', e.target.value)}
-                className="max-w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="min-h-[44px] w-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             )}
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <p className="mt-1 text-xs streak-text-secondary">
               Daily reminder showing activities to track
             </p>
           </div>
 
           {/* Evening reminder */}
           <div>
-            <label className="flex items-center justify-between min-h-[44px] cursor-pointer mb-2">
-              <span className="text-sm text-gray-900 dark:text-gray-100">Evening Reminder</span>
+            <label className="mb-2 flex min-h-[44px] cursor-pointer items-center justify-between">
+              <span className="text-sm streak-text-primary">
+                Evening Reminder
+              </span>
               <button
                 type="button"
                 onClick={() => handleToggle('eveningReminderEnabled')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.eveningReminderEnabled
+                  notifSettings.eveningReminderEnabled
                     ? 'bg-gray-900 dark:bg-gray-100'
                     : 'bg-gray-300 dark:bg-gray-700'
                 }`}
@@ -161,32 +177,34 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                    settings.eveningReminderEnabled
+                    notifSettings.eveningReminderEnabled
                       ? 'translate-x-6 bg-gray-100 dark:bg-gray-900'
                       : 'translate-x-1 bg-gray-100 dark:bg-gray-900'
                   }`}
                 />
               </button>
             </label>
-            {settings.eveningReminderEnabled && (
+            {notifSettings.eveningReminderEnabled && (
               <input
                 type="time"
-                value={settings.eveningReminderTime}
+                value={notifSettings.eveningReminderTime}
                 onChange={(e) => handleTimeChange('eveningReminderTime', e.target.value)}
-                className="max-w-full min-h-[44px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="min-h-[44px] w-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             )}
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <p className="mt-1 text-xs streak-text-secondary">
               Reminder if you have incomplete activities
             </p>
           </div>
 
           {/* At-risk streak alerts */}
           <div>
-            <label className="flex items-center justify-between min-h-[44px] cursor-pointer">
+            <label className="flex min-h-[44px] cursor-pointer items-center justify-between">
               <div className="flex-1">
-                <span className="text-sm text-gray-900 dark:text-gray-100">Streak Alerts</span>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <span className="text-sm streak-text-primary">
+                  Streak Alerts
+                </span>
+                <p className="mt-1 text-xs streak-text-secondary">
                   Alert 2 hours before midnight for at-risk streaks
                 </p>
               </div>
@@ -195,7 +213,7 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
                   type="button"
                   onClick={() => handleToggle('atRiskAlertsEnabled')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.atRiskAlertsEnabled
+                    notifSettings.atRiskAlertsEnabled
                       ? 'bg-gray-900 dark:bg-gray-100'
                       : 'bg-gray-300 dark:bg-gray-700'
                   }`}
@@ -203,7 +221,7 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                      settings.atRiskAlertsEnabled
+                      notifSettings.atRiskAlertsEnabled
                         ? 'translate-x-6 bg-gray-100 dark:bg-gray-900'
                         : 'translate-x-1 bg-gray-100 dark:bg-gray-900'
                     }`}
@@ -216,12 +234,12 @@ export default function NotificationSettings({ settings, onUpdate }: Notificatio
       )}
 
       {/* Info note */}
-      {!settings.enabled && (
-        <div className="mt-4 p-3 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+      {!notifSettings.enabled && (
+        <div className="mt-4 border border-gray-300 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+          <p className="text-xs streak-text-secondary">
             📱 Enable notifications to receive:
           </p>
-          <ul className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400 list-disc list-inside">
+          <ul className="mt-2 list-inside list-disc space-y-1 text-xs streak-text-secondary">
             <li>Morning reminders for daily activities</li>
             <li>Evening check-ins if activities are incomplete</li>
             <li>Alerts when your streaks are at risk</li>

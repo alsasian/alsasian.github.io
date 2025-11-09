@@ -11,6 +11,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   allowStreakRecovery: false,
   startOfWeek: 1, // Monday
   theme: 'auto',
+  notifications: {
+    enabled: false,
+    morningReminderEnabled: true,
+    morningReminderTime: '08:00',
+    eveningReminderEnabled: true,
+    eveningReminderTime: '20:00',
+    atRiskAlertsEnabled: true,
+    permissionGranted: false,
+  },
 };
 
 const DEFAULT_DATA: StreakData = {
@@ -39,7 +48,14 @@ export function loadData(): StreakData {
     return {
       ...DEFAULT_DATA,
       ...data,
-      settings: { ...DEFAULT_SETTINGS, ...data.settings },
+      settings: {
+        ...DEFAULT_SETTINGS,
+        ...data.settings,
+        notifications: {
+          ...DEFAULT_SETTINGS.notifications,
+          ...data.settings?.notifications,
+        },
+      },
     };
   } catch (error) {
     console.error('Error loading streak data:', error);

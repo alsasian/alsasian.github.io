@@ -10,16 +10,18 @@ interface ActivityListProps {
 export default function ActivityList({ activities, allowRecovery, onUpdate }: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">🎯</div>
-        <h3 className="text-xl font-semibold text-white mb-2">No activities yet</h3>
-        <p className="text-white/80">Add your first habit to start tracking!</p>
+      <div className="border-2 border-gray-700 p-12 text-center">
+        <div className="font-mono text-4xl text-gray-600 mb-4">[ ]</div>
+        <h3 className="font-mono text-sm uppercase tracking-wide text-gray-400 mb-2">
+          No activities tracked
+        </h3>
+        <p className="text-xs text-gray-600">Add your first habit to begin</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {activities.map((activity) => (
         <ActivityCard
           key={activity.id}

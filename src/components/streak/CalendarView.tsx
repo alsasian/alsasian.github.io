@@ -64,44 +64,46 @@ export default function CalendarView({ activity, startOfWeek = 1 }: CalendarView
   const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="border-2 border-gray-700 bg-gray-950 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={previousMonth}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center border-2 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300 font-mono transition-colors"
+          aria-label="Previous month"
         >
           ←
         </button>
 
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="font-mono text-sm uppercase tracking-wide text-gray-100">
             {getMonthName(currentMonth)} {currentYear}
           </h3>
           {!isCurrentMonth && (
             <button
               onClick={goToToday}
-              className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+              className="text-xs text-green-400 hover:text-green-300 font-mono mt-1"
             >
-              Go to today
+              [today]
             </button>
           )}
         </div>
 
         <button
           onClick={nextMonth}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center border-2 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300 font-mono transition-colors"
+          aria-label="Next month"
         >
           →
         </button>
       </div>
 
       {/* Day names */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-px mb-px border-2 border-gray-700">
         {getDayNames(startOfWeek).map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1"
+            className="text-center text-xs font-mono text-gray-600 py-2 bg-gray-900 border-gray-700"
           >
             {day}
           </div>
@@ -109,7 +111,7 @@ export default function CalendarView({ activity, startOfWeek = 1 }: CalendarView
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-px border-2 border-t-0 border-gray-700">
         {calendarDays.map((day, index) => {
           const isCheckedIn = day !== null && checkInDays.has(day);
           const isToday =
@@ -120,29 +122,29 @@ export default function CalendarView({ activity, startOfWeek = 1 }: CalendarView
           return (
             <div
               key={index}
-              className={`aspect-square flex items-center justify-center text-sm rounded-lg ${
+              className={`aspect-square flex items-center justify-center text-xs font-mono ${
                 day === null
-                  ? ''
+                  ? 'bg-gray-950'
                   : isCheckedIn
-                    ? 'bg-green-500 text-white font-semibold'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              } ${isToday ? 'ring-2 ring-purple-500' : ''}`}
+                    ? 'bg-green-400/20 text-green-400 font-bold'
+                    : 'bg-gray-900 text-gray-600'
+              } ${isToday ? 'border-2 border-green-400' : ''}`}
             >
-              {day}
+              {day ? (isCheckedIn ? '✓' : day) : ''}
             </div>
           );
         })}
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+      <div className="mt-4 flex items-center justify-center gap-6 text-xs font-mono text-gray-600">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded" />
-          <span>Completed</span>
+          <span className="text-green-400">✓</span>
+          <span>completed</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded" />
-          <span>Missed</span>
+          <span>○</span>
+          <span>missed</span>
         </div>
       </div>
     </div>

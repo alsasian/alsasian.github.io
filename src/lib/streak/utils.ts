@@ -111,3 +111,10 @@ export const ACTIVITY_COLORS = [
 export function getRandomColor(): string {
   return ACTIVITY_COLORS[Math.floor(Math.random() * ACTIVITY_COLORS.length)];
 }
+
+/**
+ * Get the color palette
+ */
+export function getColorPalette(): string[] {
+  return ACTIVITY_COLORS;
+}

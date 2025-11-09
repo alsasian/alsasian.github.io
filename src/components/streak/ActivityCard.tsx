@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import type { Activity } from '../../lib/streak/types';
-import { calculateStats, isCheckedInToday } from '../../lib/streak/streakCalculator';
+import {
+  calculateStats,
+  isCheckedInToday,
+  isStreakAtRisk,
+  getHoursRemainingToday,
+} from '../../lib/streak/streakCalculator';
 import { checkIn, removeCheckIn, deleteActivity } from '../../lib/streak/storage';
 import { getTodayString } from '../../lib/streak/utils';
 
@@ -14,6 +19,8 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
   const [isExpanded, setIsExpanded] = useState(false);
   const stats = calculateStats(activity, allowRecovery);
   const checkedToday = isCheckedInToday(activity);
+  const atRisk = isStreakAtRisk(activity);
+  const hoursRemaining = getHoursRemainingToday();
 
   const handleCheckIn = () => {
     const today = getTodayString();
@@ -38,9 +45,17 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
     <article className="border-l-4 border-gray-900 dark:border-gray-100 pl-3 mb-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {activity.name}
-        </h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {activity.name}
+          </h2>
+          {/* Streak warning */}
+          {atRisk && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              ⚠️ {hoursRemaining} {hoursRemaining === 1 ? 'hour' : 'hours'} left to keep your {stats.currentStreak}-day streak
+            </p>
+          )}
+        </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"

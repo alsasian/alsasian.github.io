@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { StreakData } from '../../lib/streak/types';
 import { loadData } from '../../lib/streak/storage';
+import TodaySummary from './TodaySummary';
 import ActivityList from './ActivityList';
 import AddActivityForm from './AddActivityForm';
 import CalendarView from './CalendarView';
@@ -33,12 +34,9 @@ export default function StreakApp() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
-      <header className="mb-4 border-b border-gray-300 dark:border-gray-700 pb-4">
-        <h1 className="text-4xl mb-2 text-gray-900 dark:text-gray-100">Streak Tracker</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Track your daily habits and build lasting streaks
-        </p>
+      {/* Header - simplified */}
+      <header className="mb-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">Streak Tracker</p>
       </header>
 
       {/* Calendar View (when activity selected) */}
@@ -65,10 +63,8 @@ export default function StreakApp() {
       {/* Main View */}
       {!showCalendar && (
         <>
-          {/* Add Activity Form */}
-          <section className="mb-6">
-            <AddActivityForm onAdd={handleUpdate} />
-          </section>
+          {/* Today's Summary */}
+          <TodaySummary activities={data.activities} />
 
           {/* Activity List */}
           <section className="mb-6">
@@ -77,6 +73,11 @@ export default function StreakApp() {
               allowRecovery={data.settings.allowStreakRecovery}
               onUpdate={handleUpdate}
             />
+          </section>
+
+          {/* Add Activity Form - moved to bottom */}
+          <section className="mb-6">
+            <AddActivityForm onAdd={handleUpdate} />
           </section>
 
           {/* View Calendar Section */}

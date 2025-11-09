@@ -47,6 +47,23 @@ Blog posts use Astro Content Collections with:
 - Main layout: `src/layouts/Layout.astro` includes comprehensive SEO metadata (Open Graph, Twitter Cards, canonical URLs)
 - Design system: Newspaper theme in `src/styles/global.css` with serif typography and monochrome palette
 
+### Streak Tracker PWA
+
+Progressive Web App for daily activity tracking at `/streak/` route:
+
+- **Architecture**: Modular React components in `src/components/streak/`, business logic in `src/lib/streak/`
+- **Data persistence**: LocalStorage (no backend)
+- **Service worker**: Auto-versioned cache management (see below)
+- **Features**: Badge API, notifications, streak calculations, calendar view
+
+**PWA Cache Management (IMPORTANT):**
+- Service worker version is **auto-generated** during build from timestamp
+- Template: `public/streak-sw-template.js` (committed to git)
+- Generated: `public/streak-sw.js` (gitignored, created on `npm run build`)
+- Script: `scripts/generate-sw-version.js` runs automatically via `prebuild` hook
+- **No manual version updates needed** - every build gets a unique cache version
+- This prevents the "broken styling after deployment" issue caused by stale cached assets
+
 ## Tooling
 
 - **ESLint v9**: Flat config in `eslint.config.js` (migrated from v8)

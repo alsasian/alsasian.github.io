@@ -7,7 +7,7 @@ const { title = 'Streak Tracker' } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="tui-terminal">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -39,11 +39,13 @@ const { title = 'Streak Tracker' } = Astro.props;
 
     <!-- TUI Terminal Styles -->
     <style>
-      body {
-        background: #030712; /* gray-950 - terminal dark */
+      /* Force dark terminal theme - override global.css */
+      html.tui-terminal,
+      html.tui-terminal body {
+        background: #030712 !important; /* gray-950 - terminal dark */
         min-height: 100vh;
-        font-family: ui-monospace, 'Courier New', monospace;
-        color: #f9fafb; /* gray-50 - terminal light text */
+        font-family: ui-monospace, 'Courier New', monospace !important;
+        color: #f9fafb !important; /* gray-50 - terminal light text */
       }
     </style>
   </head>

@@ -7,7 +7,7 @@ const { title = 'Streak Tracker' } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="tui-terminal">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,24 +29,30 @@ const { title = 'Streak Tracker' } = Astro.props;
     <link rel="icon" type="image/png" href="/icons/streak-icon-192x192.png" />
     <link rel="apple-touch-icon" href="/icons/streak-apple-touch-icon.png" />
 
-    <!-- Theme Color (Terminal dark) -->
-    <meta name="theme-color" content="#030712" />
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
+
+    <!-- Theme Detection Script (same as main site) -->
+    <script is:inline>
+      // Detect system theme preference and apply dark mode class if needed
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      }
+
+      // Listen for system theme changes and update automatically
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      });
+    </script>
 
     <!-- Tailwind CSS -->
     <style is:global>
       @import '../styles/global.css';
-    </style>
-
-    <!-- TUI Terminal Styles -->
-    <style>
-      /* Force dark terminal theme - override global.css */
-      html.tui-terminal,
-      html.tui-terminal body {
-        background: #030712 !important; /* gray-950 - terminal dark */
-        min-height: 100vh;
-        font-family: ui-monospace, 'Courier New', monospace !important;
-        color: #f9fafb !important; /* gray-50 - terminal light text */
-      }
     </style>
   </head>
   <body>

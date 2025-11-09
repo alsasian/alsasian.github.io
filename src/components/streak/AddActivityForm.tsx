@@ -21,7 +21,7 @@ export default function AddActivityForm({ onAdd }: AddActivityFormProps) {
     const newActivity: Activity = {
       id: generateId(),
       name: name.trim(),
-      color: '#6b7280', // Default gray - not used in TUI design
+      color: '#6b7280', // Default gray - not used in newspaper design
       createdAt: new Date().toISOString(),
       checkIns: [],
     };
@@ -36,30 +36,30 @@ export default function AddActivityForm({ onAdd }: AddActivityFormProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full min-h-[60px] border-2 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300 font-mono text-sm uppercase tracking-wide transition-colors"
+        className="w-full min-h-[60px] px-4 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-bold transition-colors"
       >
-        + NEW ACTIVITY
+        + Add new activity
       </button>
     );
   }
 
   return (
-    <div className="border-2 border-gray-700 bg-gray-950 p-6 mb-4">
-      <h3 className="font-mono text-xs uppercase tracking-wide text-gray-500 mb-4">
-        $ new-activity
+    <div className="border-l-4 border-gray-300 dark:border-gray-700 pl-3 py-4 mb-6">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">
+        Add New Activity
       </h3>
 
       <form onSubmit={handleSubmit}>
-        <div className="mb-6">
-          <label className="block font-mono text-xs uppercase text-gray-600 mb-2">
-            Name:
+        <div className="mb-4">
+          <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+            Activity name
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Exercise, Reading, etc..."
-            className="w-full px-4 py-3 bg-gray-900 border-2 border-gray-700 text-gray-100 font-mono text-sm focus:border-green-400 focus:outline-none placeholder-gray-600"
+            placeholder="e.g., Exercise, Reading, Meditation"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-gray-900 dark:focus:border-gray-100"
             autoFocus
             maxLength={50}
           />
@@ -69,9 +69,9 @@ export default function AddActivityForm({ onAdd }: AddActivityFormProps) {
           <button
             type="submit"
             disabled={!name.trim()}
-            className="flex-1 min-h-[50px] border-2 border-green-400 bg-green-400/10 text-green-400 hover:bg-green-400/20 disabled:border-gray-700 disabled:bg-transparent disabled:text-gray-700 disabled:cursor-not-allowed font-mono text-xs uppercase tracking-wide transition-colors"
+            className="flex-1 min-h-[50px] px-4 border border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:border-gray-300 dark:disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-sm font-bold transition-colors"
           >
-            [ENTER] Create
+            Add activity
           </button>
           <button
             type="button"
@@ -79,9 +79,9 @@ export default function AddActivityForm({ onAdd }: AddActivityFormProps) {
               setIsOpen(false);
               setName('');
             }}
-            className="px-4 min-h-[50px] border-2 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300 font-mono text-xs uppercase tracking-wide transition-colors"
+            className="px-4 min-h-[50px] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
           >
-            [ESC]
+            Cancel
           </button>
         </div>
       </form>

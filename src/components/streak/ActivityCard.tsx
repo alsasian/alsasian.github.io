@@ -34,92 +34,76 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
     }
   };
 
-  // Format streak number with leading zeros
-  const formatStreakNumber = (num: number) => String(num).padStart(3, '0');
-
   return (
-    <div className="border-2 border-gray-700 bg-gray-950 mb-4">
+    <article className="border-l-4 border-gray-900 dark:border-gray-100 pl-3 mb-6">
       {/* Header */}
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-sans text-base uppercase tracking-wide text-gray-100">
-            {activity.name}
-          </h3>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-gray-500 hover:text-gray-300 font-mono text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label={isExpanded ? 'Collapse' : 'Expand'}
-          >
-            {isExpanded ? '▲' : '▼'}
-          </button>
-        </div>
-
-        {/* Streak Display */}
-        <div className="mb-4 border-l-4 border-green-400 pl-4">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-lg">🔥</span>
-            <span className="font-mono text-4xl tabular-nums text-green-400">
-              {formatStreakNumber(stats.currentStreak)}
-            </span>
-            <span className="text-xs text-gray-500 uppercase tracking-wide">days</span>
-          </div>
-
-          <div className="flex gap-6 font-mono text-xs text-gray-400">
-            <div>
-              <span className="text-gray-600">BEST:</span>{' '}
-              <span className="text-gray-100 tabular-nums">{formatStreakNumber(stats.longestStreak)}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">TOTAL:</span>{' '}
-              <span className="text-gray-100 tabular-nums">{formatStreakNumber(stats.totalCheckIns)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Check-in Button */}
+      <div className="flex items-start justify-between mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {activity.name}
+        </h2>
         <button
-          onClick={handleCheckIn}
-          className={`w-full min-h-[60px] border-2 font-mono text-sm uppercase tracking-wide transition-colors ${
-            checkedToday
-              ? 'border-green-400 bg-green-400/10 text-green-400 hover:bg-green-400/20'
-              : 'border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300'
-          }`}
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+          aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
-          {checkedToday ? '✓ CHECKED IN' : '○ MARK AS DONE'}
+          {isExpanded ? '▲' : '▼'}
         </button>
       </div>
 
+      {/* Streak Display */}
+      <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-1">
+          <span className="font-bold text-gray-900 dark:text-gray-100">{stats.currentStreak}</span>{' '}
+          {stats.currentStreak === 1 ? 'day' : 'days'} streak
+        </p>
+        <p className="text-xs">
+          Best: {stats.longestStreak} {stats.longestStreak === 1 ? 'day' : 'days'} ·{' '}
+          Total: {stats.totalCheckIns} {stats.totalCheckIns === 1 ? 'check-in' : 'check-ins'}
+        </p>
+        {stats.lastCheckIn && (
+          <p className="text-xs mt-1">Last: {stats.lastCheckIn}</p>
+        )}
+      </div>
+
+      {/* Check-in Button */}
+      <button
+        onClick={handleCheckIn}
+        className={`w-full min-h-[60px] px-4 border text-sm font-bold transition-colors ${
+          checkedToday
+            ? 'border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+            : 'border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
+        }`}
+      >
+        {checkedToday ? '✓ Done today' : 'Mark as done'}
+      </button>
+
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="border-t-2 border-gray-700 p-5 bg-gray-900">
-          <div className="grid grid-cols-2 gap-4 mb-4 font-mono text-xs">
+        <div className="border-t border-gray-300 dark:border-gray-700 mt-4 pt-4">
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
             <div>
-              <div className="text-gray-600 uppercase mb-1">Completion</div>
-              <div className="text-2xl tabular-nums text-gray-100">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Completion Rate</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {stats.completionRate}%
               </div>
-              <div className="text-gray-600 mt-1">Last 30 days</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Last 30 days</div>
             </div>
             <div>
-              <div className="text-gray-600 uppercase mb-1">Last Check-in</div>
-              <div className="text-sm text-gray-100 mt-2">
-                {stats.lastCheckIn || 'Never'}
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Created</div>
+              <div className="text-sm text-gray-900 dark:text-gray-100">
+                {new Date(activity.createdAt).toLocaleDateString()}
               </div>
             </div>
-          </div>
-
-          <div className="text-xs text-gray-600 mb-4 font-mono">
-            Created: {new Date(activity.createdAt).toLocaleDateString()}
           </div>
 
           <button
             onClick={handleDelete}
-            className="w-full min-h-[50px] border-2 border-red-900 text-red-400 hover:border-red-700 hover:bg-red-900/20 font-mono text-xs uppercase tracking-wide transition-colors"
+            className="w-full min-h-[50px] px-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
           >
-            [DELETE]
+            Delete activity
           </button>
         </div>
       )}
-    </div>
+    </article>
   );
 }

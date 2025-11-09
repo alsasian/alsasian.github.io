@@ -19,10 +19,21 @@ export interface StreakStats {
   lastCheckIn: string | null; // ISO date string or null
 }
 
+export interface NotificationSettings {
+  enabled: boolean;
+  morningReminderEnabled: boolean;
+  morningReminderTime: string; // HH:MM format (24h)
+  eveningReminderEnabled: boolean;
+  eveningReminderTime: string; // HH:MM format (24h)
+  atRiskAlertsEnabled: boolean;
+  permissionGranted: boolean;
+}
+
 export interface AppSettings {
   allowStreakRecovery: boolean; // Allow 1-day grace period
   startOfWeek: 0 | 1; // 0 = Sunday, 1 = Monday
   theme: 'light' | 'dark' | 'auto';
+  notifications: NotificationSettings;
 }
 
 export interface StreakData {

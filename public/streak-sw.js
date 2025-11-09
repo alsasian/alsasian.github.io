@@ -1,4 +1,4 @@
-const CACHE_NAME = 'streak-tracker-v1';
+const CACHE_NAME = 'streak-tracker-v2';
 const ASSETS_TO_CACHE = [
   '/streak/',
   '/streak-manifest.webmanifest',
@@ -66,3 +66,47 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Handle notification click - open the app
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if app is already open
+      for (const client of clientList) {
+        if (client.url.includes('/streak') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+
+      // Open new window if app is not already open
+      if (clients.openWindow) {
+        return clients.openWindow('/streak/');
+      }
+    })
+  );
+});
+
+// Periodic notification check (when service worker wakes up)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CHECK_SCHEDULED_NOTIFICATIONS') {
+    checkAndSendScheduledNotifications();
+  }
+});
+
+/**
+ * Check localStorage for scheduled notifications and send if time has come
+ */
+function checkAndSendScheduledNotifications() {
+  // This function will be called periodically by the app
+  // Service workers can't directly access localStorage, so we'll need to
+  // coordinate with the main app thread
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'REQUEST_SCHEDULED_NOTIFICATIONS'
+      });
+    });
+  });
+}

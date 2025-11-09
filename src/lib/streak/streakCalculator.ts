@@ -117,3 +117,45 @@ export function isCheckedInToday(activity: Activity): boolean {
   const today = new Date();
   return hasCheckIn(activity, today);
 }
+
+/**
+ * Sort activities - uncompleted first, then by streak (highest first)
+ */
+export function sortActivitiesByPriority(activities: Activity[]): Activity[] {
+  return [...activities].sort((a, b) => {
+    const aChecked = isCheckedInToday(a);
+    const bChecked = isCheckedInToday(b);
+
+    // Uncompleted first
+    if (!aChecked && bChecked) return -1;
+    if (aChecked && !bChecked) return 1;
+
+    // If both same status, sort by current streak (highest first)
+    const aStats = calculateStats(a);
+    const bStats = calculateStats(b);
+    return bStats.currentStreak - aStats.currentStreak;
+  });
+}
+
+/**
+ * Get hours remaining in the day
+ */
+export function getHoursRemainingToday(): number {
+  const now = new Date();
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const msRemaining = endOfDay.getTime() - now.getTime();
+  return Math.ceil(msRemaining / (1000 * 60 * 60));
+}
+
+/**
+ * Check if a streak is at risk (has active streak but not checked in today)
+ */
+export function isStreakAtRisk(activity: Activity): boolean {
+  const stats = calculateStats(activity);
+  const checkedToday = isCheckedInToday(activity);
+
+  // At risk if: has a streak AND not checked in today
+  return stats.currentStreak > 0 && !checkedToday;
+}

@@ -1,4 +1,5 @@
 import type { Activity } from '../../lib/streak/types';
+import { sortActivitiesByPriority } from '../../lib/streak/streakCalculator';
 import ActivityCard from './ActivityCard';
 
 interface ActivityListProps {
@@ -19,9 +20,12 @@ export default function ActivityList({ activities, allowRecovery, onUpdate }: Ac
     );
   }
 
+  // Sort: uncompleted first, then by streak (highest first)
+  const sortedActivities = sortActivitiesByPriority(activities);
+
   return (
     <div>
-      {activities.map((activity) => (
+      {sortedActivities.map((activity) => (
         <ActivityCard
           key={activity.id}
           activity={activity}

@@ -11,9 +11,9 @@ interface ActivityListProps {
 export default function ActivityList({ activities, allowRecovery, onUpdate }: ActivityListProps) {
   if (activities.length === 0) {
     return (
-      <div className="border-l-4 border-gray-300 dark:border-gray-700 pl-3 py-8 text-center">
+      <div className="py-8 pl-3 pt-6 text-center">
         <p className="text-sm text-gray-600 dark:text-gray-400">No activities yet.</p>
-        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
           Add your first habit to start tracking.
         </p>
       </div>
@@ -24,7 +24,7 @@ export default function ActivityList({ activities, allowRecovery, onUpdate }: Ac
   const sortedActivities = sortActivitiesByPriority(activities);
 
   return (
-    <div>
+    <div className="border-t border-gray-300 pt-6 dark:border-gray-700">
       {sortedActivities.map((activity) => (
         <ActivityCard
           key={activity.id}

@@ -35,76 +35,89 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
   };
 
   const handleDelete = () => {
-    if (confirm(`Delete "${activity.name}"? This cannot be undone.`)) {
+    if (window.confirm(`Delete "${activity.name}"? This cannot be undone.`)) {
       deleteActivity(activity.id);
       onUpdate();
     }
   };
 
   return (
-    <article className="border-l-4 border-gray-900 dark:border-gray-100 pl-3 mb-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {activity.name}
-          </h2>
-          {/* Streak warning */}
-          {atRisk && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-              ⚠️ {hoursRemaining} {hoursRemaining === 1 ? 'hour' : 'hours'} left to keep your {stats.currentStreak}-day streak
+    <article className="mb-6 border-l-4 border-gray-900 pl-3 dark:border-gray-100">
+      <div className="flex flex-row">
+        <div className="flex flex-1 flex-col justify-between">
+          <div className="mb-2 flex items-start justify-between">
+            <button
+              className="flex-1 text-left"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              <h2 className="text-md font-bold text-gray-900 dark:text-gray-100">
+                {activity.name}
+              </h2>
+              {/* Streak warning */}
+              {atRisk && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  ⚠️ {hoursRemaining} {hoursRemaining === 1 ? 'hour' : 'hours'} left to keep your{' '}
+                  {stats.currentStreak}-day streak
+                </p>
+              )}
+            </button>
+          </div>
+
+          {/* Streak Display */}
+          <div className="text-2xl text-gray-600 dark:text-gray-400">
+            <p className="">
+              <span className="font-bold text-gray-900 dark:text-gray-100">
+                {stats.currentStreak}
+              </span>
             </p>
-          )}
+          </div>
         </div>
+
+        {/* Check-in Button */}
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          onClick={handleCheckIn}
+          className={`min-h-[60px] min-w-[100px] border px-4 text-sm font-bold transition-colors ${
+            checkedToday
+              ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+              : 'border-gray-300 text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800'
+          }`}
         >
-          {isExpanded ? '▲' : '▼'}
+          {checkedToday ? '✓ Done today' : 'Mark as done'}
         </button>
       </div>
 
-      {/* Streak Display */}
-      <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-        <p className="mb-1">
-          <span className="font-bold text-gray-900 dark:text-gray-100">{stats.currentStreak}</span>{' '}
-          {stats.currentStreak === 1 ? 'day' : 'days'} streak
-        </p>
-        <p className="text-xs">
-          Best: {stats.longestStreak} {stats.longestStreak === 1 ? 'day' : 'days'} ·{' '}
-          Total: {stats.totalCheckIns} {stats.totalCheckIns === 1 ? 'check-in' : 'check-ins'}
-        </p>
-        {stats.lastCheckIn && (
-          <p className="text-xs mt-1">Last: {stats.lastCheckIn}</p>
-        )}
-      </div>
-
-      {/* Check-in Button */}
-      <button
-        onClick={handleCheckIn}
-        className={`w-full min-h-[60px] px-4 border text-sm font-bold transition-colors ${
-          checkedToday
-            ? 'border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-            : 'border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
-        }`}
-      >
-        {checkedToday ? '✓ Done today' : 'Mark as done'}
-      </button>
-
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="border-t border-gray-300 dark:border-gray-700 mt-4 pt-4">
-          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div className="mt-4 border-t border-gray-300 pt-4 dark:border-gray-700">
+          <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Completion Rate</div>
+              <div className="mb-1 text-xs text-gray-600 dark:text-gray-400">Best</div>
+              <div className="text-sm text-gray-900 dark:text-gray-100">
+                {stats.longestStreak} {stats.longestStreak === 1 ? 'day' : 'days'}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-gray-600 dark:text-gray-400">Total</div>
+              <div className="text-sm text-gray-900 dark:text-gray-100">
+                {stats.totalCheckIns} {stats.totalCheckIns === 1 ? 'check-in' : 'check-ins'}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-gray-600 dark:text-gray-400">Last Check-in</div>
+              <div className="text-sm text-gray-900 dark:text-gray-100">
+                {stats.lastCheckIn ? stats.lastCheckIn : 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-gray-600 dark:text-gray-400">Completion Rate</div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {stats.completionRate}%
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">Last 30 days</div>
             </div>
             <div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Created</div>
+              <div className="mb-1 text-xs text-gray-600 dark:text-gray-400">Created</div>
               <div className="text-sm text-gray-900 dark:text-gray-100">
                 {new Date(activity.createdAt).toLocaleDateString()}
               </div>
@@ -113,7 +126,7 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
 
           <button
             onClick={handleDelete}
-            className="w-full min-h-[50px] px-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors"
+            className="min-h-[50px] w-full border border-gray-300 px-4 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Delete activity
           </button>

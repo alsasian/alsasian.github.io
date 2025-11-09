@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { StreakData } from '../../lib/streak/types';
 import { loadData } from '../../lib/streak/storage';
 import TodaySummary from './TodaySummary';
@@ -7,38 +7,20 @@ import AddActivityForm from './AddActivityForm';
 import CalendarView from './CalendarView';
 
 export default function StreakApp() {
-  const [data, setData] = useState<StreakData | null>(null);
+  const [data, setData] = useState<StreakData>(() => loadData());
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
-
-  // Load data on mount
-  useEffect(() => {
-    setData(loadData());
-  }, []);
 
   const handleUpdate = () => {
     setData(loadData());
   };
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-sm text-gray-600 dark:text-gray-400">Loading...</div>
-      </div>
-    );
-  }
 
   const selectedActivity = selectedActivityId
     ? data.activities.find((a) => a.id === selectedActivityId)
     : null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header - simplified */}
-      <header className="mb-6">
-        <p className="text-sm text-gray-600 dark:text-gray-400">Streak Tracker</p>
-      </header>
-
+    <div className="mx-auto max-w-5xl">
       {/* Calendar View (when activity selected) */}
       {showCalendar && selectedActivity && (
         <div className="mb-6">
@@ -47,11 +29,11 @@ export default function StreakApp() {
               setShowCalendar(false);
               setSelectedActivityId(null);
             }}
-            className="mb-4 min-h-[44px] px-4 text-sm font-bold text-gray-900 dark:text-gray-100 hover:underline"
+            className="mb-4 min-h-[44px] px-4 text-sm font-bold text-gray-900 hover:underline dark:text-gray-100"
           >
             ← Back to activities
           </button>
-          <div className="mb-4 border-l-4 border-gray-900 dark:border-gray-100 pl-3">
+          <div className="mb-4 border-l-4 border-gray-900 pl-3 dark:border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {selectedActivity.name}
             </h2>
@@ -82,10 +64,8 @@ export default function StreakApp() {
 
           {/* View Calendar Section */}
           {data.activities.length > 0 && (
-            <section className="mt-6 border-l-4 border-gray-300 dark:border-gray-700 pl-3 py-4">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">
-                View Calendar
-              </h3>
+            <section className="mt-6 border-t border-gray-300 pt-6 dark:border-gray-700">
+              <h3 className="mb-3 text-lg font-bold text-gray-900 dark:text-gray-100">Calendar</h3>
               <div className="space-y-2">
                 {data.activities.map((activity) => (
                   <button
@@ -94,7 +74,7 @@ export default function StreakApp() {
                       setSelectedActivityId(activity.id);
                       setShowCalendar(true);
                     }}
-                    className="w-full text-left px-4 py-3 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between"
+                    className="flex w-full items-center justify-between border border-gray-300 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
                     <span className="text-sm text-gray-900 dark:text-gray-100">
                       {activity.name}
@@ -109,7 +89,7 @@ export default function StreakApp() {
       )}
 
       {/* Footer */}
-      <footer className="mt-12 text-center border-t border-gray-300 dark:border-gray-700 pt-6 pb-8">
+      <footer className="mt-12 border-t border-gray-300 pb-8 pt-6 text-center dark:border-gray-700">
         <p className="text-xs text-gray-600 dark:text-gray-400">
           All data is stored locally in your browser
         </p>

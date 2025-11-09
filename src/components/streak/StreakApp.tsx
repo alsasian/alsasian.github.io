@@ -22,7 +22,7 @@ export default function StreakApp() {
   if (!data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white text-lg">Loading...</div>
+        <div className="font-mono text-sm text-gray-400">Loading...</div>
       </div>
     );
   }
@@ -32,27 +32,32 @@ export default function StreakApp() {
     : null;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="text-center mb-8 pt-8">
-        <h1 className="text-4xl font-bold text-white mb-2">🔥 Streak Tracker</h1>
-        <p className="text-white/80">Build habits, one day at a time</p>
+      <div className="border-b-2 border-gray-700 pb-6 mb-6">
+        <div className="font-mono text-xs text-gray-600 mb-2">$ streak-tracker</div>
+        <h1 className="font-mono text-xl uppercase tracking-wide text-gray-100 mb-1">
+          STREAK TRACKER
+        </h1>
+        <p className="font-mono text-xs text-gray-500">Track your daily habits</p>
       </div>
 
       {/* Calendar View (when activity selected) */}
       {showCalendar && selectedActivity && (
-        <div className="mb-4">
+        <div className="mb-6">
           <button
             onClick={() => {
               setShowCalendar(false);
               setSelectedActivityId(null);
             }}
-            className="mb-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg font-medium transition-all"
+            className="mb-4 min-h-[44px] px-4 border-2 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300 font-mono text-xs uppercase tracking-wide transition-colors"
           >
-            ← Back to Activities
+            ← BACK
           </button>
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-white mb-2">{selectedActivity.name}</h2>
+          <div className="mb-4 border-l-4 border-green-400 pl-4">
+            <h2 className="font-mono text-base uppercase tracking-wide text-gray-100">
+              {selectedActivity.name}
+            </h2>
           </div>
           <CalendarView activity={selectedActivity} startOfWeek={data.settings.startOfWeek} />
         </div>
@@ -75,31 +80,26 @@ export default function StreakApp() {
             />
           </div>
 
-          {/* View Calendar Button */}
+          {/* View Calendar Section */}
           {data.activities.length > 0 && (
-            <div className="mt-6">
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-                <h3 className="text-white font-medium mb-3">View Calendar</h3>
-                <div className="space-y-2">
-                  {data.activities.map((activity) => (
-                    <button
-                      key={activity.id}
-                      onClick={() => {
-                        setSelectedActivityId(activity.id);
-                        setShowCalendar(true);
-                      }}
-                      className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-3"
-                    >
-                      <div
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: activity.color }}
-                      />
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {activity.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+            <div className="mt-6 border-2 border-gray-700 p-4">
+              <h3 className="font-mono text-xs uppercase text-gray-600 mb-3">View Calendar</h3>
+              <div className="space-y-2">
+                {data.activities.map((activity) => (
+                  <button
+                    key={activity.id}
+                    onClick={() => {
+                      setSelectedActivityId(activity.id);
+                      setShowCalendar(true);
+                    }}
+                    className="w-full text-left px-4 py-3 border-2 border-gray-700 bg-gray-950 hover:border-gray-500 transition-colors flex items-center justify-between"
+                  >
+                    <span className="font-mono text-sm text-gray-100">
+                      {activity.name}
+                    </span>
+                    <span className="font-mono text-xs text-gray-600">→</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -107,8 +107,10 @@ export default function StreakApp() {
       )}
 
       {/* Footer */}
-      <div className="mt-12 text-center text-white/60 text-sm pb-8">
-        <p>All data is stored locally in your browser</p>
+      <div className="mt-12 text-center border-t-2 border-gray-700 pt-6 pb-8">
+        <p className="font-mono text-xs text-gray-600">
+          All data stored locally in browser
+        </p>
       </div>
     </div>
   );

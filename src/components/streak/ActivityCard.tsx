@@ -34,87 +34,89 @@ export default function ActivityCard({ activity, allowRecovery, onUpdate }: Acti
     }
   };
 
+  // Format streak number with leading zeros
+  const formatStreakNumber = (num: number) => String(num).padStart(3, '0');
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div className="border-2 border-gray-700 bg-gray-950 mb-4">
       {/* Header */}
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: activity.color }}
-            />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {activity.name}
-            </h3>
-          </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-sans text-base uppercase tracking-wide text-gray-100">
+            {activity.name}
+          </h3>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-300 font-mono text-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
             {isExpanded ? '▲' : '▼'}
           </button>
         </div>
 
         {/* Streak Display */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">🔥</span>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.currentStreak}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">day streak</div>
-            </div>
+        <div className="mb-4 border-l-4 border-green-400 pl-4">
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-lg">🔥</span>
+            <span className="font-mono text-4xl tabular-nums text-green-400">
+              {formatStreakNumber(stats.currentStreak)}
+            </span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">days</span>
           </div>
 
-          <div className="flex-1 text-sm text-gray-600 dark:text-gray-300">
-            <div>Best: {stats.longestStreak} days</div>
-            <div>Total: {stats.totalCheckIns} check-ins</div>
+          <div className="flex gap-6 font-mono text-xs text-gray-400">
+            <div>
+              <span className="text-gray-600">BEST:</span>{' '}
+              <span className="text-gray-100 tabular-nums">{formatStreakNumber(stats.longestStreak)}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">TOTAL:</span>{' '}
+              <span className="text-gray-100 tabular-nums">{formatStreakNumber(stats.totalCheckIns)}</span>
+            </div>
           </div>
         </div>
 
         {/* Check-in Button */}
         <button
           onClick={handleCheckIn}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+          className={`w-full min-h-[60px] border-2 font-mono text-sm uppercase tracking-wide transition-colors ${
             checkedToday
-              ? 'bg-green-500 text-white hover:bg-green-600'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600'
+              ? 'border-green-400 bg-green-400/10 text-green-400 hover:bg-green-400/20'
+              : 'border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300'
           }`}
         >
-          {checkedToday ? '✓ Done Today' : 'Mark as Done'}
+          {checkedToday ? '✓ CHECKED IN' : '○ MARK AS DONE'}
         </button>
       </div>
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
-          <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div className="border-t-2 border-gray-700 p-5 bg-gray-900">
+          <div className="grid grid-cols-2 gap-4 mb-4 font-mono text-xs">
             <div>
-              <div className="text-gray-500 dark:text-gray-400">Completion Rate</div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="text-gray-600 uppercase mb-1">Completion</div>
+              <div className="text-2xl tabular-nums text-gray-100">
                 {stats.completionRate}%
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Last 30 days</div>
+              <div className="text-gray-600 mt-1">Last 30 days</div>
             </div>
             <div>
-              <div className="text-gray-500 dark:text-gray-400">Last Check-in</div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="text-gray-600 uppercase mb-1">Last Check-in</div>
+              <div className="text-sm text-gray-100 mt-2">
                 {stats.lastCheckIn || 'Never'}
               </div>
             </div>
           </div>
 
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          <div className="text-xs text-gray-600 mb-4 font-mono">
             Created: {new Date(activity.createdAt).toLocaleDateString()}
           </div>
 
           <button
             onClick={handleDelete}
-            className="w-full py-2 px-4 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg text-sm font-medium transition-colors"
+            className="w-full min-h-[50px] border-2 border-red-900 text-red-400 hover:border-red-700 hover:bg-red-900/20 font-mono text-xs uppercase tracking-wide transition-colors"
           >
-            Delete Activity
+            [DELETE]
           </button>
         </div>
       )}

@@ -1,9 +1,8 @@
-import { useAtom, useSetAtom } from 'jotai';
-import { currentPageAtom, showAddActivityModalAtom, type PageType } from '@/lib/streak/atoms';
+import { useAtom } from 'jotai';
+import { currentPageAtom, type PageType } from '@/lib/streak/atoms';
 
 export default function BottomNav() {
   const [currentPage, setCurrentPage] = useAtom(currentPageAtom);
-  const setShowAddModal = useSetAtom(showAddActivityModalAtom);
 
   const tabs: { id: PageType; label: string; icon: string }[] = [
     { id: 'main', label: 'Home', icon: '🏠' },
@@ -40,15 +39,6 @@ export default function BottomNav() {
           </button>
         ))}
       </div>
-
-      {/* Floating Action Button (FAB) */}
-      <button
-        onClick={() => setShowAddModal(true)}
-        className="absolute bottom-16 left-1/2 -translate-x-1/2 transform rounded-full bg-gray-900 p-4 text-2xl text-white shadow-elevated dark:shadow-elevated-dark transition-transform duration-ios-fast ease-ios-spring hover:scale-105 active:scale-95 dark:bg-gray-100 dark:text-gray-900"
-        aria-label="Add new activity"
-      >
-        <span aria-hidden="true">+</span>
-      </button>
     </nav>
   );
 }

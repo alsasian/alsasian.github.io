@@ -6,7 +6,7 @@ export default function AppSettingsSection() {
   const updateSettings = useSetAtom(updateSettingsAtom);
 
   return (
-    <section className="border streak-border-subtle p-4 ">
+    <section className="glass-elevated border streak-border-subtle rounded-2xl p-4">
       <h3 className="mb-3 text-sm font-bold streak-text-primary">
         App Preferences
       </h3>

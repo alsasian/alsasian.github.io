@@ -8,7 +8,7 @@ export default function PageContainer() {
   const currentPage = useAtomValue(currentPageAtom);
 
   return (
-    <div className="page-container mb-24 pb-4">
+    <div className="page-container mb-24 pt-4 pb-4">
       {currentPage === 'main' && (
         <div className="page-enter">
           <MainPage />

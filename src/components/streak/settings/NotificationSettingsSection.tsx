@@ -69,7 +69,7 @@ export default function NotificationSettingsSection() {
   const showPermissionWarning = notifSettings.enabled && !canNotify;
 
   return (
-    <section className="border streak-border-subtle p-4 ">
+    <section className="glass-elevated border streak-border-subtle rounded-2xl p-4">
       <h3 className="mb-3 text-sm font-bold streak-text-primary">
         Notifications & Reminders
       </h3>

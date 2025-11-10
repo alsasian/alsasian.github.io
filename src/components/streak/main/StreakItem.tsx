@@ -50,7 +50,7 @@ export default function StreakItem({ activity, allowRecovery }: StreakItemProps)
         <button
           onClick={handleCheckIn}
           className={`
-            flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border text-lg transition-all
+            flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border text-lg transition-all duration-ios ease-ios-spring
             ${
               isCheckedIn
                 ? 'streak-border-emphasis bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
@@ -80,7 +80,7 @@ export default function StreakItem({ activity, allowRecovery }: StreakItemProps)
         <div className="flex items-center gap-2">
           <button
             onClick={() => toggleExpansion(activity.id)}
-            className="streak-text-secondary hover:streak-text-primary transition-colors"
+            className="streak-text-secondary hover:streak-text-primary transition-colors duration-ios ease-ios"
             aria-label={isExpanded ? 'Hide details' : 'Show details'}
             aria-expanded={isExpanded}
           >
@@ -91,14 +91,14 @@ export default function StreakItem({ activity, allowRecovery }: StreakItemProps)
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`transition-transform duration-ios ease-ios ${isExpanded ? 'rotate-180' : ''}`}
             >
               <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="square" />
             </svg>
           </button>
           <button
             onClick={handleDelete}
-            className="streak-text-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            className="streak-text-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors duration-ios ease-ios"
             aria-label="Delete activity"
           >
             <svg

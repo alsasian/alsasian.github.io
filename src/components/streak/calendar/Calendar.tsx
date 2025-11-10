@@ -64,12 +64,12 @@ export default function Calendar() {
   };
 
   return (
-    <div className="border streak-border-subtle rounded-lg p-4">
+    <div className="glass-elevated border streak-border-subtle rounded-2xl p-4">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between pb-3 border-b streak-divider">
         <button
           onClick={previousMonth}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center streak-text-secondary hover:streak-text-primary"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center streak-text-secondary hover:streak-text-primary transition-colors duration-ios ease-ios"
           aria-label="Previous month"
         >
           ←
@@ -82,7 +82,7 @@ export default function Calendar() {
           {!isCurrentMonth && (
             <button
               onClick={goToToday}
-              className="mt-1 text-xs streak-text-secondary hover:underline"
+              className="mt-1 text-xs streak-text-secondary hover:underline transition-colors duration-ios ease-ios"
             >
               Go to today
             </button>
@@ -91,7 +91,7 @@ export default function Calendar() {
 
         <button
           onClick={nextMonth}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center streak-text-secondary hover:streak-text-primary"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center streak-text-secondary hover:streak-text-primary transition-colors duration-ios ease-ios"
           aria-label="Next month"
         >
           →
@@ -133,7 +133,7 @@ export default function Calendar() {
             <div
               key={index}
               className={`
-                aspect-square flex flex-col items-center justify-center text-xs rounded
+                aspect-square flex flex-col items-center justify-center text-xs rounded transition-all duration-ios ease-ios
                 ${hasCheckIns
                   ? 'bg-gray-900 font-bold text-white dark:bg-gray-100 dark:text-gray-900'
                   : 'streak-text-secondary'

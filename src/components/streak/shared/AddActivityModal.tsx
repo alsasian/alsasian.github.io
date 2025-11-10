@@ -52,14 +52,14 @@ export default function AddActivityModal() {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm ${
         isClosing ? 'modal-overlay-exit' : 'modal-overlay'
       }`}
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
       onClick={handleClose}
     >
       <div
-        className={`w-full max-w-md border-2 streak-border-emphasis bg-white p-6 shadow-xl dark:border-gray-100 dark:bg-gray-950 ${
+        className={`w-full max-w-md glass-strong rounded-2xl p-6 border streak-border-emphasis shadow-elevated dark:shadow-elevated-dark ${
           isClosing ? 'modal-content-exit' : 'modal-content'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -87,7 +87,7 @@ export default function AddActivityModal() {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Morning workout"
               maxLength={50}
-              className="w-full border-2 streak-border-emphasis bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:border-gray-100 dark:bg-gray-950 dark:text-gray-100 dark:placeholder-gray-600 dark:focus:ring-gray-100"
+              className="w-full rounded-xl border streak-border-emphasis bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all duration-ios ease-ios dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-600 dark:focus:ring-gray-100"
             />
             <p className="mt-2 text-right text-xs streak-text-secondary">
               {name.length}/50
@@ -97,14 +97,14 @@ export default function AddActivityModal() {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 border border-gray-900 bg-gray-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-800 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+              className="streak-button-primary flex-1"
             >
               Create
             </button>
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:hover:bg-gray-900"
+              className="streak-button-secondary flex-1"
             >
               Cancel
             </button>

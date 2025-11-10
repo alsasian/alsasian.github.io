@@ -1,5 +1,5 @@
 // Cache version - auto-generated during build
-const CACHE_VERSION = '2025.1109.1216';
+const CACHE_VERSION = '2025.1110.0009';
 const CACHE_NAME = `streak-tracker-v${CACHE_VERSION}`;
 
 // Assets to precache on install

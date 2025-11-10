@@ -12,14 +12,14 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t streak-divider streak-surface pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t streak-divider glass pb-safe">
       <div className="relative mx-auto flex max-w-2xl items-center">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setCurrentPage(tab.id)}
             className={`
-              flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors
+              flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors duration-ios ease-ios
               ${
                 currentPage === tab.id
                   ? 'streak-text-primary font-bold relative'
@@ -35,7 +35,7 @@ export default function BottomNav() {
             <span>{tab.label}</span>
             {/* Active indicator - subtle underline */}
             {currentPage === tab.id && (
-              <span className="absolute bottom-0 left-1/2 h-0.5 w-12 -translate-x-1/2 bg-gray-900 dark:bg-gray-100"></span>
+              <span className="absolute bottom-0 left-1/2 h-0.5 w-12 -translate-x-1/2 bg-gray-900 dark:bg-gray-100 transition-all duration-ios ease-ios"></span>
             )}
           </button>
         ))}
@@ -44,7 +44,7 @@ export default function BottomNav() {
       {/* Floating Action Button (FAB) */}
       <button
         onClick={() => setShowAddModal(true)}
-        className="absolute bottom-16 left-1/2 -translate-x-1/2 transform rounded-full bg-gray-900 p-4 text-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95 dark:bg-gray-100 dark:text-gray-900"
+        className="absolute bottom-16 left-1/2 -translate-x-1/2 transform rounded-full bg-gray-900 p-4 text-2xl text-white shadow-elevated dark:shadow-elevated-dark transition-transform duration-ios-fast ease-ios-spring hover:scale-105 active:scale-95 dark:bg-gray-100 dark:text-gray-900"
         aria-label="Add new activity"
       >
         <span aria-hidden="true">+</span>

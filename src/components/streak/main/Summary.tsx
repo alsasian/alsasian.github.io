@@ -15,7 +15,7 @@ export default function Summary() {
   }
 
   return (
-    <div className="p-4 dark:bg-gray-800">
+    <div className="glass-elevated p-4 rounded-2xl mx-4">
       <div className="mb-3">
         <p className="streak-section-header">Today's Progress</p>
         <p className="streak-text-primary mt-2 text-2xl font-bold">
@@ -26,7 +26,7 @@ export default function Summary() {
       {/* Progress Bar */}
       <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
         <div
-          className="h-full bg-gray-900 transition-all duration-300 dark:bg-gray-100"
+          className="h-full bg-gray-900 transition-all duration-ios ease-ios dark:bg-gray-100"
           style={{ width: `${stats.percentage}%` }}
         />
       </div>

@@ -64,6 +64,15 @@ Progressive Web App for daily activity tracking at `/streak/` route:
 - **No manual version updates needed** - every build gets a unique cache version
 - This prevents the "broken styling after deployment" issue caused by stale cached assets
 
+### Architecture Reference Page
+
+Interactive B2B SaaS architecture reference at `/architect` route:
+
+- **Component**: `src/components/ArchitectureTree.tsx` - React component with collapsible tree navigation
+- **Data**: `src/data/architectureData.ts` - TypeScript data structure with 15 major architectural categories
+- **Features**: Search, expand/collapse controls, category counting, newspaper-themed styling
+- **Content**: 200+ architectural concerns covering business requirements, technical infrastructure, security, data management, integrations, testing, deployment, observability, compliance, performance, cost, customer success, disaster recovery, and development processes
+
 ## Tooling
 
 - **ESLint v9**: Flat config in `eslint.config.js` (migrated from v8)

@@ -1,4 +1,4 @@
-import type { TreeNode } from "../data/architectureData";
+import type { TreeNode } from "../data/architecture";
 
 interface DetailPanelProps {
 	selectedItem: TreeNode | null;

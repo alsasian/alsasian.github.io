@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { TreeNode } from "../data/architectureData";
+import type { TreeNode } from "../data/architecture";
 import DetailPanel from "./DetailPanel";
 
 interface TreeItemProps {

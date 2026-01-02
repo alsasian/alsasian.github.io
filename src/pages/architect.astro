@@ -1,0 +1,22 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import ArchitectureTree from "../components/ArchitectureTree";
+import { architectureData } from "../data/architectureData";
+---
+
+<Layout
+	title="B2B SaaS Architecture Map | alsasian.github.io"
+	description="Interactive collapsible architecture map for B2B SaaS platforms covering business requirements, technical infrastructure, security, data management, and more."
+>
+	<Header />
+	<main class="mx-auto max-w-5xl px-4 py-6">
+		<article class="mb-6 border-b border-gray-300 pb-4 dark:border-gray-700">
+			<h1 class="mb-2 text-4xl">B2B SaaS Platform Architecture</h1>
+			<p class="text-sm text-gray-600 dark:text-gray-400">
+				Interactive collapsible architecture map
+			</p>
+		</article>
+		<ArchitectureTree client:load data={architectureData} />
+	</main>
+</Layout>

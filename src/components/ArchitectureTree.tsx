@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
-import type { TreeNode } from "../data/architecture";
+import type { TreeNode, Pillar } from "../data/architecture";
+import { pillarColors } from "../data/architecture/types";
 import DetailPanel from "./DetailPanel";
+import PillarOverviewCards from "./PillarOverviewCards";
 
 interface TreeItemProps {
 	node: TreeNode;
@@ -19,6 +21,10 @@ function countChildren(node: TreeNode): number {
 		node.children.length +
 		node.children.reduce((sum, child) => sum + countChildren(child), 0)
 	);
+}
+
+function isPillar(node: TreeNode): node is Pillar {
+	return "icon" in node && "color" in node;
 }
 
 function TreeItem({
@@ -52,22 +58,43 @@ function TreeItem({
 		onSelect(node, path);
 	};
 
+	// Check if this is a pillar (level 1)
+	const pillarNode = level === 1 && isPillar(node) ? node : null;
+	const colors = pillarNode ? pillarColors[pillarNode.color] : null;
+
 	return (
 		<li className="my-1">
 			<div
-				className={`flex items-center px-3 py-2 rounded cursor-pointer transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
-					matchesSearch && searchTerm ? "bg-yellow-100 dark:bg-yellow-900" : ""
-				} ${isSelected ? "bg-neutral-200 dark:bg-neutral-700" : ""}`}
+				className={`flex items-center px-3 py-2 rounded cursor-pointer transition-all ${
+					pillarNode
+						? `${colors!.bg} border-l-4 ${colors!.border} hover:shadow-md`
+						: "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+				} ${matchesSearch && searchTerm ? "bg-yellow-100 dark:bg-yellow-900" : ""} ${
+					isSelected ? "bg-neutral-200 dark:bg-neutral-700" : ""
+				}`}
 				onClick={handleClick}
 			>
+				{pillarNode && (
+					<span className="text-2xl mr-3 flex-shrink-0">{pillarNode.icon}</span>
+				)}
 				<span className="w-5 h-5 mr-2 flex items-center justify-center text-xs text-neutral-600 dark:text-neutral-400 flex-shrink-0">
 					{hasChildren ? (isExpanded ? "▼" : "▶") : "●"}
 				</span>
-				<span className={`flex-1 ${levelStyles} font-serif text-neutral-900 dark:text-neutral-100`}>
-					{node.label}
+				<span
+					className={`flex-1 ${levelStyles} font-serif ${
+						pillarNode ? colors!.text : "text-neutral-900 dark:text-neutral-100"
+					}`}
+				>
+					{pillarNode ? node.label.replace(/^[🎯🏗️⚙️✅]\s*/, "") : node.label}
 				</span>
 				{hasChildren && childCount > 0 && (
-					<span className="bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 px-2 py-0.5 rounded-full text-xs font-semibold ml-2">
+					<span
+						className={`px-2 py-0.5 rounded-full text-xs font-semibold ml-2 ${
+							pillarNode
+								? `${colors!.accent} bg-opacity-20 dark:bg-opacity-20`
+								: "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+						}`}
+					>
 						{childCount}
 					</span>
 				)}
@@ -174,22 +201,37 @@ export default function ArchitectureTree({ data }: ArchitectureTreeProps) {
 				{/* Info Box */}
 				<div className="mb-6 p-4 bg-neutral-50 dark:bg-neutral-800 border-l-4 border-neutral-900 dark:border-neutral-100 rounded">
 					<h3 className="font-serif font-bold text-lg mb-2 text-neutral-900 dark:text-neutral-100">
-						How to Use
+						4-Pillar Architecture Framework
 					</h3>
 					<p className="font-serif text-neutral-700 dark:text-neutral-300 leading-relaxed">
-						Click on any item to view details in the side panel. Click categories to
-						expand/collapse sub-items. Use the controls to manage sections and search.
+						This reference organizes B2B SaaS architecture into <strong>4 foundational pillars</strong>:
+						Strategy & Business, Technical Foundation, Operations & Reliability, and Excellence & Governance.
+						Each pillar contains categories and sub-concerns that together form a comprehensive architectural guide.
+						Click any item to view details in the side panel.
 					</p>
 				</div>
 
+				{/* Pillar Overview Cards */}
+				{data.children && (
+					<PillarOverviewCards pillars={data.children as Pillar[]} />
+				)}
+
 				{/* Stats */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+					<div className="text-center p-4 bg-neutral-50 dark:bg-neutral-800 rounded">
+						<div className="text-4xl font-bold font-serif text-neutral-900 dark:text-neutral-100">
+							4
+						</div>
+						<div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-serif">
+							Pillars
+						</div>
+					</div>
 					<div className="text-center p-4 bg-neutral-50 dark:bg-neutral-800 rounded">
 						<div className="text-4xl font-bold font-serif text-neutral-900 dark:text-neutral-100">
 							{majorCategories}
 						</div>
 						<div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-serif">
-							Major Categories
+							Categories
 						</div>
 					</div>
 					<div className="text-center p-4 bg-neutral-50 dark:bg-neutral-800 rounded">
@@ -197,7 +239,7 @@ export default function ArchitectureTree({ data }: ArchitectureTreeProps) {
 							{totalConcerns}+
 						</div>
 						<div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-serif">
-							Architectural Concerns
+							Concerns
 						</div>
 					</div>
 					<div className="text-center p-4 bg-neutral-50 dark:bg-neutral-800 rounded">
@@ -205,7 +247,7 @@ export default function ArchitectureTree({ data }: ArchitectureTreeProps) {
 							{totalConcerns * 2}+
 						</div>
 						<div className="text-sm text-neutral-600 dark:text-neutral-400 mt-1 font-serif">
-							Implementation Points
+							Details
 						</div>
 					</div>
 				</div>
@@ -224,23 +266,30 @@ export default function ArchitectureTree({ data }: ArchitectureTreeProps) {
 					>
 						Collapse All
 					</button>
+					<div className="w-full md:w-auto border-l-2 border-neutral-300 dark:border-neutral-600 my-1 md:my-0"></div>
 					<button
 						onClick={() => expandToLevel(1)}
-						className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded font-medium text-sm hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+						className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium text-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
 					>
-						Level 1
+						Pillars Only
 					</button>
 					<button
 						onClick={() => expandToLevel(2)}
-						className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded font-medium text-sm hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+						className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium text-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
 					>
-						Level 2
+						+ Categories
 					</button>
 					<button
 						onClick={() => expandToLevel(3)}
-						className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded font-medium text-sm hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-colors"
+						className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium text-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
 					>
-						Level 3
+						+ Sub-categories
+					</button>
+					<button
+						onClick={() => expandToLevel(4)}
+						className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded font-medium text-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+					>
+						+ All Details
 					</button>
 					<div className="flex-1 min-w-[250px] flex gap-2">
 						<input

@@ -1,0 +1,39 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ArchitectureTree from "../components/ArchitectureTree";
+import { architectureData } from "../data/architectureData";
+---
+
+<Layout
+	title="B2B SaaS Architecture Map"
+	description="Interactive collapsible architecture map for B2B SaaS platforms covering business requirements, technical infrastructure, security, data management, and more."
+>
+	<main class="min-h-screen bg-white dark:bg-neutral-950">
+		<div class="max-w-6xl mx-auto px-4 py-12">
+			<!-- Header -->
+			<header class="mb-8 border-b-4 border-neutral-900 dark:border-neutral-100 pb-6">
+				<h1
+					class="font-serif text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-100 mb-3"
+				>
+					B2B SaaS Platform Architecture
+				</h1>
+				<p class="font-serif text-lg text-neutral-600 dark:text-neutral-400">
+					Interactive Collapsible Architecture Map
+				</p>
+			</header>
+
+			<!-- React Component -->
+			<ArchitectureTree client:load data={architectureData} />
+
+			<!-- Footer Note -->
+			<footer class="mt-12 pt-6 border-t-2 border-neutral-200 dark:border-neutral-800">
+				<p
+					class="font-serif text-sm text-neutral-600 dark:text-neutral-400 text-center"
+				>
+					This architecture map serves as a comprehensive checklist for building and
+					maintaining enterprise B2B SaaS platforms.
+				</p>
+			</footer>
+		</div>
+	</main>
+</Layout>

@@ -1,22 +1,26 @@
 export interface TreeNode {
 	label: string;
+	description?: string;
 	children?: TreeNode[];
 }
 
 export const architectureData: TreeNode = {
 	label: "B2B SaaS Platform Architecture",
+	description: "Comprehensive architectural framework for building scalable, secure, and maintainable B2B SaaS platforms.",
 	children: [
 		{
 			label: "1. Business & Requirements",
+			description: "Core business requirements and strategic decisions that shape the platform architecture.",
 			children: [
 				{
 					label: "Functional Requirements",
+					description: "Defines the specific features and capabilities the platform must provide to users.",
 					children: [
-						{ label: "Quote Creation" },
-						{ label: "Approval Workflows" },
-						{ label: "Order Placement" },
-						{ label: "Pricing Rules" },
-						{ label: "Product Catalog" },
+						{ label: "Quote Creation", description: "Enable users to generate custom quotes with pricing, products, and terms." },
+						{ label: "Approval Workflows", description: "Multi-step approval processes with routing rules and escalation paths." },
+						{ label: "Order Placement", description: "Convert approved quotes to orders with fulfillment tracking." },
+						{ label: "Pricing Rules", description: "Configure discounts, tiered pricing, and custom pricing strategies." },
+						{ label: "Product Catalog", description: "Manage products, SKUs, bundles, and configuration options." },
 					],
 				},
 				{

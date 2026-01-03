@@ -1,15 +1,19 @@
-import type { PersonalBest } from './types';
+import type { PersonalBest, GameMode } from './types';
 
-const STORAGE_KEY = 'memory-game-pb-blitz';
+const STORAGE_KEY_PREFIX = 'memory-game-pb';
+
+function getStorageKey(mode: GameMode): string {
+  return `${STORAGE_KEY_PREFIX}-${mode}`;
+}
 
 /**
- * Load personal best from localStorage
+ * Load personal best from localStorage for a specific mode
  */
-export function loadPersonalBest(): PersonalBest | null {
+export function loadPersonalBest(mode: GameMode): PersonalBest | null {
   if (typeof window === 'undefined') return null;
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(getStorageKey(mode));
     if (!stored) return null;
 
     return JSON.parse(stored);
@@ -20,13 +24,13 @@ export function loadPersonalBest(): PersonalBest | null {
 }
 
 /**
- * Save personal best to localStorage
+ * Save personal best to localStorage for a specific mode
  */
-export function savePersonalBest(best: PersonalBest): void {
+export function savePersonalBest(mode: GameMode, best: PersonalBest): void {
   if (typeof window === 'undefined') return;
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(best));
+    localStorage.setItem(getStorageKey(mode), JSON.stringify(best));
   } catch (error) {
     console.error('Failed to save personal best:', error);
   }

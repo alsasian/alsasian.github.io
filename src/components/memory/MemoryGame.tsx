@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { GameState, PersonalBest } from './types';
-import { generateBlitzDeck, cardsMatch, formatTime } from './gameLogic';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { GameState, PersonalBest, GameMode } from './types';
+import { generateBlitzDeck, generateRapidDeck, cardsMatch, formatTime } from './gameLogic';
 import { loadPersonalBest, savePersonalBest, isNewRecord } from './storage';
 
 export default function MemoryGame() {
+  const [mode, setMode] = useState<GameMode>('blitz');
   const [gameState, setGameState] = useState<GameState>(() => ({
+    mode: 'blitz',
     cards: generateBlitzDeck(),
     flippedCards: [],
     mistakes: 0,
@@ -17,10 +19,16 @@ export default function MemoryGame() {
   const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
   const [isRecord, setIsRecord] = useState(false);
 
-  // Load personal best on mount
+  // Pan/drag state for Rapid mode
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  // Load personal best on mount and mode change
   useEffect(() => {
-    setPersonalBest(loadPersonalBest());
-  }, []);
+    setPersonalBest(loadPersonalBest(mode));
+  }, [mode]);
 
   // Helper to determine if suit is red
   const isRedSuit = (suit: string) => suit === '♥' || suit === '♦';
@@ -54,13 +62,13 @@ export default function MemoryGame() {
 
       if (isNewRecord(currentScore, personalBest)) {
         setIsRecord(true);
-        savePersonalBest(currentScore);
+        savePersonalBest(mode, currentScore);
         setPersonalBest(currentScore);
       } else {
         setIsRecord(false);
       }
     }
-  }, [gameState.cards, gameState.isComplete, gameState.elapsedTime, gameState.mistakes, gameState.totalFlips, personalBest]);
+  }, [gameState.cards, gameState.isComplete, gameState.elapsedTime, gameState.mistakes, gameState.totalFlips, personalBest, mode]);
 
   const handleCardClick = useCallback((cardId: string) => {
     setGameState((prev) => {
@@ -137,8 +145,10 @@ export default function MemoryGame() {
   }, []);
 
   const handleReset = () => {
+    const deck = mode === 'blitz' ? generateBlitzDeck() : generateRapidDeck();
     setGameState({
-      cards: generateBlitzDeck(),
+      mode,
+      cards: deck,
       flippedCards: [],
       mistakes: 0,
       totalFlips: 0,
@@ -146,16 +156,85 @@ export default function MemoryGame() {
       elapsedTime: 0,
       isComplete: false,
     });
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  const handleModeChange = (newMode: GameMode) => {
+    setMode(newMode);
+    const deck = newMode === 'blitz' ? generateBlitzDeck() : generateRapidDeck();
+    setGameState({
+      mode: newMode,
+      cards: deck,
+      flippedCards: [],
+      mistakes: 0,
+      totalFlips: 0,
+      startTime: null,
+      elapsedTime: 0,
+      isComplete: false,
+    });
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  // Pan/drag handlers for Rapid mode
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (mode !== 'rapid') return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || mode !== 'rapid') return;
+    setPanOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   return (
     <div className="min-h-screen p-4">
       {/* Header */}
-      <header className="max-w-2xl mx-auto mb-6">
-        <h1 className="text-3xl mb-2 border-b-2 border-gray-900 dark:border-gray-100 pb-2">
+      <header className="max-w-2xl mx-auto mb-4">
+        <h1 className="text-3xl mb-3 border-b-2 border-gray-900 dark:border-gray-100 pb-2">
           Pair Memory Game
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Blitz Mode - 6 Pairs</p>
+
+        {/* Mode Selector */}
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={() => handleModeChange('blitz')}
+            className={`
+              px-4 py-2 rounded font-bold text-sm transition-all
+              ${mode === 'blitz'
+                ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700'
+              }
+            `}
+          >
+            Blitz (6 pairs)
+          </button>
+          <button
+            onClick={() => handleModeChange('rapid')}
+            className={`
+              px-4 py-2 rounded font-bold text-sm transition-all
+              ${mode === 'rapid'
+                ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700'
+              }
+            `}
+          >
+            Rapid (18 pairs)
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {mode === 'rapid' ? 'Drag to pan the grid' : ''}
+        </p>
       </header>
 
       {/* Stats */}
@@ -179,8 +258,27 @@ export default function MemoryGame() {
       </div>
 
       {/* Game Grid */}
-      <div className="max-w-2xl mx-auto">
-        <div className="grid grid-cols-4 gap-2 mb-6" style={{ perspective: '1000px' }}>
+      <div className="max-w-2xl mx-auto relative">
+        {/* Grid Container with Pan/Drag for Rapid mode */}
+        <div
+          ref={gridRef}
+          className={`
+            ${mode === 'rapid' ? 'overflow-hidden h-[70vh] relative touch-none' : ''}
+          `}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+        >
+          <div
+            className={`grid gap-2 mb-6 ${mode === 'blitz' ? 'grid-cols-4' : 'grid-cols-6'}`}
+            style={{
+              perspective: '1000px',
+              ...(mode === 'rapid' && {
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                cursor: isDragging ? 'grabbing' : 'grab',
+              }),
+            }}
+          >
           {gameState.cards.map((card) => (
             <button
               key={card.id}
@@ -191,32 +289,73 @@ export default function MemoryGame() {
                 transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)',
               }}
               className={`
-                aspect-[2/3] rounded-lg border-2
-                flex items-center justify-center text-xl font-bold
+                aspect-[2/3] rounded-lg relative
                 transition-all duration-500 active:scale-95
-                ${
-                  card.isMatched
-                    ? 'bg-transparent border-transparent cursor-default'
-                    : card.isFlipped
-                      ? 'bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100'
-                      : 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 cursor-pointer'
-                }
+                ${card.isMatched ? 'cursor-default' : 'cursor-pointer'}
               `}
             >
-              <span
-                style={{ transform: 'rotateY(180deg)' }}
+              {/* Card Back (face down) */}
+              <div
+                style={{ backfaceVisibility: 'hidden' }}
+                className="absolute inset-0 rounded-lg border-2 border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100"
+              />
+
+              {/* Card Front (face up) */}
+              <div
+                style={{
+                  backfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                }}
                 className={`
-                  ${card.isMatched ? 'opacity-0' : card.isFlipped ? 'opacity-100' : 'opacity-0'}
-                  ${isRedSuit(card.suit) ? 'text-red-600 dark:text-red-500' : ''}
+                  absolute inset-0 rounded-lg border-2 flex items-center justify-center text-xl font-bold
+                  ${
+                    card.isMatched
+                      ? 'bg-transparent border-transparent'
+                      : 'bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100'
+                  }
                 `}
               >
-                {card.rank}
-                {card.suit}
-              </span>
+                <span
+                  className={`
+                    ${card.isMatched ? 'opacity-0' : 'opacity-100'}
+                    ${isRedSuit(card.suit) ? 'text-red-600 dark:text-red-500' : ''}
+                  `}
+                >
+                  {card.rank}
+                  {card.suit}
+                </span>
+              </div>
             </button>
           ))}
         </div>
+        </div>
 
+        {/* Mini-map for Rapid mode */}
+        {mode === 'rapid' && gridRef.current && (
+          <div className="fixed bottom-20 right-4 bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 p-2 rounded-lg shadow-lg">
+            <div className="grid grid-cols-6 gap-0.5" style={{ width: '60px', height: '60px' }}>
+              {gameState.cards.map((card) => (
+                <div
+                  key={card.id}
+                  className={`
+                    ${card.isMatched ? 'bg-gray-300 dark:bg-gray-600' : 'bg-gray-900 dark:bg-gray-100'}
+                  `}
+                  style={{ aspectRatio: '1' }}
+                />
+              ))}
+            </div>
+            {/* Viewport indicator */}
+            <div
+              className="absolute border-2 border-red-600 dark:border-red-500 pointer-events-none"
+              style={{
+                left: `${2 + Math.max(0, Math.min(40, -panOffset.x / 10))}px`,
+                top: `${2 + Math.max(0, Math.min(40, -panOffset.y / 10))}px`,
+                width: '20px',
+                height: '20px',
+              }}
+            />
+          </div>
+        )}
 
         {/* Reset Button */}
         {!gameState.isComplete && (

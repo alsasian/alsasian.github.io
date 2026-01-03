@@ -16,9 +16,9 @@ export function shuffle<T>(array: T[]): T[] {
 }
 
 /**
- * Generate a deck of cards for Blitz mode (6 pairs = 12 cards)
+ * Generate a deck of cards with specified number of pairs
  */
-export function generateBlitzDeck(): Card[] {
+function generateDeck(pairCount: number): Card[] {
   // Create all possible cards
   const allCards: Card[] = [];
 
@@ -34,9 +34,9 @@ export function generateBlitzDeck(): Card[] {
     }
   }
 
-  // Randomly select 6 cards for 6 pairs
+  // Randomly select cards for pairs
   const shuffledDeck = shuffle(allCards);
-  const selectedCards = shuffledDeck.slice(0, 6);
+  const selectedCards = shuffledDeck.slice(0, pairCount);
 
   // Duplicate them to create pairs
   const pairs = [...selectedCards, ...selectedCards].map((card, index) => ({
@@ -46,6 +46,20 @@ export function generateBlitzDeck(): Card[] {
 
   // Shuffle the pairs
   return shuffle(pairs);
+}
+
+/**
+ * Generate a deck of cards for Blitz mode (6 pairs = 12 cards)
+ */
+export function generateBlitzDeck(): Card[] {
+  return generateDeck(6);
+}
+
+/**
+ * Generate a deck of cards for Rapid mode (18 pairs = 36 cards)
+ */
+export function generateRapidDeck(): Card[] {
+  return generateDeck(18);
 }
 
 /**

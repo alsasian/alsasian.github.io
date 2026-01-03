@@ -191,28 +191,42 @@ export default function MemoryGame() {
                 transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)',
               }}
               className={`
-                aspect-[2/3] rounded-lg border-2
-                flex items-center justify-center text-xl font-bold
+                aspect-[2/3] rounded-lg relative
                 transition-all duration-500 active:scale-95
-                ${
-                  card.isMatched
-                    ? 'bg-transparent border-transparent cursor-default'
-                    : card.isFlipped
-                      ? 'bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100'
-                      : 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 cursor-pointer'
-                }
+                ${card.isMatched ? 'cursor-default' : 'cursor-pointer'}
               `}
             >
-              <span
-                style={{ transform: 'rotateY(180deg)' }}
+              {/* Card Back (face down) */}
+              <div
+                style={{ backfaceVisibility: 'hidden' }}
+                className="absolute inset-0 rounded-lg border-2 border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100"
+              />
+
+              {/* Card Front (face up) */}
+              <div
+                style={{
+                  backfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                }}
                 className={`
-                  ${card.isMatched ? 'opacity-0' : card.isFlipped ? 'opacity-100' : 'opacity-0'}
-                  ${isRedSuit(card.suit) ? 'text-red-600 dark:text-red-500' : ''}
+                  absolute inset-0 rounded-lg border-2 flex items-center justify-center text-xl font-bold
+                  ${
+                    card.isMatched
+                      ? 'bg-transparent border-transparent'
+                      : 'bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100'
+                  }
                 `}
               >
-                {card.rank}
-                {card.suit}
-              </span>
+                <span
+                  className={`
+                    ${card.isMatched ? 'opacity-0' : 'opacity-100'}
+                    ${isRedSuit(card.suit) ? 'text-red-600 dark:text-red-500' : ''}
+                  `}
+                >
+                  {card.rank}
+                  {card.suit}
+                </span>
+              </div>
             </button>
           ))}
         </div>

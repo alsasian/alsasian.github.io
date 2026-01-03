@@ -23,6 +23,7 @@ export default function MemoryGame() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Load personal best on mount and mode change
@@ -71,6 +72,9 @@ export default function MemoryGame() {
   }, [gameState.cards, gameState.isComplete, gameState.elapsedTime, gameState.mistakes, gameState.totalFlips, personalBest, mode]);
 
   const handleCardClick = useCallback((cardId: string) => {
+    // Don't flip card if we just finished dragging
+    if (hasDragged) return;
+
     setGameState((prev) => {
       // Start timer on first flip
       const startTime = prev.startTime || Date.now();
@@ -142,7 +146,7 @@ export default function MemoryGame() {
         startTime,
       };
     });
-  }, []);
+  }, [hasDragged]);
 
   const handleReset = () => {
     const deck = mode === 'blitz' ? generateBlitzDeck() : generateRapidDeck();
@@ -178,10 +182,9 @@ export default function MemoryGame() {
   // Pan/drag handlers for Rapid mode
   const handlePointerDown = (e: React.PointerEvent) => {
     if (mode !== 'rapid') return;
-    // Don't start drag on card buttons
-    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
 
     setIsDragging(true);
+    setHasDragged(false);
     setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -189,10 +192,21 @@ export default function MemoryGame() {
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging || mode !== 'rapid') return;
     e.preventDefault();
-    setPanOffset({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
+
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+
+    // Mark as dragged if moved more than 5px
+    if (!hasDragged) {
+      const distance = Math.sqrt(
+        Math.pow(newX - panOffset.x, 2) + Math.pow(newY - panOffset.y, 2)
+      );
+      if (distance > 5) {
+        setHasDragged(true);
+      }
+    }
+
+    setPanOffset({ x: newX, y: newY });
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -201,6 +215,8 @@ export default function MemoryGame() {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
+    // Reset hasDragged after a brief delay to allow click event to be blocked
+    setTimeout(() => setHasDragged(false), 50);
   };
 
   return (

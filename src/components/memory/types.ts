@@ -13,7 +13,14 @@ export interface GameState {
   cards: Card[];
   flippedCards: string[];
   mistakes: number;
+  totalFlips: number;
   startTime: number | null;
   elapsedTime: number;
   isComplete: boolean;
+}
+
+export interface PersonalBest {
+  time: number;
+  mistakes: number;
+  flips: number;
 }

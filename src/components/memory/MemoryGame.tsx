@@ -274,13 +274,14 @@ export default function MemoryGame() {
           `}
         >
           <div
-            className={`mb-6 ${mode === 'blitz' ? 'grid grid-cols-4 gap-2' : 'grid gap-2'}`}
+            className={mode === 'blitz' ? 'mb-6 grid grid-cols-4 gap-2' : 'mb-6'}
             style={{
               perspective: '1000px',
               ...(mode === 'rapid' && {
+                display: 'grid',
                 gridTemplateColumns: 'repeat(6, 80px)',
                 gridAutoRows: '80px',
-                placeItems: 'start',
+                gap: '8px',
                 transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
                 cursor: isDragging ? 'grabbing' : 'grab',
                 willChange: 'transform',

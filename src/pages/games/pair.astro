@@ -1,19 +1,11 @@
 ---
+import Layout from '../../layouts/Layout.astro';
 import MemoryGame from '../../components/memory/MemoryGame';
 
 const title = 'Pair Memory Game';
 const description = 'Test your memory with this card matching game';
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <title>{title}</title>
-  </head>
-  <body>
-    <MemoryGame client:load />
-  </body>
-</html>
+<Layout title={title} description={description}>
+  <MemoryGame client:load />
+</Layout>

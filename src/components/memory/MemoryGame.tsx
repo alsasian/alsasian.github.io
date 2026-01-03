@@ -116,17 +116,17 @@ export default function MemoryGame() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffef9] text-[#1a1a1a] p-4 font-serif">
+    <div className="min-h-screen p-4">
       {/* Header */}
       <header className="max-w-2xl mx-auto mb-6">
-        <h1 className="text-3xl font-bold mb-2 border-b-2 border-[#1a1a1a] pb-2">
+        <h1 className="text-3xl mb-2 border-b-2 border-gray-900 dark:border-gray-100 pb-2">
           Pair Memory Game
         </h1>
-        <p className="text-sm text-gray-600">Blitz Mode - 6 Pairs</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Blitz Mode - 6 Pairs</p>
       </header>
 
       {/* Stats */}
-      <div className="max-w-2xl mx-auto mb-6 flex gap-6 text-sm border-t border-b border-gray-300 py-3">
+      <div className="max-w-2xl mx-auto mb-6 flex gap-6 text-sm border-t border-b border-gray-300 dark:border-gray-700 py-3">
         <div>
           <span className="font-bold">Time:</span> {formatTime(gameState.elapsedTime)}
         </div>
@@ -144,31 +144,33 @@ export default function MemoryGame() {
               onClick={() => handleCardClick(card.id)}
               disabled={card.isMatched || card.isFlipped}
               className={`
-                aspect-[2/3] rounded-lg border-2 border-[#1a1a1a]
+                aspect-[2/3] rounded-lg border-2
                 flex items-center justify-center text-2xl font-bold
                 transition-all duration-300 active:scale-95
                 ${
                   card.isMatched
-                    ? 'bg-transparent border-transparent text-transparent cursor-default'
+                    ? 'bg-transparent border-transparent cursor-default'
                     : card.isFlipped
-                      ? 'bg-white'
-                      : 'bg-[#1a1a1a] text-transparent cursor-pointer'
+                      ? 'bg-white dark:bg-gray-800 border-gray-900 dark:border-gray-100'
+                      : 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 cursor-pointer'
                 }
               `}
             >
-              {(card.isFlipped || card.isMatched) && (
-                <span className={card.isMatched ? 'opacity-0' : 'opacity-100'}>
-                  {card.rank}
-                  {card.suit}
-                </span>
-              )}
+              <span
+                className={`
+                  ${card.isMatched ? 'opacity-0' : card.isFlipped ? 'opacity-100' : 'opacity-0'}
+                `}
+              >
+                {card.rank}
+                {card.suit}
+              </span>
             </button>
           ))}
         </div>
 
         {/* Win State */}
         {gameState.isComplete && (
-          <div className="bg-white border-2 border-[#1a1a1a] p-6 text-center">
+          <div className="bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 p-6 text-center">
             <h2 className="text-2xl font-bold mb-4">Complete!</h2>
             <div className="space-y-2 mb-6">
               <p>
@@ -180,7 +182,7 @@ export default function MemoryGame() {
             </div>
             <button
               onClick={handleReset}
-              className="bg-[#1a1a1a] text-white px-6 py-3 rounded font-bold hover:bg-gray-800 active:scale-95 transition-all"
+              className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded font-bold hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-95 transition-all"
             >
               Play Again
             </button>
@@ -191,7 +193,7 @@ export default function MemoryGame() {
         {!gameState.isComplete && (
           <button
             onClick={handleReset}
-            className="w-full bg-white border-2 border-[#1a1a1a] px-6 py-3 rounded font-bold hover:bg-gray-100 active:scale-95 transition-all"
+            className="w-full bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 px-6 py-3 rounded font-bold hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95 transition-all"
           >
             Reset Game
           </button>

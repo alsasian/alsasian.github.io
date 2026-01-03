@@ -178,13 +178,17 @@ export default function MemoryGame() {
   // Pan/drag handlers for Rapid mode
   const handlePointerDown = (e: React.PointerEvent) => {
     if (mode !== 'rapid') return;
+    // Don't start drag on card buttons
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+
     setIsDragging(true);
     setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging || mode !== 'rapid') return;
+    e.preventDefault();
     setPanOffset({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
@@ -192,8 +196,11 @@ export default function MemoryGame() {
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (mode !== 'rapid') return;
     setIsDragging(false);
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   };
 
   return (
@@ -258,26 +265,32 @@ export default function MemoryGame() {
       </div>
 
       {/* Game Grid */}
-      <div className="max-w-2xl mx-auto relative">
+      <div className={`mx-auto relative ${mode === 'blitz' ? 'max-w-2xl' : ''}`}>
         {/* Grid Container with Pan/Drag for Rapid mode */}
         <div
           ref={gridRef}
           className={`
             ${mode === 'rapid' ? 'overflow-hidden h-[70vh] relative touch-none' : ''}
           `}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
         >
           <div
-            className={`mb-6 ${mode === 'blitz' ? 'grid grid-cols-4 gap-2' : 'inline-grid grid-cols-6 gap-2'}`}
+            className={mode === 'blitz' ? 'mb-6 grid grid-cols-4 gap-2' : 'mb-6'}
             style={{
               perspective: '1000px',
               ...(mode === 'rapid' && {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(6, 80px)',
+                gridAutoRows: '80px',
+                gap: '8px',
                 transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
                 cursor: isDragging ? 'grabbing' : 'grab',
+                willChange: 'transform',
               }),
             }}
+            onPointerDown={mode === 'rapid' ? handlePointerDown : undefined}
+            onPointerMove={mode === 'rapid' ? handlePointerMove : undefined}
+            onPointerUp={mode === 'rapid' ? handlePointerUp : undefined}
+            onPointerCancel={mode === 'rapid' ? handlePointerUp : undefined}
           >
           {gameState.cards.map((card) => (
             <button

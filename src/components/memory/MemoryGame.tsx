@@ -12,6 +12,9 @@ export default function MemoryGame() {
     isComplete: false,
   }));
 
+  // Helper to determine if suit is red
+  const isRedSuit = (suit: string) => suit === '♥' || suit === '♦';
+
   // Timer effect
   useEffect(() => {
     if (!gameState.startTime || gameState.isComplete) return;
@@ -137,7 +140,7 @@ export default function MemoryGame() {
 
       {/* Game Grid */}
       <div className="max-w-2xl mx-auto">
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-4 gap-2 mb-6">
           {gameState.cards.map((card) => (
             <button
               key={card.id}
@@ -145,7 +148,7 @@ export default function MemoryGame() {
               disabled={card.isMatched || card.isFlipped}
               className={`
                 aspect-[2/3] rounded-lg border-2
-                flex items-center justify-center text-2xl font-bold
+                flex items-center justify-center text-xl font-bold
                 transition-all duration-300 active:scale-95
                 ${
                   card.isMatched
@@ -159,6 +162,7 @@ export default function MemoryGame() {
               <span
                 className={`
                   ${card.isMatched ? 'opacity-0' : card.isFlipped ? 'opacity-100' : 'opacity-0'}
+                  ${isRedSuit(card.suit) ? 'text-red-600 dark:text-red-500' : ''}
                 `}
               >
                 {card.rank}
@@ -168,26 +172,6 @@ export default function MemoryGame() {
           ))}
         </div>
 
-        {/* Win State */}
-        {gameState.isComplete && (
-          <div className="bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Complete!</h2>
-            <div className="space-y-2 mb-6">
-              <p>
-                <span className="font-bold">Time:</span> {formatTime(gameState.elapsedTime)}
-              </p>
-              <p>
-                <span className="font-bold">Mistakes:</span> {gameState.mistakes}
-              </p>
-            </div>
-            <button
-              onClick={handleReset}
-              className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded font-bold hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-95 transition-all"
-            >
-              Play Again
-            </button>
-          </div>
-        )}
 
         {/* Reset Button */}
         {!gameState.isComplete && (
@@ -199,6 +183,29 @@ export default function MemoryGame() {
           </button>
         )}
       </div>
+
+      {/* Win State Modal */}
+      {gameState.isComplete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 p-6 rounded-lg max-w-sm w-full text-center">
+            <h2 className="text-2xl font-bold mb-4">Complete!</h2>
+            <div className="space-y-2 mb-6">
+              <p>
+                <span className="font-bold">Time:</span> {formatTime(gameState.elapsedTime)}
+              </p>
+              <p>
+                <span className="font-bold">Mistakes:</span> {gameState.mistakes}
+              </p>
+            </div>
+            <button
+              onClick={handleReset}
+              className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded font-bold hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-95 transition-all"
+            >
+              Play Again
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

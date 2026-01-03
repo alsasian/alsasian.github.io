@@ -182,6 +182,7 @@ export default function MemoryGame() {
   // Pan/drag handlers for Rapid mode
   const handlePointerDown = (e: React.PointerEvent) => {
     if (mode !== 'rapid') return;
+    e.preventDefault();
 
     setIsDragging(true);
     setHasDragged(false);

@@ -270,7 +270,7 @@ export default function MemoryGame() {
           onPointerUp={handlePointerUp}
         >
           <div
-            className={`grid gap-2 mb-6 ${mode === 'blitz' ? 'grid-cols-4' : 'grid-cols-6'}`}
+            className={`mb-6 ${mode === 'blitz' ? 'grid grid-cols-4 gap-2' : 'inline-grid grid-cols-6 gap-2'}`}
             style={{
               perspective: '1000px',
               ...(mode === 'rapid' && {
@@ -289,7 +289,8 @@ export default function MemoryGame() {
                 transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)',
               }}
               className={`
-                aspect-[2/3] rounded-lg relative
+                ${mode === 'blitz' ? 'aspect-square' : 'w-20 h-20'}
+                rounded-lg relative
                 transition-all duration-500 active:scale-95
                 ${card.isMatched ? 'cursor-default' : 'cursor-pointer'}
               `}
@@ -307,7 +308,8 @@ export default function MemoryGame() {
                   transform: 'rotateY(180deg)',
                 }}
                 className={`
-                  absolute inset-0 rounded-lg border-2 flex items-center justify-center text-xl font-bold
+                  absolute inset-0 rounded-lg border-2 flex items-center justify-center font-bold
+                  ${mode === 'blitz' ? 'text-xl' : 'text-lg'}
                   ${
                     card.isMatched
                       ? 'bg-transparent border-transparent'
@@ -348,10 +350,15 @@ export default function MemoryGame() {
             <div
               className="absolute border-2 border-red-600 dark:border-red-500 pointer-events-none"
               style={{
-                left: `${2 + Math.max(0, Math.min(40, -panOffset.x / 10))}px`,
-                top: `${2 + Math.max(0, Math.min(40, -panOffset.y / 10))}px`,
-                width: '20px',
-                height: '20px',
+                // Grid is 6 cards * 80px + 5 gaps * 8px = 520px
+                // Container is typically ~320px wide on mobile
+                // Minimap is 60px representing 520px grid
+                // Scale: 60/520 ≈ 0.115
+                left: `${8 + (-panOffset.x * 60) / 520}px`,
+                top: `${8 + (-panOffset.y * 60) / 520}px`,
+                // Viewport size scales similarly
+                width: `${(gridRef.current.offsetWidth * 60) / 520}px`,
+                height: `${(gridRef.current.offsetHeight * 60) / 520}px`,
               }}
             />
           </div>

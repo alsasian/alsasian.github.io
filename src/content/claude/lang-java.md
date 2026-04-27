@@ -1,81 +1,58 @@
 ---
 title: 'Java'
-summary: 'Java conventions: style, static analysis, security, architecture, dependencies, testing, CI hooks. Apply on any Java work.'
-tags: ['java', 'jvm', 'spring-boot', 'quarkus', 'security', 'testing', 'static-analysis', 'ci']
+summary: 'My Java conventions — formatting, security, architecture, testing, CI. Apply on any Java work.'
+tags: ['java', 'jvm', 'spring-boot', 'quarkus']
 updated: 2026-04-27
 ---
 
-## When to pull this in
+## When to apply
 
-Working in any Java codebase — Spring Boot, Quarkus, or plain JVM services. Use as the baseline for new projects and as a reference when joining one without enforced standards. If the project also handles untrusted input or persistence, also fetch `topic-security` (when it exists). If the project is hexagonal, the architecture rules below apply; if not, skip them.
+Working in any Java codebase — Spring Boot, Quarkus, or plain JVM services. Apply once per project; the rules persist via the project's `.claude/CLAUDE.md` memory file. Subsequent sessions in the same repo will read those rules automatically without re-fetching this page.
 
-## How to apply
+## What to do
 
-Run the [standard protocol](./#protocol). Specifics for this page:
+1. Find the current repo root (the directory containing `.git/`).
+2. Open or create `.claude/CLAUDE.md` at the repo root.
+3. If it does **not** already contain the line `https://alsasian.github.io/claude/lang-java`, append the **Memory snippet** below. If that line is already present, this page has been applied — do nothing and move to step 5.
+4. Save the file. Do not modify anything else.
+5. Tell me: which file you wrote, whether it was new or appended, and that the Java rules are now in force for this session.
 
-1. Confirm `google-java-format` is on `PATH`. If missing, ask me before installing — it's a global install.
-2. Detect Maven (`pom.xml`) vs Gradle (`build.gradle` / `build.gradle.kts`) in the current repo. The Apply > Settings block matches either.
-3. Merge the **Settings** block into the project's `.claude/settings.json` (project scope, not user scope). Create the file if absent.
-4. Add the **Memory** block to the project's `.claude/CLAUDE.md`. Create the file if absent. The security rules are inlined deliberately — they're damage-class and must apply even without a fetch.
-5. Skip **Skills** for now — none exist on the wiki yet.
-6. Run the **Verify** checklist. If anything fails, revert the changes from steps 3–4 and stop.
+If the repo root has no `.git/`, ask me before continuing — you might be in the wrong place.
 
-## Apply
+## Memory snippet
 
-### Settings
-
-Merge into `.claude/settings.json` at the repo root. Project scope.
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(./mvnw:*)",
-      "Bash(./gradlew:*)",
-      "Bash(mvn:*)",
-      "Bash(gradle:*)",
-      "Bash(google-java-format:*)",
-      "Bash(java:*)",
-      "Bash(javac:*)",
-      "Bash(jshell:*)"
-    ]
-  }
-}
-```
-
-### Skills
-
-_None yet on the wiki._ Forward-looking candidates (don't try to fetch — they don't exist):
-
-- `skill-format-java` — invoke `google-java-format --aosp` on changed `.java` files.
-- `skill-archunit-check` — run only the architecture tests; useful during refactors.
-- `skill-dep-audit` — `dependency:tree` + `dependency:analyze` + OWASP, condensed report.
-
-### Memory
-
-Append to project `.claude/CLAUDE.md`:
+Append this verbatim to `.claude/CLAUDE.md` at the repo root:
 
 ```
-This project uses Java conventions from https://alsasian.github.io/claude/lang-java.
-Apply formatting and architecture rules to all Java edits.
+This project follows Java conventions from https://alsasian.github.io/claude/lang-java.
+Re-fetch that URL for full rules. The most critical ones are inlined here so they apply
+without re-fetching:
 
-Security rules (always in force, do not require a fetch):
 - Never concatenate user input into SQL — use PreparedStatement or JPA named params.
 - Never pass user input to Runtime.exec() or ProcessBuilder unvalidated.
 - Never deserialize untrusted data with ObjectInputStream.
-- Use SecureRandom for tokens, secrets, nonces — never java.util.Random.
+- Use SecureRandom for tokens, secrets, and nonces — never java.util.Random.
 - Never log secrets, tokens, passwords, or PII at any log level.
 - Never disable TLS certificate verification.
 - Validate path inputs against traversal — use Path.normalize().startsWith().
 - Never hardcode secrets; load from env, Secrets Manager, or vault.
 - Hash with SHA-256 or stronger; never MD5 or SHA-1 for security purposes.
-- Disable DTD/external entities on XMLInputFactory (XXE).
-- Close InputStream/Connection/ResultSet in try-with-resources.
+- Disable DTD and external entities on XMLInputFactory (XXE).
+- Close InputStream / Connection / ResultSet in try-with-resources.
+- Never throw generic Exception or RuntimeException — define domain-specific exceptions.
+- Never use wildcard imports.
+- Never add @SuppressWarnings("all") — suppress specific checks only, with a reason.
+- Use Java records for immutable data; avoid Lombok @Data for new code.
+- Domain classes have zero framework imports (no Spring, no Jakarta annotations).
+- Format Java with `google-java-format --aosp` before committing.
+- Run `./mvnw spotless:check` (or `./gradlew spotlessCheck`) before committing.
+- Tests use JUnit 5 + AssertJ; integration tests use Testcontainers, never H2.
+- Never use Thread.sleep() in tests — use Awaitility await().atMost() for async.
 ```
 
-## Absorb
+## Full conventions
 
-Rules I follow when generating Java code. Carry these in context for the rest of the session; do not "install" them.
+The memory snippet above is the always-on subset. The full ruleset below is for re-fetch when you need detail. It does not need to be written into the project — the snippet covers the must-honor rules.
 
 ### Code style and formatting
 
@@ -103,10 +80,6 @@ _Requires: Error Prone, SpotBugs, Checkstyle._
 - Use `spotbugs-exclude-filter.xml` to suppress only documented false positives. Blanket suppressions hide real bugs.
 - Never add `@SuppressWarnings("all")` or tool-wide suppression annotations. Suppress only the specific check, with a comment explaining why.
 - Run `./mvnw spotless:check` or `./gradlew spotlessCheck` in pre-commit. Catches format drift before it reaches CI.
-
-### Security
-
-The security rules are inlined in the **Memory** block above so they apply without a fetch. Honor them in every Java edit.
 
 ### Architecture and structure
 
@@ -177,19 +150,3 @@ _Requires: pre-commit framework or a Husky equivalent._
 
 - Run integration tests tagged `@Tag("integration")` against Testcontainers. Full integration coverage without slowing every PR build.
 - Run mutation testing with PIT (`pitest-maven`); track the trend, don't gate. Mutation scores reveal weak tests that line coverage misses.
-
-## Verify
-
-Run after Apply. All must pass.
-
-- `which google-java-format` returns a path. If not, the formatter isn't installed — flag and stop.
-- `jq '.permissions.allow' .claude/settings.json` includes `"Bash(./mvnw:*)"` and `"Bash(./gradlew:*)"`.
-- `grep -q "alsasian.github.io/claude/lang-java" .claude/CLAUDE.md` succeeds.
-- `grep -q "Never log secrets" .claude/CLAUDE.md` succeeds (security rules inlined).
-- Confirm out loud which rules will now apply, and ask me to start.
-
-## See also
-
-- `topic-security` — pair with this whenever the project handles untrusted input or persistence. _Page does not exist yet._
-- `topic-testing` — broader testing patterns beyond JUnit specifics. _Page does not exist yet._
-- `topic-code-review` — review process beyond Java. _Page does not exist yet._

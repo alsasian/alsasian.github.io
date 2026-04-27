@@ -27,7 +27,28 @@ Built-in (ship with Claude Code):
 - `/security-review` — security pass over pending changes.
 - `/simplify` — review changed code for quality and reuse opportunities.
 
-Init — for fresh projects with no `pom.xml` yet. Drop into `<repo>/.claude/skills/<name>/SKILL.md`. After running an init skill, follow up with the relevant `/setup-lib-*` skills below.
+Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new Maven project. Drop into `<repo>/.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/` for the JDK installer, since it isn't project-scoped).
+
+**`setup-init-jdk`**
+
+```yaml
+---
+name: setup-init-jdk
+description: Install a JDK on the local machine via SDKMAN. Cross-platform (macOS, Linux, WSL).
+allowed-tools: Bash Read
+paths: []
+---
+
+# Steps
+
+1. Ask me for: JDK version (default `21`) and distribution (default `tem` for Eclipse Temurin).
+2. Check whether `sdk` is on `PATH`. If not, confirm with me before installing SDKMAN — its installer modifies shell rc files (`~/.zshrc`, `~/.bashrc`).
+3. If installing SDKMAN: run `curl -s "https://get.sdkman.io" | bash`, then instruct me to either `source ~/.sdkman/bin/sdkman-init.sh` or open a new shell.
+4. Find the exact identifier for the requested JDK: `sdk list java | grep <version>`. Pick the matching `<version>-<distribution>` row.
+5. Install: `sdk install java <identifier>`.
+6. Verify with `java -version`. If I want it as the system default, run `sdk default java <identifier>`.
+7. Report the installed version, identifier, and whether it was set as default.
+```
 
 **`setup-init-mvn`**
 

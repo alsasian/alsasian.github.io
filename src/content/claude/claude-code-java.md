@@ -62,7 +62,7 @@ Project memory lives at `<repo>/CLAUDE.md` (or `<repo>/.claude/CLAUDE.md`) and i
 
 Keep `CLAUDE.md` minimal — don't duplicate the wiki, link to it. Single source of truth, edits propagate via re-fetch instead of needing to update every repo's `CLAUDE.md` whenever I revise a rule.
 
-Example `<repo>/CLAUDE.md`:
+Example minimal `<repo>/CLAUDE.md`:
 
 ```markdown
 # Java project
@@ -72,23 +72,16 @@ Claude conventions and configuration:
 - Claude Code setup for Java: https://alsasian.github.io/claude/claude-code-java
 
 Fetch both at session start (or on first Java edit) and follow them.
-
-## Build commands
-
-- Maven: `./mvnw verify` (full), `./mvnw test -Dgroups='!integration'` (unit only).
-- Gradle: `./gradlew check` (full), `./gradlew test` (unit only).
-- Format: `google-java-format --aosp -i <file>`.
-- Spotless: `./mvnw spotless:check` (or `./gradlew spotlessCheck`) before commit.
 ```
 
-Build commands stay inline because they describe *this repo's* shape — which build tool, which command pattern — not universal Java rules. The wiki holds the universal stuff.
+Beyond the wiki links, each project's `CLAUDE.md` carries only what's specific to *that* repo — build commands, module layout, business context, deployment quirks. None of that is universal Java knowledge, so the wiki doesn't dictate it; it gets added per-project.
 
-Why not inline the security rules too? Two reasons:
+Why not inline the security rules from the wiki?
 
 1. **They're not project-specific.** Universal Java best practices already live on the wiki and Claude largely knows them from training. Inlining duplicates content; when I update the wiki, every project's `CLAUDE.md` would need updating to match.
 2. **Skills aren't the right primitive either.** They get invoked — by description match or path scoping — not loaded into context unconditionally. Use skills for *named workflows* (`/java-test`, `/format-java`); use `CLAUDE.md` for what should be in scope as long as Claude is in this repo.
 
-The one exception worth flagging: a *project-specific* damage-class rule ("this service handles raw PII; never log request bodies") is worth inlining because it's truly local and a missed fetch has real cost. Universal rules don't meet that bar.
+The one exception worth flagging: a *project-specific* damage-class rule ("this service handles raw PII; never log request bodies") is worth inlining in that project's `CLAUDE.md` because it's truly local and a missed fetch has real cost. Universal rules don't meet that bar.
 
 For machine-specific overrides (`JAVA_HOME` paths, plugin locations), use `<repo>/CLAUDE.local.md` and `.gitignore` it. Local notes load last and override team instructions.
 

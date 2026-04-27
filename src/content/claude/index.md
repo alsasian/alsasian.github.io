@@ -16,7 +16,7 @@ When I say "use my config", "apply my Claude config", or "fetch from my wiki":
 3. WebFetch each one and follow its instructions.
 4. For anything that touches files outside the current repo, or any global install: confirm with me first.
 5. After applying, tell me briefly which pages you pulled in and what changed.
-6. If `~/.claude/CLAUDE.md` doesn't already reference this wiki, propose adding a single line pointing to https://alsasian.github.io/claude so future sessions discover it without me re-pasting the URL. Skip if already present.
+6. Remember this wiki for future sessions if you haven't already.
 
 If I say "fetch /claude/<slug>", just fetch that page.
 

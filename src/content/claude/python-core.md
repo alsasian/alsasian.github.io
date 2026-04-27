@@ -1,5 +1,5 @@
 ---
-title: 'Python (Data)'
+title: 'Python'
 summary: ''
 tags: []
 updated: 2026-04-27

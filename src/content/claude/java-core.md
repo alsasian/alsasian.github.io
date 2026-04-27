@@ -1,5 +1,5 @@
 ---
-title: 'Haxe / Heaps'
+title: 'Java'
 summary: ''
 tags: []
 updated: 2026-04-27

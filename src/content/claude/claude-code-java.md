@@ -27,6 +27,33 @@ Built-in (ship with Claude Code):
 - `/security-review` — security pass over pending changes.
 - `/simplify` — review changed code for quality and reuse opportunities.
 
+Init — for fresh projects with no `pom.xml` yet. Drop into `<repo>/.claude/skills/<name>/SKILL.md`. After running an init skill, follow up with the relevant `/setup-lib-*` skills below.
+
+**`setup-init-mvn`**
+
+```yaml
+---
+name: setup-init-mvn
+description: Scaffold a fresh Maven Java project with sane defaults — pom.xml, directory layout, .gitignore.
+allowed-tools: Read Edit Write Bash
+paths: []
+---
+
+# Steps
+
+1. Confirm the working directory is empty or contains only common artifacts (`.git`, `README.md`). If `pom.xml` already exists, abort and report — this skill is for fresh projects only.
+2. Ask me for: `groupId`, `artifactId`, JDK version (default 17), packaging (`jar` default; `war` if asked).
+3. Generate `pom.xml` with:
+   - The supplied `groupId` / `artifactId` / packaging.
+   - Version `0.1.0-SNAPSHOT`.
+   - `<properties>`: `maven.compiler.release` set to the chosen JDK, `project.build.sourceEncoding` set to UTF-8.
+   - Empty `<dependencies>` and `<build><plugins>` blocks ready to fill.
+4. Create the standard directory layout: `src/main/java`, `src/main/resources`, `src/test/java`, `src/test/resources`.
+5. Create `.gitignore` with Maven defaults: `target/`, `.idea/`, `*.iml`, `.vscode/`, `.DS_Store`.
+6. Report what was created.
+7. Suggest next steps: run `/setup-lib-mvn-wrapper`, then `/setup-lib-enforcer`, `/setup-lib-test`, `/setup-lib-lint`, optionally `/setup-lib-archunit` and `/setup-lib-coverage`.
+```
+
 Setup — drop each into `<repo>/.claude/skills/<name>/SKILL.md`. These are instructions for the agent; the agent reads `pom.xml` and applies the edits.
 
 **`setup-lib-mvn-wrapper`**

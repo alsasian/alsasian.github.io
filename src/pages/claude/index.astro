@@ -1,0 +1,50 @@
+---
+import { getEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+
+const entry = await getEntry('claude', 'index');
+if (!entry) {
+  throw new Error('Missing src/content/claude/index.md');
+}
+const { Content } = await entry.render();
+---
+
+<Layout
+  title={`${entry.data.title} | alsasian.github.io`}
+  description={entry.data.summary || entry.data.title}
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-6">
+    <article>
+      <header class="mb-6 border-b-2 border-gray-900 pb-4 dark:border-gray-100">
+        <h1 class="mb-2 text-4xl">{entry.data.title}</h1>
+        {
+          entry.data.summary && (
+            <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">{entry.data.summary}</p>
+          )
+        }
+        <p class="text-xs text-gray-500 dark:text-gray-500">
+          updated {entry.data.updated.toISOString().slice(0, 10)}
+        </p>
+        {
+          entry.data.tags.length > 0 && (
+            <div class="mt-2 flex flex-wrap gap-2">
+              {entry.data.tags.map((tag) => (
+                <span class="rounded bg-gray-200 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )
+        }
+      </header>
+
+      <div
+        class="prose prose-sm max-w-none dark:prose-invert prose-headings:font-sans prose-headings:font-bold prose-h1:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:text-2xl prose-h3:mb-3 prose-h3:mt-6 prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-gray-900 prose-a:underline prose-blockquote:border-l-4 prose-blockquote:border-gray-900 prose-blockquote:pl-4 prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-lg prose-pre:p-4 prose-ol:list-decimal prose-ul:list-disc dark:prose-a:text-gray-100 dark:prose-blockquote:border-gray-100 dark:prose-code:bg-gray-800"
+      >
+        <Content />
+      </div>
+    </article>
+  </main>
+</Layout>

@@ -1,0 +1,120 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+---
+
+<Layout
+  title="Claude Code Config | alsasian.github.io"
+  description="Personal Claude Code configuration — settings, MCP servers, skills, permissions, hooks. Fetchable by Claude Code via WebFetch."
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-6">
+    <article class="mb-6 border-b border-gray-300 pb-4 dark:border-gray-700">
+      <h1 class="mb-2 text-4xl">Claude Code Config</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        My personal Claude Code setup. Fetchable from inside a session.
+      </p>
+    </article>
+
+    <section class="mb-6">
+      <h2 class="mb-2 text-2xl">How to apply</h2>
+      <p class="mb-2 text-sm">From inside Claude Code, run:</p>
+      <pre
+        class="overflow-x-auto rounded border border-gray-300 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-800"><code>WebFetch https://alsasian.github.io/claude and apply the config block exactly.</code></pre>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Claude will read the <code>CLAUDE-CONFIG-START</code> / <code>CLAUDE-CONFIG-END</code> block
+        below and update <code>~/.claude/settings.json</code>, install MCP servers, and add the
+        listed skills.
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- AI-READABLE BLOCK BELOW. Edit the contents inside the markers. -->
+    <!-- ============================================================ -->
+    <section class="mb-6">
+      <h2 class="mb-2 text-2xl">Configuration</h2>
+      <pre
+        class="overflow-x-auto whitespace-pre-wrap rounded border border-gray-300 bg-gray-50 p-4 text-xs dark:border-gray-700 dark:bg-gray-800"><code># CLAUDE-CONFIG-START
+
+You are reading alsasian's personal Claude Code configuration. Apply the
+sections below to the current machine. Make the edits idempotent — if a
+setting already matches, leave it alone. Confirm before installing global
+tools or anything that requires sudo.
+
+## 1. User settings (~/.claude/settings.json)
+
+Merge the following into the user's global settings file. Preserve any
+existing keys not listed here.
+
+```json
+{
+  "model": "claude-opus-4-7",
+  "env": {
+    "DISABLE_TELEMETRY": "0"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}
+```
+
+## 2. MCP servers
+
+Install via `claude mcp add` (user scope). Skip any already present.
+
+- github — official GitHub MCP server for issues, PRs, code search
+  command: `claude mcp add github -s user -- npx -y @modelcontextprotocol/server-github`
+  env: GITHUB_PERSONAL_ACCESS_TOKEN must be set in the shell first
+
+## 3. Skills
+
+Skills live in `~/.claude/skills/<name>/SKILL.md`. Ensure these exist; if
+missing, ask before scaffolding.
+
+- update-config — manage settings.json edits
+- fewer-permission-prompts — auto-allowlist common read-only calls
+- simplify — review changed code for quality
+- review — review a pull request
+- security-review — security review of pending changes
+
+## 4. Hooks
+
+None configured. Leave the `hooks` key untouched unless explicitly asked.
+
+## 5. Status line
+
+Leave the user's existing status line untouched.
+
+# CLAUDE-CONFIG-END
+</code></pre>
+    </section>
+
+    <section class="mb-6 border-t border-gray-300 pt-4 dark:border-gray-700">
+      <h2 class="mb-2 text-xl">Notes</h2>
+      <ul class="list-disc space-y-1 pl-5 text-sm">
+        <li>Edit this file at <code>src/pages/claude.astro</code> to change what gets applied.</li>
+        <li>The block between the start/end markers is the source of truth.</li>
+        <li>
+          Claude Code's WebFetch strips most HTML, so plain text inside <code>&lt;pre&gt;</code> survives.
+        </li>
+      </ul>
+    </section>
+  </main>
+</Layout>

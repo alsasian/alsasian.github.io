@@ -27,7 +27,7 @@ Built-in (ship with Claude Code):
 - `/security-review` — security pass over pending changes.
 - `/simplify` — review changed code for quality and reuse opportunities.
 
-Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new Maven project. Drop into `<repo>/.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/` for the JDK installer, since it isn't project-scoped).
+Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new Maven project. Each skill is a folder containing a `SKILL.md` — drop into `<repo>/.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/<name>/SKILL.md` for the JDK installer, since it isn't project-scoped). **Not** `.claude/commands/<name>.md` — that's the legacy slash-command location and the wrong primitive for parametrized multi-step setup.
 
 **`setup-init-jdk`**
 
@@ -35,6 +35,7 @@ Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new M
 ---
 name: setup-init-jdk
 description: Install a JDK on the local machine using whichever installer is available. Supports Linux, macOS, WSL, and Windows.
+disable-model-invocation: true
 allowed-tools: Bash Read
 paths: []
 ---
@@ -60,6 +61,7 @@ paths: []
 ---
 name: setup-init-mvn
 description: Scaffold a fresh Maven Java project with sane defaults — pom.xml, directory layout, .gitignore.
+disable-model-invocation: true
 allowed-tools: Read Edit Write Bash
 paths: []
 ---
@@ -79,7 +81,7 @@ paths: []
 7. Suggest next steps: run `/setup-lib-mvn-wrapper`, then `/setup-lib-enforcer`, `/setup-lib-test`, `/setup-lib-lint`, optionally `/setup-lib-archunit` and `/setup-lib-coverage`.
 ```
 
-Setup — drop each into `<repo>/.claude/skills/<name>/SKILL.md`. These are instructions for the agent; the agent reads `pom.xml` and applies the edits.
+Setup — same location convention as Init: each skill is a folder under `<repo>/.claude/skills/<name>/SKILL.md`, **not** `.claude/commands/<name>.md`. These are instructions for the agent; the agent reads `pom.xml` and applies the edits.
 
 **`setup-lib-mvn-wrapper`**
 
@@ -87,6 +89,7 @@ Setup — drop each into `<repo>/.claude/skills/<name>/SKILL.md`. These are inst
 ---
 name: setup-lib-mvn-wrapper
 description: Install the Maven Wrapper (mvnw) if it isn't already present.
+disable-model-invocation: true
 allowed-tools: Bash Read
 paths: pom.xml
 ---
@@ -105,6 +108,7 @@ paths: pom.xml
 ---
 name: setup-lib-enforcer
 description: Add Maven Enforcer rules banning SNAPSHOTs, LATEST/RELEASE, and version ranges.
+disable-model-invocation: true
 allowed-tools: Read Edit
 paths: pom.xml
 ---
@@ -128,6 +132,7 @@ paths: pom.xml
 ---
 name: setup-lib-test
 description: Add JUnit 5 and AssertJ as test dependencies to the project's pom.xml.
+disable-model-invocation: true
 allowed-tools: Read Edit
 paths: pom.xml
 ---
@@ -149,6 +154,7 @@ paths: pom.xml
 ---
 name: setup-lib-lint
 description: Configure Spotless, Error Prone (with NullAway), SpotBugs, and Checkstyle on the project's pom.xml.
+disable-model-invocation: true
 allowed-tools: Read Edit Write
 paths: pom.xml
 ---
@@ -172,6 +178,7 @@ paths: pom.xml
 ---
 name: setup-lib-archunit
 description: Add ArchUnit as a test dependency and scaffold a starter architecture test.
+disable-model-invocation: true
 allowed-tools: Read Edit Write
 paths: pom.xml
 ---
@@ -194,6 +201,7 @@ paths: pom.xml
 ---
 name: setup-lib-coverage
 description: Configure JaCoCo for line coverage with a fail-on-regress threshold.
+disable-model-invocation: true
 allowed-tools: Read Edit
 paths: pom.xml
 ---

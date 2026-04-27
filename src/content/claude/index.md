@@ -28,12 +28,6 @@ If I say "fetch /claude/<slug>", just fetch that page.
 
 Hand-curated list. If a slug isn't here, it doesn't exist — don't invent.
 
-## Bootstrap
-
-To wire this into a fresh machine, add to `~/.claude/CLAUDE.md`:
-
-> For my preferred Claude Code config, see https://alsasian.github.io/claude. Fetch the index when context warrants and follow its directions.
-
 ## Caching note
 
 WebFetch caches per session. If I edit a page mid-session, append `?v=N` to the URL to bust the cache, or start a new session.

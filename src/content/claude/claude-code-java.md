@@ -34,7 +34,7 @@ Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new M
 ```yaml
 ---
 name: setup-init-jdk
-description: Install a JDK on the local machine using whichever installer is available.
+description: Install a JDK on the local machine using whichever installer is available. Supports Linux, macOS, WSL, and Windows.
 allowed-tools: Bash Read
 paths: []
 ---
@@ -42,11 +42,16 @@ paths: []
 # Steps
 
 1. Ask me for: JDK version (default `21`) and distribution (default Eclipse Temurin).
-2. Detect installers available on `PATH`: `sdk` (SDKMAN), `mise`, `asdf`, `brew` (macOS), `apt-get` / `dnf` / `pacman` (Linux).
-3. If one is available, propose using it. If multiple, ask me which. If none are available, list bootstrap options (SDKMAN via `curl -s "https://get.sdkman.io" | bash`, mise via `curl https://mise.run | sh`, or download a JDK directly from adoptium.net) and ask me which — confirm with me before installing any installer, since each modifies shell rc files or system state.
-4. Run the install command for the chosen tool. Confirm with me before any global state change.
-5. Verify with `java -version`. If the chosen tool supports a default-version concept and I want this version as default, set it.
-6. Report what was installed, where it lives, and how to make it default later if not done now.
+2. Detect the OS (macOS, Linux, WSL, Windows) and which installers are on `PATH`:
+   - Linux / macOS / WSL: `sdk` (SDKMAN), `mise`, `asdf`.
+   - macOS: `brew`.
+   - Linux / WSL: `apt-get`, `dnf`, `pacman`.
+   - Windows: `winget`, `scoop`, `choco`. `mise` also runs on Windows.
+3. If one installer is available, propose using it. If multiple, ask me which.
+4. If none are available, list bootstrap options for the detected OS — SDKMAN (Linux/macOS/WSL only) via `curl -s "https://get.sdkman.io" | bash`; `mise` via `curl https://mise.run | sh` (Linux/macOS/WSL) or `irm https://mise.run | iex` (Windows PowerShell); or download a JDK directly from adoptium.net (works everywhere). Confirm with me before installing any installer — each modifies shell rc files or system state.
+5. Run the install command for the chosen tool. Confirm with me before any global state change.
+6. Verify with `java -version`. If the chosen tool supports a default-version concept and I want this version as default, set it.
+7. Report what was installed, where it lives, and how to make it default later if not done now.
 ```
 
 **`setup-init-mvn`**

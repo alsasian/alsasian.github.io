@@ -58,42 +58,39 @@ Frontmatter keys worth knowing: `description` (used for auto-invocation matching
 
 ## Memory / rules
 
-Project memory lives at `<repo>/CLAUDE.md` or `<repo>/.claude/CLAUDE.md`. Files concatenate up the directory tree; project memory loads before user memory. Keep under ~200 lines.
+Project memory lives at `<repo>/CLAUDE.md` (or `<repo>/.claude/CLAUDE.md`) and is auto-loaded into every session opened in the repo. Files concatenate up the directory tree; project memory loads before user memory. Keep under ~200 lines.
 
-Drop this snippet into a Java repo's `CLAUDE.md`. The wiki link gives Claude the full ruleset on demand; the inlined rules below are too damage-prone to risk a missed fetch.
+Keep `CLAUDE.md` minimal — don't duplicate the wiki, link to it. Single source of truth, edits propagate via re-fetch instead of needing to update every repo's `CLAUDE.md` whenever I revise a rule.
+
+Example `<repo>/CLAUDE.md`:
 
 ```markdown
 # Java project
 
-For full conventions, fetch https://alsasian.github.io/claude/java-best-practices.
+Claude conventions and configuration:
+- Java conventions: https://alsasian.github.io/claude/java-best-practices
+- Claude Code setup for Java: https://alsasian.github.io/claude/claude-code-java
 
-## Critical rules — always in force
-
-- Never concatenate user input into SQL — use PreparedStatement or JPA named parameters.
-- Never pass user input to Runtime.exec() or ProcessBuilder unvalidated.
-- Never deserialize untrusted data with ObjectInputStream.
-- Use SecureRandom for tokens, secrets, and nonces; never java.util.Random.
-- Never log secrets, tokens, passwords, or PII.
-- Never disable TLS certificate verification.
-- Validate path inputs against traversal — Path.normalize().startsWith().
-- Never hardcode secrets; load from env, Secrets Manager, or vault.
-- Hash with SHA-256 or stronger; never MD5 or SHA-1 for security purposes.
-- Disable DTD and external entities on XMLInputFactory (XXE).
-- Close InputStream / Connection / ResultSet in try-with-resources.
-- Never throw raw Exception or RuntimeException — use domain-specific exceptions.
-- No wildcard imports.
-- Use Java records for immutable data; avoid Lombok @Data for new code.
-- Domain classes have zero framework imports.
+Fetch both at session start (or on first Java edit) and follow them.
 
 ## Build commands
 
 - Maven: `./mvnw verify` (full), `./mvnw test -Dgroups='!integration'` (unit only).
 - Gradle: `./gradlew check` (full), `./gradlew test` (unit only).
 - Format: `google-java-format --aosp -i <file>`.
-- Spotless: `./mvnw spotless:check` or `./gradlew spotlessCheck` before commit.
+- Spotless: `./mvnw spotless:check` (or `./gradlew spotlessCheck`) before commit.
 ```
 
-For machine-specific overrides (laptop A vs laptop B), use `<repo>/CLAUDE.local.md` and add it to `.gitignore`. Local notes load last and override team instructions.
+Build commands stay inline because they describe *this repo's* shape — which build tool, which command pattern — not universal Java rules. The wiki holds the universal stuff.
+
+Why not inline the security rules too? Two reasons:
+
+1. **They're not project-specific.** Universal Java best practices already live on the wiki and Claude largely knows them from training. Inlining duplicates content; when I update the wiki, every project's `CLAUDE.md` would need updating to match.
+2. **Skills aren't the right primitive either.** They get invoked — by description match or path scoping — not loaded into context unconditionally. Use skills for *named workflows* (`/java-test`, `/format-java`); use `CLAUDE.md` for what should be in scope as long as Claude is in this repo.
+
+The one exception worth flagging: a *project-specific* damage-class rule ("this service handles raw PII; never log request bodies") is worth inlining because it's truly local and a missed fetch has real cost. Universal rules don't meet that bar.
+
+For machine-specific overrides (`JAVA_HOME` paths, plugin locations), use `<repo>/CLAUDE.local.md` and `.gitignore` it. Local notes load last and override team instructions.
 
 ## Settings
 
@@ -132,35 +129,7 @@ For machine-specific overrides (different `JAVA_HOME` per machine, custom plugin
 
 ## MCPs
 
-I keep MCPs minimal — Bash plus Maven/Gradle covers most Java work. Add an MCP only when there's a concrete capability the shell can't give me.
-
-Three Java-relevant MCPs that earn their keep when the use case fits:
-
-| Server | When it earns its keep | Source |
-|---|---|---|
-| **Maven Tools MCP** | Dependency intelligence — tree, analyze, version queries — without re-running Maven each time. Big wins in dependency-heavy Spring Boot apps. | https://github.com/arvindand/maven-tools-mcp |
-| **LSP4J-MCP** | Bridges Eclipse JDTLS so Claude has IDE-grade symbol navigation, refactoring, and type info. Worth it on large multi-module codebases; overkill for small services. | https://github.com/stephanj/LSP4J-MCP |
-| **Gradle MCP Server** | Equivalent of Maven Tools for Gradle projects — task introspection, dependency queries. | https://github.com/IlyaGulya/gradle-mcp-server |
-
-Project-scoped declaration at `<repo>/.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "maven-tools": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "maven-tools-mcp"]
-    }
-  }
-}
-```
-
-Or via CLI:
-
-```bash
-claude mcp add --scope project --transport stdio maven-tools -- npx -y maven-tools-mcp
-```
+_None yet._
 
 ## Hooks
 

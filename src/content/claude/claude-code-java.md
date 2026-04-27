@@ -34,20 +34,19 @@ Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new M
 ```yaml
 ---
 name: setup-init-jdk
-description: Install a JDK on the local machine via SDKMAN. Cross-platform (macOS, Linux, WSL).
+description: Install a JDK on the local machine using whichever installer is available.
 allowed-tools: Bash Read
 paths: []
 ---
 
 # Steps
 
-1. Ask me for: JDK version (default `21`) and distribution (default `tem` for Eclipse Temurin).
-2. Check whether `sdk` is on `PATH`. If not, confirm with me before installing SDKMAN — its installer modifies shell rc files (`~/.zshrc`, `~/.bashrc`).
-3. If installing SDKMAN: run `curl -s "https://get.sdkman.io" | bash`, then instruct me to either `source ~/.sdkman/bin/sdkman-init.sh` or open a new shell.
-4. Find the exact identifier for the requested JDK: `sdk list java | grep <version>`. Pick the matching `<version>-<distribution>` row.
-5. Install: `sdk install java <identifier>`.
-6. Verify with `java -version`. If I want it as the system default, run `sdk default java <identifier>`.
-7. Report the installed version, identifier, and whether it was set as default.
+1. Ask me for: JDK version (default `21`) and distribution (default Eclipse Temurin).
+2. Detect installers available on `PATH`: `sdk` (SDKMAN), `mise`, `asdf`, `brew` (macOS), `apt-get` / `dnf` / `pacman` (Linux).
+3. If one is available, propose using it. If multiple, ask me which. If none are available, list bootstrap options (SDKMAN via `curl -s "https://get.sdkman.io" | bash`, mise via `curl https://mise.run | sh`, or download a JDK directly from adoptium.net) and ask me which — confirm with me before installing any installer, since each modifies shell rc files or system state.
+4. Run the install command for the chosen tool. Confirm with me before any global state change.
+5. Verify with `java -version`. If the chosen tool supports a default-version concept and I want this version as default, set it.
+6. Report what was installed, where it lives, and how to make it default later if not done now.
 ```
 
 **`setup-init-mvn`**

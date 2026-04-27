@@ -1,13 +1,24 @@
 ---
 title: 'Claude Code: Java'
-summary: 'Ready-to-use Claude Code configuration for Java projects.'
-tags: ['claude-code', 'java', 'tooling']
+summary: 'Ready-to-use Claude Code configuration for Maven Java projects.'
+tags: ['claude-code', 'java', 'maven', 'tooling']
 updated: 2026-04-27
 ---
 
 ## Overview
 
-Ready-to-use Claude Code configuration for Java work — Spring Boot, Quarkus, plain JVM. Pair with [java-best-practices](./java-best-practices) for the conventions.
+Ready-to-use Claude Code configuration for Java work on Maven projects. Pair with [java-best-practices](./java-best-practices) for the conventions.
+
+## Required dependencies
+
+Mandatory in any project this configuration applies to:
+
+- **Test:** JUnit 5 (`org.junit.jupiter:junit-jupiter`), AssertJ (`org.assertj:assertj-core`).
+- **Lint plugins:** Spotless (`com.diffplug.spotless:spotless-maven-plugin`), Error Prone (via `maven-compiler-plugin` `<compilerArgs>`), SpotBugs (`com.github.spotbugs:spotbugs-maven-plugin`), Checkstyle (`org.apache.maven.plugins:maven-checkstyle-plugin`).
+- **Build wrapper:** `mvnw` (Maven Wrapper).
+- **Local toolchain:** JDK 17+, `google-java-format` on `PATH`.
+
+The `/setup-lib-test` and `/setup-lib-lint` skills below install the test and lint deps into a project's `pom.xml`.
 
 ## Skills
 
@@ -17,24 +28,68 @@ Built-in (ship with Claude Code):
 - `/security-review` — security pass over pending changes.
 - `/simplify` — review changed code for quality and reuse opportunities.
 
-Custom — drop each into `<repo>/.claude/skills/<name>/SKILL.md`:
+Setup — drop each into `<repo>/.claude/skills/<name>/SKILL.md`. These are instructions for the agent; the agent reads `pom.xml` and applies the edits.
+
+**`setup-lib-test`**
+
+```yaml
+---
+name: setup-lib-test
+description: Add JUnit 5 and AssertJ as test dependencies to the project's pom.xml.
+allowed-tools: Read Edit
+paths: pom.xml
+---
+
+# Steps
+
+1. Read `pom.xml`.
+2. In `<dependencies>`, ensure these are present with `<scope>test</scope>`:
+   - `org.junit.jupiter:junit-jupiter`
+   - `org.assertj:assertj-core`
+   Pin each to an exact stable version — never `LATEST` or `RELEASE`.
+3. In `<build><plugins>`, ensure `maven-surefire-plugin` is present, version pinned, configured to run JUnit Platform.
+4. Report what was added vs. already present.
+```
+
+**`setup-lib-lint`**
+
+```yaml
+---
+name: setup-lib-lint
+description: Configure Spotless, Error Prone, SpotBugs, and Checkstyle on the project's pom.xml.
+allowed-tools: Read Edit
+paths: pom.xml
+---
+
+# Steps
+
+1. Read `pom.xml`.
+2. In `<build><plugins>`, ensure each of the following is configured and version-pinned:
+   - `com.diffplug.spotless:spotless-maven-plugin` — using `googleJavaFormat("aosp")`.
+   - `maven-compiler-plugin` — Error Prone added via `-Xplugin:ErrorProne` in `<compilerArgs>` with `-Werror`, plus `error_prone_core` on the annotation processor path.
+   - `com.github.spotbugs:spotbugs-maven-plugin` — `effort=Max`, `threshold=Medium`.
+   - `org.apache.maven.plugins:maven-checkstyle-plugin` — using `google_checks.xml`.
+3. Pin every plugin to an exact stable version. No `LATEST` or `RELEASE`.
+4. Report what was added vs. already present.
+```
+
+Operational — drop each into `<repo>/.claude/skills/<name>/SKILL.md`:
 
 **`java-test`**
 
 ```yaml
 ---
 name: java-test
-description: Run JUnit unit tests excluding integration; summarize failures.
+description: Run JUnit 5 unit tests; summarize failures.
 allowed-tools: Bash Read
 paths: src/**/*.java
 ---
 
 # Steps
 
-1. Detect Maven (`pom.xml`) or Gradle (`build.gradle` / `build.gradle.kts`).
-2. Maven: `./mvnw test -Dgroups='!integration'`. Gradle: `./gradlew test --fail-fast=false`.
-3. Summarize the first three failures with `class:line`, expected vs actual, failing assertion.
-4. Report total pass/fail counts.
+1. Run `./mvnw test`.
+2. Summarize the first three failures with `class:line`, expected vs actual, failing assertion.
+3. Report total pass/fail counts.
 ```
 
 **`archunit-check`**
@@ -42,14 +97,14 @@ paths: src/**/*.java
 ```yaml
 ---
 name: archunit-check
-description: Run only ArchUnit architecture tests; report layer and import violations.
+description: Run only ArchUnit architecture tests; report violations.
 allowed-tools: Bash Read
 paths: src/**/*.java
 ---
 
 # Steps
 
-1. Maven: `./mvnw test -Dtest='*Architecture*'`. Gradle: `./gradlew test --tests '*Architecture*'`.
+1. Run `./mvnw test -Dtest='*Architecture*'`.
 2. For failures, list each rule violated and the offending class.
 3. Report pass/fail counts.
 ```
@@ -59,16 +114,16 @@ paths: src/**/*.java
 ```yaml
 ---
 name: java-dep-audit
-description: Audit Java dependencies — tree, unused declarations, CVEs.
+description: Audit Java dependencies — tree and unused declarations.
 allowed-tools: Bash Read
-paths: ['pom.xml', 'build.gradle', 'build.gradle.kts']
+paths: pom.xml
 ---
 
 # Steps
 
-1. Maven: `mvn dependency:tree`, `mvn dependency:analyze`, `mvn org.owasp:dependency-check-maven:check`. Gradle equivalent if `build.gradle*` is present.
-2. Report direct dependencies with effective versions, unused declared dependencies, and CVEs at HIGH severity or above.
-3. Flag anything that breaks the rules at https://alsasian.github.io/claude/java-best-practices (no SNAPSHOTs, no LATEST/RELEASE, no `com.sun.*` / `sun.misc.*`).
+1. Run `mvn dependency:tree` and `mvn dependency:analyze`.
+2. Report direct dependencies with effective versions, and any unused declared dependencies.
+3. Flag SNAPSHOTs, `LATEST` / `RELEASE` versions, and `com.sun.*` / `sun.misc.*` imports — they violate the conventions at https://alsasian.github.io/claude/java-best-practices.
 ```
 
 **`format-java`**
@@ -94,7 +149,7 @@ Drop into `<repo>/.claude/rules/java.md`:
 
 ```markdown
 ---
-paths: ['src/**/*.java', 'src/**/*.kt']
+paths: ['src/**/*.java']
 ---
 
 When editing Java files in this project, follow the conventions at
@@ -114,17 +169,13 @@ Merge into `<repo>/.claude/settings.json`:
   "permissions": {
     "allow": [
       "Bash(./mvnw:*)",
-      "Bash(./gradlew:*)",
       "Bash(mvn:*)",
-      "Bash(gradle:*)",
       "Bash(java:*)",
       "Bash(javac:*)",
       "Bash(jshell:*)",
       "Bash(google-java-format:*)",
       "Read(src/**/*.java)",
-      "Read(pom.xml)",
-      "Read(build.gradle)",
-      "Read(build.gradle.kts)"
+      "Read(pom.xml)"
     ],
     "deny": [
       "Read(./.env)",
@@ -170,7 +221,7 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f ./mvnw ]; then ./mvnw spotless:check; elif [ -f ./gradlew ]; then ./gradlew spotlessCheck; fi"
+            "command": "if [ -f ./mvnw ]; then ./mvnw spotless:check; fi"
           }
         ]
       }
@@ -181,7 +232,7 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f pom.xml ] || [ -f build.gradle ] || [ -f build.gradle.kts ]; then command -v google-java-format >/dev/null 2>&1 || echo 'WARNING: google-java-format not on PATH' >&2; fi"
+            "command": "if [ -f pom.xml ]; then command -v google-java-format >/dev/null 2>&1 || echo 'WARNING: google-java-format not on PATH' >&2; fi"
           }
         ]
       }

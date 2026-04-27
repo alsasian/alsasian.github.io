@@ -11,14 +11,13 @@ Ready-to-use Claude Code configuration for Java work on Maven projects. Pair wit
 
 ## Required dependencies
 
-Mandatory in any project this configuration applies to:
+What the Setup skills install. Most are added by their corresponding `/setup-lib-*` skill below.
 
-- **Test:** JUnit 5 (`org.junit.jupiter:junit-jupiter`), AssertJ (`org.assertj:assertj-core`).
-- **Lint plugins:** Spotless (`com.diffplug.spotless:spotless-maven-plugin`), Error Prone (via `maven-compiler-plugin` `<compilerArgs>`), SpotBugs (`com.github.spotbugs:spotbugs-maven-plugin`), Checkstyle (`org.apache.maven.plugins:maven-checkstyle-plugin`).
-- **Build wrapper:** `mvnw` (Maven Wrapper).
+- **Test:** JUnit 5 (`org.junit.jupiter:junit-jupiter`), AssertJ (`org.assertj:assertj-core`). ArchUnit (`com.tngtech.archunit:archunit-junit5`) added by `/setup-lib-archunit`.
+- **Lint plugins:** Spotless (`com.diffplug.spotless:spotless-maven-plugin`), Error Prone (via `maven-compiler-plugin`) with NullAway (`com.uber.nullaway:nullaway`), SpotBugs (`com.github.spotbugs:spotbugs-maven-plugin`), Checkstyle (`org.apache.maven.plugins:maven-checkstyle-plugin`). JSpecify (`org.jspecify:jspecify`) for `@NullMarked`.
+- **Quality plugins:** JaCoCo (`org.jacoco:jacoco-maven-plugin`) added by `/setup-lib-coverage`. Maven Enforcer (`org.apache.maven.plugins:maven-enforcer-plugin`) added by `/setup-lib-enforcer`.
+- **Build wrapper:** `mvnw` (Maven Wrapper) — added by `/setup-lib-mvn-wrapper` if missing.
 - **Local toolchain:** JDK 17+, `google-java-format` on `PATH`.
-
-The `/setup-lib-test` and `/setup-lib-lint` skills below install the test and lint deps into a project's `pom.xml`.
 
 ## Skills
 
@@ -29,6 +28,47 @@ Built-in (ship with Claude Code):
 - `/simplify` — review changed code for quality and reuse opportunities.
 
 Setup — drop each into `<repo>/.claude/skills/<name>/SKILL.md`. These are instructions for the agent; the agent reads `pom.xml` and applies the edits.
+
+**`setup-lib-mvn-wrapper`**
+
+```yaml
+---
+name: setup-lib-mvn-wrapper
+description: Install the Maven Wrapper (mvnw) if it isn't already present.
+allowed-tools: Bash Read
+paths: pom.xml
+---
+
+# Steps
+
+1. Check whether `./mvnw` exists at the repo root. If yes, do nothing and report.
+2. Run `mvn -N wrapper:wrapper` (Maven 3.7+). Pin to the project's chosen Maven baseline if the wrapper goal supports a `-Dmaven` argument.
+3. Confirm `mvnw`, `mvnw.cmd`, and `.mvn/wrapper/maven-wrapper.properties` were created.
+4. Report what was added.
+```
+
+**`setup-lib-enforcer`**
+
+```yaml
+---
+name: setup-lib-enforcer
+description: Add Maven Enforcer rules banning SNAPSHOTs, LATEST/RELEASE, and version ranges.
+allowed-tools: Read Edit
+paths: pom.xml
+---
+
+# Steps
+
+1. Read `pom.xml`.
+2. In `<build><plugins>`, ensure `org.apache.maven.plugins:maven-enforcer-plugin` is configured and version-pinned.
+3. Bind an `enforce` execution to the `validate` phase with these rules:
+   - `requireReleaseDeps` — no SNAPSHOT versions.
+   - `bannedDependencies` — reject versions matching `LATEST`, `RELEASE`, or any range syntax (`[`, `(`, `,`, `]`, `)`).
+   - `requireMavenVersion` — matching the project's chosen Maven baseline.
+   - `requireJavaVersion` — matching the project's required JDK (default JDK 17+).
+4. Pin to an exact stable version. No `LATEST` / `RELEASE`.
+5. Report what was added vs. already present.
+```
 
 **`setup-lib-test`**
 
@@ -56,7 +96,52 @@ paths: pom.xml
 ```yaml
 ---
 name: setup-lib-lint
-description: Configure Spotless, Error Prone, SpotBugs, and Checkstyle on the project's pom.xml.
+description: Configure Spotless, Error Prone (with NullAway), SpotBugs, and Checkstyle on the project's pom.xml.
+allowed-tools: Read Edit Write
+paths: pom.xml
+---
+
+# Steps
+
+1. Read `pom.xml`.
+2. In `<build><plugins>`, ensure each is configured and version-pinned:
+   - `com.diffplug.spotless:spotless-maven-plugin` — using `googleJavaFormat("aosp")`.
+   - `maven-compiler-plugin` — Error Prone added via `-Xplugin:ErrorProne` in `<compilerArgs>` with `-Werror`. Annotation processor path includes `com.google.errorprone:error_prone_core` and `com.uber.nullaway:nullaway`. Configure NullAway with the project's base package as `AnnotatedPackages`.
+   - `com.github.spotbugs:spotbugs-maven-plugin` — `effort=Max`, `threshold=Medium`.
+   - `org.apache.maven.plugins:maven-checkstyle-plugin` — using `google_checks.xml`.
+3. Add `org.jspecify:jspecify` to `<dependencies>` (regular scope) if not already present, and add `@NullMarked` (from JSpecify) to the project's main `package-info.java` files. Create them if they don't exist.
+4. Pin every plugin to an exact stable version. No `LATEST` / `RELEASE`.
+5. Report what was added vs. already present.
+```
+
+**`setup-lib-archunit`**
+
+```yaml
+---
+name: setup-lib-archunit
+description: Add ArchUnit as a test dependency and scaffold a starter architecture test.
+allowed-tools: Read Edit Write
+paths: pom.xml
+---
+
+# Steps
+
+1. Read `pom.xml`.
+2. In `<dependencies>`, ensure `com.tngtech.archunit:archunit-junit5` is present with `<scope>test</scope>`. Pin to an exact stable version.
+3. Detect the project's base package from existing source. If no architecture test exists, scaffold `src/test/java/<base-pkg>/ArchitectureTest.java` with starter rules:
+   - Domain classes (`..domain..`) have no framework imports (no Spring, no Jakarta).
+   - Controllers (`..adapter.in..` or `..controller..`) don't access repositories (`..adapter.out..` or `..repository..`) directly.
+   - Layer dependency direction: `domain` ← `application` ← `adapter`.
+4. The class name must match `*Architecture*Test` so the `/archunit-check` skill picks it up.
+5. Report what was added.
+```
+
+**`setup-lib-coverage`**
+
+```yaml
+---
+name: setup-lib-coverage
+description: Configure JaCoCo for line coverage with a fail-on-regress threshold.
 allowed-tools: Read Edit
 paths: pom.xml
 ---
@@ -64,14 +149,16 @@ paths: pom.xml
 # Steps
 
 1. Read `pom.xml`.
-2. In `<build><plugins>`, ensure each of the following is configured and version-pinned:
-   - `com.diffplug.spotless:spotless-maven-plugin` — using `googleJavaFormat("aosp")`.
-   - `maven-compiler-plugin` — Error Prone added via `-Xplugin:ErrorProne` in `<compilerArgs>` with `-Werror`, plus `error_prone_core` on the annotation processor path.
-   - `com.github.spotbugs:spotbugs-maven-plugin` — `effort=Max`, `threshold=Medium`.
-   - `org.apache.maven.plugins:maven-checkstyle-plugin` — using `google_checks.xml`.
-3. Pin every plugin to an exact stable version. No `LATEST` or `RELEASE`.
-4. Report what was added vs. already present.
+2. In `<build><plugins>`, ensure `org.jacoco:jacoco-maven-plugin` is configured and version-pinned.
+3. Bind these executions:
+   - `prepare-agent` (default phase, attaches the JaCoCo agent).
+   - `report` in the `verify` phase.
+   - `check` with a `BUNDLE`-scope `LINE` coverage rule. Default minimum: 80%. Fail the build on regression.
+4. Pin to an exact stable version. No `LATEST` / `RELEASE`.
+5. Report what was added vs. already present, plus the active threshold.
 ```
+
+**TODO: `setup-lib-bom`** — detect the framework in use (Spring Boot, Quarkus, AWS SDK) and add the appropriate BOM to `<dependencyManagement>`. Skipped until framework detection is specified.
 
 Operational — drop each into `<repo>/.claude/skills/<name>/SKILL.md`:
 

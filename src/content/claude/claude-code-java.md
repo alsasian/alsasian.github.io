@@ -56,34 +56,50 @@ paths: src/**/*.java
 
 Frontmatter keys worth knowing: `description` (used for auto-invocation matching), `allowed-tools` (whitelist scope), `paths` (glob to scope when the skill applies), `effort` (`low`/`medium`/`high`/`xhigh`/`max`), `context: fork` (run inside a subagent so the main session's context isn't consumed).
 
-## Memory / rules
+## Rules
 
-Project memory lives at `<repo>/CLAUDE.md` (or `<repo>/.claude/CLAUDE.md`) and is auto-loaded into every session opened in the repo. Files concatenate up the directory tree; project memory loads before user memory. Keep under ~200 lines.
+Markdown files in `<repo>/.claude/rules/` load into context at session start, like `CLAUDE.md`, but with one extra capability: an optional `paths` frontmatter glob scopes the file's content so it only enters context when Claude is touching matching files. Useful in polyglot repos where Java rules shouldn't dilute context for non-Java work.
 
-Keep `CLAUDE.md` minimal — don't duplicate the wiki, link to it. Single source of truth, edits propagate via re-fetch instead of needing to update every repo's `CLAUDE.md` whenever I revise a rule.
-
-Example minimal `<repo>/CLAUDE.md`:
+Example `<repo>/.claude/rules/java.md`:
 
 ```markdown
-# Java project
+---
+paths: ['src/**/*.java', 'src/**/*.kt']
+---
 
-Claude conventions and configuration:
-- Java conventions: https://alsasian.github.io/claude/java-best-practices
-- Claude Code setup for Java: https://alsasian.github.io/claude/claude-code-java
+When editing Java files in this project, follow the conventions at
+https://alsasian.github.io/claude/java-best-practices.
 
-Fetch both at session start (or on first Java edit) and follow them.
+[Project-specific rules, if any, that don't fit on the wiki — module layout,
+local damage-class rules, deployment quirks. None of this is universal Java
+knowledge.]
 ```
 
-Beyond the wiki links, each project's `CLAUDE.md` carries only what's specific to *that* repo — build commands, module layout, business context, deployment quirks. None of that is universal Java knowledge, so the wiki doesn't dictate it; it gets added per-project.
+Compared to other carriers:
 
-Why not inline the security rules from the wiki?
+- **vs. `CLAUDE.md`** — `.claude/rules/` is finer-grained (path-scoped), better when the project has multiple languages or contexts. `CLAUDE.md` is the right primitive when something should be in scope across the whole repo.
+- **vs. skills** — rules load passively into context; skills are *invoked* on demand. Use a rule for "things I want Claude to know whenever it's in Java files"; use a skill for "named workflow I'll trigger explicitly."
+- **vs. project docs (`docs/*.md`, etc.)** — rules auto-load into context. Anything the agent should know without being told to read it belongs here. Anything that's reference material the agent reads on demand belongs in regular project docs.
 
-1. **They're not project-specific.** Universal Java best practices already live on the wiki and Claude largely knows them from training. Inlining duplicates content; when I update the wiki, every project's `CLAUDE.md` would need updating to match.
-2. **Skills aren't the right primitive either.** They get invoked — by description match or path scoping — not loaded into context unconditionally. Use skills for *named workflows* (`/java-test`, `/format-java`); use `CLAUDE.md` for what should be in scope as long as Claude is in this repo.
+What goes inside is project-specific by design; the wiki only describes the primitive, not the contents.
 
-The one exception worth flagging: a *project-specific* damage-class rule ("this service handles raw PII; never log request bodies") is worth inlining in that project's `CLAUDE.md` because it's truly local and a missed fetch has real cost. Universal rules don't meet that bar.
+## Memory
 
-For machine-specific overrides (`JAVA_HOME` paths, plugin locations), use `<repo>/CLAUDE.local.md` and `.gitignore` it. Local notes load last and override team instructions.
+Beyond `CLAUDE.md`, Claude Code has **auto-memory**: a per-repo store at `~/.claude/projects/<project-slug>/memory/MEMORY.md`. The first 200 lines (or 25 KB, whichever comes first) load at session start; Claude reads and writes to it during the session as it learns about the project.
+
+What the agent decides to remember is up to it. Typical candidates for Java work:
+
+- Build command flavors specific to this repo (test groupings, profile names, env requirements).
+- Module layout and package boundaries inferred from existing code.
+- Recurring failure patterns or flaky tests.
+- Conventions the agent observed but couldn't otherwise verify.
+
+Auto-memory is preferable to inlining transient or project-shape info into `.claude/rules/` or anywhere git-tracked: it lives under `~/.claude` (machine-local, not shared), and the agent updates it organically.
+
+Browse or edit via `/memory`. Relevant settings:
+
+- `autoMemoryEnabled` — default `true`. Keep on.
+- `autoMemoryDirectory` — override location. Set in user (`~/.claude/settings.json`) or local (`.claude/settings.local.json`) settings only — not in shared project settings, to avoid sensitive redirects via git.
 
 ## Settings
 

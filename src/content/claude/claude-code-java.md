@@ -17,7 +17,7 @@ What the Setup skills install. Most are added by their corresponding `/setup-lib
 - **Lint plugins:** Spotless (`com.diffplug.spotless:spotless-maven-plugin`), Error Prone (via `maven-compiler-plugin`) with NullAway (`com.uber.nullaway:nullaway`), SpotBugs (`com.github.spotbugs:spotbugs-maven-plugin`), Checkstyle (`org.apache.maven.plugins:maven-checkstyle-plugin`). JSpecify (`org.jspecify:jspecify`) for `@NullMarked`.
 - **Quality plugins:** JaCoCo (`org.jacoco:jacoco-maven-plugin`) added by `/setup-lib-coverage`. Maven Enforcer (`org.apache.maven.plugins:maven-enforcer-plugin`) added by `/setup-lib-enforcer`.
 - **Build wrapper:** `mvnw` (Maven Wrapper) — added by `/setup-lib-mvn-wrapper` if missing.
-- **Local toolchain:** JDK 17+, `google-java-format` on `PATH`.
+- **Local toolchain:** JDK 17+. Formatting goes through Spotless via Maven, so no separate `google-java-format` install is required.
 
 ## Skills
 
@@ -27,7 +27,7 @@ Built-in (ship with Claude Code):
 - `/security-review` — security pass over pending changes.
 - `/simplify` — review changed code for quality and reuse opportunities.
 
-Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new Maven project. Each skill is a folder containing a `SKILL.md` — drop into `<repo>/.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/<name>/SKILL.md` for the JDK installer, since it isn't project-scoped). **Not** `.claude/commands/<name>.md` — that's the legacy slash-command location and the wrong primitive for parametrized multi-step setup.
+Init — one-time bootstrap. Install the local JDK toolchain or scaffold a new Maven project. Each skill is a folder containing a `SKILL.md` — drop into `<repo>/.claude/skills/<name>/SKILL.md`. **Not** `.claude/commands/<name>.md` — that's the legacy slash-command location and the wrong primitive for parametrized multi-step setup. Everything stays in the project, never under `~/.claude`.
 
 **`setup-init-jdk`**
 
@@ -278,16 +278,15 @@ paths: pom.xml
 ```yaml
 ---
 name: format-java
-description: Format Java files with google-java-format using AOSP style.
+description: Format Java files via Spotless (configured with googleJavaFormat AOSP).
 allowed-tools: Bash
 paths: src/**/*.java
 ---
 
 # Steps
 
-1. Identify modified `.java` files: `git diff --name-only HEAD --diff-filter=AMR | grep -E '\.java$'`.
-2. Run `google-java-format --aosp -i` on each.
-3. Report the file count formatted.
+1. Run `./mvnw spotless:apply`. To scope to specific files, use `./mvnw spotless:apply -DspotlessFiles=<comma-separated paths>`.
+2. Report which files were rewritten and which were already clean.
 ```
 
 ## Rules
@@ -320,7 +319,6 @@ Merge into `<repo>/.claude/settings.json`:
       "Bash(java:*)",
       "Bash(javac:*)",
       "Bash(jshell:*)",
-      "Bash(google-java-format:*)",
       "Read(src/**/*.java)",
       "Read(pom.xml)"
     ],
@@ -349,18 +347,6 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
 ```json
 {
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "if": "Edit|Write(*.java)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/format-java-on-edit.sh"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -368,7 +354,7 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f ./mvnw ]; then ./mvnw spotless:check; fi"
+            "command": "if [ -f ./mvnw ]; then ./mvnw -q spotless:check; fi"
           }
         ]
       }
@@ -379,7 +365,7 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f pom.xml ]; then command -v google-java-format >/dev/null 2>&1 || echo 'WARNING: google-java-format not on PATH' >&2; fi"
+            "command": "if [ -f pom.xml ] && [ ! -f ./mvnw ]; then echo 'WARNING: pom.xml present but no Maven Wrapper. Run /setup-lib-mvn-wrapper.' >&2; fi"
           }
         ]
       }
@@ -388,17 +374,7 @@ Merge `hooks` into `<repo>/.claude/settings.json`:
 }
 ```
 
-Companion script — save as `~/.claude/hooks/format-java-on-edit.sh` and `chmod +x`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-file_path="$(jq -r '.tool_input.file_path // empty')"
-[ -n "$file_path" ] || exit 0
-[[ "$file_path" == *.java ]] || exit 0
-command -v google-java-format >/dev/null 2>&1 || exit 0
-google-java-format --aosp -i -- "$file_path"
-```
+Format-on-edit isn't included — running Spotless via Maven on every `.java` edit is slow (Maven cold start). The pre-commit `spotless:check` catches drift, and `/format-java` runs `spotless:apply` on demand.
 
 ## See also
 

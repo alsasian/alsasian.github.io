@@ -59,11 +59,11 @@
 <body>
 <canvas id="c"></canvas>
 <div class="hud">
-  <div class="row">
+  <div class="row" style="align-items:flex-start">
     <div class="panel">
       <div class="title">Iso Sandbox<span class="saved" id="savedDot">●</span></div>
-      <div class="geo-row" id="geoRow">—</div>
-      <span class="k">1 finger</span> tool · <span class="k">2 fingers</span> pan
+      <div class="geo-row" id="gpsRow"><span class="k">gps</span> —</div>
+      <div class="geo-row" id="viewRow"><span class="k">view</span> —</div>
     </div>
     <div class="panel">
       <div class="title">View</div>
@@ -78,6 +78,7 @@
       <div class="time-row">
         <span class="k">travel</span>
         <button class="mini-btn" id="travelBtn">→ Tokyo</button>
+        <button class="mini-btn" id="hereBtn">↻ Here</button>
       </div>
     </div>
   </div>
@@ -98,8 +99,10 @@ const phaseEl = document.getElementById('phase');
 const demoBtn = document.getElementById('demo');
 const zoomBtn = document.getElementById('zoomBtn');
 const savedDot = document.getElementById('savedDot');
-const geoRow = document.getElementById('geoRow');
+const gpsRow = document.getElementById('gpsRow');
+const viewRow = document.getElementById('viewRow');
 const travelBtn = document.getElementById('travelBtn');
+const hereBtn = document.getElementById('hereBtn');
 
 // -- config --
 const TW_BASE = 64, TH_BASE = 32, LIFT_BASE = 12;
@@ -145,14 +148,31 @@ function latLonToTile(lat, lon) {
 function formatLat(lat) { return Math.abs(lat).toFixed(2) + '°' + (lat >= 0 ? 'N' : 'S'); }
 function formatLon(lon) { return Math.abs(lon).toFixed(2) + '°' + (lon >= 0 ? 'E' : 'W'); }
 function updateGeoDisplay() {
-  if (homeLat != null && homeLon != null) {
-    const name = homeCityName ? `<span class="v">${homeCityName}</span> · ` : '';
-    geoRow.innerHTML = `<span class="k">spawn</span> ${name}${formatLat(homeLat)} ${formatLon(homeLon)}`;
-  } else {
-    geoRow.innerHTML = `<span class="k">spawn</span> origin`;
-  }
   const next = CITIES[(cityIdx + 1) % CITIES.length];
   travelBtn.textContent = '→ ' + next.name;
+}
+
+function updateGpsDisplay(lat, lon, label) {
+  if (lat == null || lon == null) {
+    gpsRow.innerHTML = `<span class="k">gps</span> ${label || '—'}`;
+    return;
+  }
+  gpsRow.innerHTML = `<span class="k">gps</span> ${formatLat(lat)} ${formatLon(lon)}`;
+}
+
+let gpsWatchId = null;
+function startGpsWatch() {
+  if (!navigator.geolocation) { updateGpsDisplay(null, null, 'unsupported'); return; }
+  if (!window.isSecureContext) { updateGpsDisplay(null, null, 'insecure'); return; }
+  updateGpsDisplay(null, null, '…');
+  gpsWatchId = navigator.geolocation.watchPosition(
+    pos => updateGpsDisplay(pos.coords.latitude, pos.coords.longitude),
+    err => {
+      const map = { 1: 'denied', 2: 'unavailable', 3: 'timeout' };
+      updateGpsDisplay(null, null, map[err.code] || 'error');
+    },
+    { enableHighAccuracy: false, maximumAge: 30 * 1000, timeout: 20000 }
+  );
 }
 
 // -- persistence --
@@ -547,6 +567,10 @@ function draw() {
   const mm = (tm % 60).toString().padStart(2, '0');
   timeEl.textContent = `${hh}:${mm}`;
   phaseEl.textContent = phaseName(L.hours);
+
+  const lon = -2 * camX / (TW * TILE_SCALE);
+  const lat = 2 * camY / (TH * TILE_SCALE);
+  viewRow.innerHTML = `<span class="k">view</span> ${formatLat(lat)} ${formatLon(lon)}`;
 }
 
 // -- tools --
@@ -694,6 +718,23 @@ travelBtn.addEventListener('click', () => {
   travelTo(CITIES[cityIdx]);
 });
 
+hereBtn.addEventListener('click', async () => {
+  const orig = hereBtn.textContent;
+  hereBtn.textContent = '…';
+  hereBtn.disabled = true;
+  const res = await getCurrentPosition();
+  hereBtn.disabled = false;
+  if (res.error) {
+    console.warn('geolocation:', res.error, res.detail || '');
+    hereBtn.textContent = res.error;
+    setTimeout(() => { hereBtn.textContent = orig; }, 1800);
+    return;
+  }
+  hereBtn.textContent = orig;
+  cityIdx = -1;
+  travelTo({ name: 'Here', lat: res.pos.coords.latitude, lon: res.pos.coords.longitude });
+});
+
 let demoRAF = null;
 function demoTick() {
   draw();
@@ -714,14 +755,20 @@ demoBtn.addEventListener('click', () => {
 
 setInterval(() => { if (!demoMode) draw(); }, 10000);
 
-function getCurrentPosition() {
+function getCurrentPosition(opts = {}) {
+  const { timeoutMs = 15000, maximumAge = 60 * 60 * 1000 } = opts;
   return new Promise(resolve => {
-    if (!navigator.geolocation) { resolve(null); return; }
-    const timeout = setTimeout(() => resolve(null), 6000);
+    if (!navigator.geolocation) { resolve({ error: 'unsupported' }); return; }
+    if (!window.isSecureContext) { resolve({ error: 'insecure' }); return; }
+    const guard = setTimeout(() => resolve({ error: 'timeout' }), timeoutMs + 500);
     navigator.geolocation.getCurrentPosition(
-      pos => { clearTimeout(timeout); resolve(pos); },
-      () => { clearTimeout(timeout); resolve(null); },
-      { enableHighAccuracy: false, maximumAge: 60 * 60 * 1000, timeout: 5000 }
+      pos => { clearTimeout(guard); resolve({ pos }); },
+      err => {
+        clearTimeout(guard);
+        const map = { 1: 'denied', 2: 'unavailable', 3: 'timeout' };
+        resolve({ error: map[err.code] || 'error', detail: err.message });
+      },
+      { enableHighAccuracy: false, maximumAge, timeout: timeoutMs }
     );
   });
 }
@@ -730,10 +777,10 @@ function getCurrentPosition() {
 (async function init() {
   const loaded = load();
   if (!loaded) {
-    const pos = await getCurrentPosition();
-    if (pos) {
-      homeLat = pos.coords.latitude;
-      homeLon = pos.coords.longitude;
+    const res = await getCurrentPosition();
+    if (res.pos) {
+      homeLat = res.pos.coords.latitude;
+      homeLon = res.pos.coords.longitude;
       homeCityName = 'Here';
       const t = latLonToTile(homeLat, homeLon);
       homeI = t.i; homeJ = t.j;
@@ -749,6 +796,7 @@ function getCurrentPosition() {
     save();
   }
   updateGeoDisplay();
+  startGpsWatch();
   resize();
 })();
 </script>

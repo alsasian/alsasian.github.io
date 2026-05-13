@@ -54,6 +54,21 @@
   .btn.active { border-color: #9ecbff; color: #9ecbff; background: rgba(40, 70, 110, 0.5); }
   .btn[data-tool="lantern"].active { border-color: #ffd080; color: #ffd080; background: rgba(110, 80, 40, 0.45); }
   .btn:active { transform: translateY(1px); }
+  .chip {
+    pointer-events: auto;
+    background: rgba(10, 13, 18, 0.78); border: 1px solid rgba(120, 160, 200, 0.22);
+    color: #c8d3e2; font: inherit; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 6px 10px; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .chip.active { border-color: #9ecbff; color: #9ecbff; background: rgba(40, 70, 110, 0.4); }
+  .chip[data-mat="soil"].active  { border-color: #c89868; color: #c89868; background: rgba(80, 55, 30, 0.45); }
+  .chip[data-mat="sand"].active  { border-color: #f0d890; color: #f0d890; background: rgba(110, 90, 50, 0.45); }
+  .chip[data-mat="stone"].active { border-color: #b8b8b8; color: #b8b8b8; background: rgba(60, 60, 60, 0.45); }
+  .chip:active { transform: translateY(1px); }
+  .stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 </style>
 </head>
 <body>
@@ -83,11 +98,19 @@
     </div>
   </div>
   <div class="row" style="justify-content:center">
-    <div class="tools">
-      <button class="btn active" data-tool="raise">▲ Raise</button>
-      <button class="btn" data-tool="lower">▼ Lower</button>
-      <button class="btn" data-tool="lantern">✦ Light</button>
-      <button class="btn" data-tool="reset">↻ Reset</button>
+    <div class="stack">
+      <div class="tools" id="matRow">
+        <button class="chip active" data-mat="grass">Grass</button>
+        <button class="chip" data-mat="soil">Soil</button>
+        <button class="chip" data-mat="sand">Sand</button>
+        <button class="chip" data-mat="stone">Stone</button>
+      </div>
+      <div class="tools">
+        <button class="btn active" data-tool="raise">▲ Raise</button>
+        <button class="btn" data-tool="lower">▼ Lower</button>
+        <button class="btn" data-tool="lantern">✦ Light</button>
+        <button class="btn" data-tool="reset">↻ Reset</button>
+      </div>
     </div>
   </div>
 </div>
@@ -105,14 +128,15 @@ const travelBtn = document.getElementById('travelBtn');
 const hereBtn = document.getElementById('hereBtn');
 
 // -- config --
-const TW_BASE = 64, TH_BASE = 32, LIFT_BASE = 12;
+const TW_BASE = 32, TH_BASE = 16, LIFT_BASE = 6;
 const MAX_H = 6;
 const RESET_RADIUS = 24;
 const ZOOM_LEVELS = [0.5, 1];
 const LIGHT_RADIUS = 2.4;
 const LIGHT_RGB = [255, 200, 100];
-const STORAGE_KEY = 'iso-sandbox-v4';
+const STORAGE_KEY = 'iso-sandbox-v5';
 const TILE_SCALE = 1000;
+const MATERIALS = ['grass', 'soil', 'sand', 'stone'];
 
 const CITIES = [
   { name: 'Singapore', lat: 1.35, lon: 103.82 },
@@ -137,6 +161,7 @@ let homeI = 0, homeJ = 0;
 let homeLat = null, homeLon = null;
 let homeCityName = null;
 let cityIdx = 0;
+let material = 'grass';
 
 // -- geo --
 function latLonToTile(lat, lon) {
@@ -185,7 +210,7 @@ function scheduleSave() {
 function save() {
   try {
     const data = {
-      v: 4,
+      v: 5,
       home: [homeI, homeJ],
       geo: (homeLat != null && homeLon != null) ? [homeLat, homeLon] : null,
       cityName: homeCityName,
@@ -195,6 +220,7 @@ function save() {
       cam: [camX, camY],
       zoom: zoomIdx,
       tool,
+      material,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     flashSaved();
@@ -227,6 +253,12 @@ function load() {
         const bt = b.dataset.tool;
         if (bt === 'reset') return;
         b.classList.toggle('active', bt === tool);
+      });
+    }
+    if (typeof d.material === 'string' && MATERIALS.includes(d.material)) {
+      material = d.material;
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.mat === material);
       });
     }
     if (Array.isArray(d.home)) { homeI = d.home[0]; homeJ = d.home[1]; }
@@ -322,7 +354,8 @@ function computeInfluence(lightStrength) {
   const inf = new Map();
   if (lightStrength <= 0.01 || lights.size === 0) return inf;
   for (const lk of lights.keys()) {
-    if (!(world.get(lk) > 0)) continue;
+    const lc = world.get(lk);
+    if (!lc || lc.h <= 0) continue;
     const parts = lk.split(','); const li = +parts[0], lj = +parts[1];
     for (let di = -2; di <= 2; di++) {
       for (let dj = -2; dj <= 2; dj++) {
@@ -411,10 +444,32 @@ function travelTo(city) {
 const BASE = {
   waterFlat: '#2f5878',
   waterHover: '#4a7ba8',
-  dirtLight: '#7a5a3d',
-  dirtDark: '#5a3f2a',
-  greens: ['#6b9039','#759a3f','#80a445','#8aae4b','#94b850','#9ec055'],
-  grassHover: '#b8d870',
+};
+const MAT_BASE = {
+  grass: {
+    top:   ['#6b9039','#759a3f','#80a445','#8aae4b','#94b850','#9ec055'],
+    hover: '#b8d870',
+    sideL: '#7a5a3d',
+    sideD: '#5a3f2a',
+  },
+  soil: {
+    top:   ['#6b4f30','#75583a','#7f6244','#896c4e','#937558','#9d7f62'],
+    hover: '#c0966c',
+    sideL: '#5a3f2a',
+    sideD: '#3f2a18',
+  },
+  sand: {
+    top:   ['#d8c080','#dec890','#e4d09a','#eadaa4','#f0e2ae','#f6eab8'],
+    hover: '#fff0c8',
+    sideL: '#b89860',
+    sideD: '#8a7048',
+  },
+  stone: {
+    top:   ['#6c6c6c','#787878','#848484','#909090','#9c9c9c','#a8a8a8'],
+    hover: '#c8c8c8',
+    sideL: '#454545',
+    sideD: '#2e2e2e',
+  },
 };
 
 function diamond(x, y, fill, stroke) {
@@ -434,7 +489,8 @@ let L_GLOBAL = null;
 
 function drawCell(i, j) {
   const key = i + ',' + j;
-  const h = world.get(key) || 0;
+  const cell = world.get(key);
+  const h = cell ? cell.h : 0;
   const hovered = i === hoverI && j === hoverJ;
   const cx = (i - j) * TW/2 + camX + W/2;
   const baseY = (i + j) * TH/2 + camY + H/2;
@@ -446,8 +502,9 @@ function drawCell(i, j) {
     diamond(cx, baseY, addLightHex(base, inf), P.waterStroke);
     return;
   }
+  const mat = P.mats[cell.m] || P.mats.grass;
   const liftPx = h * LIFT;
-  ctx.fillStyle = addLightHex(P.dirtLight, inf);
+  ctx.fillStyle = addLightHex(mat.sideL, inf);
   ctx.beginPath();
   ctx.moveTo(cx - TW/2, topY);
   ctx.lineTo(cx, topY + TH/2);
@@ -455,7 +512,7 @@ function drawCell(i, j) {
   ctx.lineTo(cx - TW/2, topY + liftPx);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = addLightHex(P.dirtDark, inf);
+  ctx.fillStyle = addLightHex(mat.sideD, inf);
   ctx.beginPath();
   ctx.moveTo(cx + TW/2, topY);
   ctx.lineTo(cx, topY + TH/2);
@@ -463,9 +520,9 @@ function drawCell(i, j) {
   ctx.lineTo(cx + TW/2, topY + liftPx);
   ctx.closePath();
   ctx.fill();
-  const gi = Math.min(h - 1, P.greens.length - 1);
-  const top = hovered ? P.grassHover : P.greens[gi];
-  diamond(cx, topY, addLightHex(top, inf), P.grassStroke);
+  const gi = Math.min(h - 1, mat.top.length - 1);
+  const top = hovered ? mat.hover : mat.top[gi];
+  diamond(cx, topY, addLightHex(top, inf), P.topStroke);
 
   if (lights.has(key)) drawLanternPost(cx, topY);
 }
@@ -492,7 +549,8 @@ function drawGlows() {
   if (ls < 0.05) return;
   ctx.globalCompositeOperation = 'lighter';
   for (const lk of lights.keys()) {
-    const h = world.get(lk) || 0;
+    const lc = world.get(lk);
+    const h = lc ? lc.h : 0;
     if (h <= 0) continue;
     const parts = lk.split(','); const i = +parts[0], j = +parts[1];
     const cx = (i - j) * TW/2 + camX + W/2;
@@ -518,12 +576,18 @@ function draw() {
     waterFlat: tintHex(BASE.waterFlat, L.tint),
     waterHover: tintHex(BASE.waterHover, L.tint),
     waterStroke: tintRgba(140, 190, 220, 0.18, L.tint),
-    dirtLight: tintHex(BASE.dirtLight, L.tint),
-    dirtDark: tintHex(BASE.dirtDark, L.tint),
-    greens: BASE.greens.map(g => tintHex(g, L.tint)),
-    grassHover: tintHex(BASE.grassHover, L.tint),
-    grassStroke: tintRgba(200, 220, 160, 0.22, L.tint),
+    topStroke: tintRgba(200, 220, 160, 0.22, L.tint),
+    mats: {},
   };
+  for (const m of MATERIALS) {
+    const b = MAT_BASE[m];
+    P.mats[m] = {
+      top: b.top.map(c => tintHex(c, L.tint)),
+      hover: tintHex(b.hover, L.tint),
+      sideL: tintHex(b.sideL, L.tint),
+      sideD: tintHex(b.sideD, L.tint),
+    };
+  }
   INF = computeInfluence(L.lightStrength);
 
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -576,15 +640,17 @@ function draw() {
 // -- tools --
 function applyTool(i, j) {
   const k = i + ',' + j;
-  const cur = world.get(k) || 0;
+  const cur = world.get(k);
   let changed = false;
   if (tool === 'raise') {
-    if (cur < MAX_H) { world.set(k, cur + 1); changed = true; }
+    if (!cur) { world.set(k, { h: 1, m: material }); changed = true; }
+    else if (cur.h < MAX_H) { world.set(k, { h: cur.h + 1, m: material }); changed = true; }
+    else if (cur.m !== material) { world.set(k, { h: cur.h, m: material }); changed = true; }
   } else if (tool === 'lower') {
-    if (cur > 1) { world.set(k, cur - 1); changed = true; }
-    else if (cur === 1) { world.delete(k); lights.delete(k); changed = true; }
+    if (cur && cur.h > 1) { world.set(k, { h: cur.h - 1, m: cur.m }); changed = true; }
+    else if (cur && cur.h === 1) { world.delete(k); lights.delete(k); changed = true; }
   } else if (tool === 'lantern') {
-    if (cur > 0) {
+    if (cur && cur.h > 0) {
       if (lights.has(k)) lights.delete(k);
       else lights.set(k, true);
       changed = true;
@@ -706,6 +772,16 @@ document.querySelectorAll('.btn').forEach(btn => {
       const bt = b.dataset.tool;
       if (bt === 'reset') return;
       b.classList.toggle('active', bt === t);
+    });
+    scheduleSave();
+  });
+});
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    material = chip.dataset.mat;
+    document.querySelectorAll('.chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.mat === material);
     });
     scheduleSave();
   });

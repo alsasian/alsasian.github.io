@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Iso Sandbox · Infinite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #050810; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #e6e9ef; }
+  canvas { display: block; touch-action: none; }
+  .hud {
+    position: fixed; inset: 0; pointer-events: none;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+  .panel {
+    background: rgba(10, 13, 18, 0.78); border: 1px solid rgba(120, 160, 200, 0.18);
+    padding: 8px 12px; font-size: 11px; letter-spacing: 0.04em;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #c8d3e2;
+  }
+  .panel .k { color: #6e8aab; }
+  .panel .v { color: #9ecbff; }
+  .title { font-size: 10px; color: #6e8aab; text-transform: uppercase; letter-spacing: 0.18em; margin-bottom: 4px; }
+  .title .saved { margin-left: 8px; color: #6ab880; opacity: 0; transition: opacity 0.2s; }
+  .title .saved.show { opacity: 1; }
+  .geo-row { font-size: 10px; color: #8a9bb0; margin-bottom: 4px; }
+  .time-row { display: flex; align-items: center; gap: 10px; }
+  .time-row + .time-row { margin-top: 6px; }
+  .mini-btn {
+    pointer-events: auto;
+    background: transparent; border: 1px solid rgba(120, 160, 200, 0.32);
+    color: #c8d3e2; font: inherit; font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 5px 9px; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    min-width: 44px;
+  }
+  .mini-btn.demo.active { border-color: #ffd080; color: #ffd080; }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    pointer-events: auto;
+    background: rgba(10, 13, 18, 0.82); border: 1px solid rgba(120, 160, 200, 0.22);
+    color: #c8d3e2; font: inherit; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    min-width: 76px;
+  }
+  .btn.active { border-color: #9ecbff; color: #9ecbff; background: rgba(40, 70, 110, 0.5); }
+  .btn[data-tool="lantern"].active { border-color: #ffd080; color: #ffd080; background: rgba(110, 80, 40, 0.45); }
+  .btn:active { transform: translateY(1px); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <div class="row" style="align-items:flex-start">
+    <div class="panel">
+      <div class="title">Iso Sandbox<span class="saved" id="savedDot">●</span></div>
+      <div class="geo-row" id="gpsRow"><span class="k">gps</span> —</div>
+      <div class="geo-row" id="viewRow"><span class="k">view</span> —</div>
+    </div>
+    <div class="panel">
+      <div class="title">View</div>
+      <div class="time-row">
+        <span><span class="v" id="time">--:--</span> · <span class="k" id="phase">—</span></span>
+        <button class="mini-btn demo" id="demo">Demo</button>
+      </div>
+      <div class="time-row">
+        <span class="k">zoom</span>
+        <button class="mini-btn" id="zoomBtn">1x</button>
+      </div>
+      <div class="time-row">
+        <span class="k">travel</span>
+        <button class="mini-btn" id="travelBtn">→ Tokyo</button>
+        <button class="mini-btn" id="hereBtn">↻ Here</button>
+      </div>
+    </div>
+  </div>
+  <div class="row" style="justify-content:center">
+    <div class="tools">
+      <button class="btn active" data-tool="raise">▲ Raise</button>
+      <button class="btn" data-tool="lower">▼ Lower</button>
+      <button class="btn" data-tool="lantern">✦ Light</button>
+      <button class="btn" data-tool="reset">↻ Reset</button>
+    </div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const timeEl = document.getElementById('time');
+const phaseEl = document.getElementById('phase');
+const demoBtn = document.getElementById('demo');
+const zoomBtn = document.getElementById('zoomBtn');
+const savedDot = document.getElementById('savedDot');
+const gpsRow = document.getElementById('gpsRow');
+const viewRow = document.getElementById('viewRow');
+const travelBtn = document.getElementById('travelBtn');
+const hereBtn = document.getElementById('hereBtn');
+
+// -- config --
+const TW_BASE = 64, TH_BASE = 32, LIFT_BASE = 12;
+const MAX_H = 6;
+const RESET_RADIUS = 24;
+const ZOOM_LEVELS = [0.5, 1];
+const LIGHT_RADIUS = 2.4;
+const LIGHT_RGB = [255, 200, 100];
+const STORAGE_KEY = 'iso-sandbox-v4';
+const TILE_SCALE = 1000;
+
+const CITIES = [
+  { name: 'Singapore', lat: 1.35, lon: 103.82 },
+  { name: 'Tokyo',     lat: 35.68, lon: 139.69 },
+  { name: 'Reykjavik', lat: 64.13, lon: -21.94 },
+  { name: 'Bali',      lat: -8.34, lon: 115.09 },
+  { name: 'Sydney',    lat: -33.87, lon: 151.21 },
+  { name: 'New York',  lat: 40.71, lon: -74.01 },
+];
+
+let zoomIdx = 1;
+let zoom = ZOOM_LEVELS[zoomIdx];
+let TW = TW_BASE * zoom, TH = TH_BASE * zoom, LIFT = LIFT_BASE * zoom;
+
+// -- state --
+const world = new Map();
+const lights = new Map();
+let camX = 0, camY = 0;
+let hoverI = null, hoverJ = null;
+let tool = 'raise';
+let homeI = 0, homeJ = 0;
+let homeLat = null, homeLon = null;
+let homeCityName = null;
+let cityIdx = 0;
+
+// -- geo --
+function latLonToTile(lat, lon) {
+  return {
+    i: Math.round((lon - lat) * TILE_SCALE / 2),
+    j: Math.round(-(lon + lat) * TILE_SCALE / 2),
+  };
+}
+function formatLat(lat) { return Math.abs(lat).toFixed(2) + '°' + (lat >= 0 ? 'N' : 'S'); }
+function formatLon(lon) { return Math.abs(lon).toFixed(2) + '°' + (lon >= 0 ? 'E' : 'W'); }
+function updateGeoDisplay() {
+  const next = CITIES[(cityIdx + 1) % CITIES.length];
+  travelBtn.textContent = '→ ' + next.name;
+}
+
+function updateGpsDisplay(lat, lon, label) {
+  if (lat == null || lon == null) {
+    gpsRow.innerHTML = `<span class="k">gps</span> ${label || '—'}`;
+    return;
+  }
+  gpsRow.innerHTML = `<span class="k">gps</span> ${formatLat(lat)} ${formatLon(lon)}`;
+}
+
+let gpsWatchId = null;
+function startGpsWatch() {
+  if (!navigator.geolocation) { updateGpsDisplay(null, null, 'unsupported'); return; }
+  if (!window.isSecureContext) { updateGpsDisplay(null, null, 'insecure'); return; }
+  updateGpsDisplay(null, null, '…');
+  gpsWatchId = navigator.geolocation.watchPosition(
+    pos => updateGpsDisplay(pos.coords.latitude, pos.coords.longitude),
+    err => {
+      const map = { 1: 'denied', 2: 'unavailable', 3: 'timeout' };
+      updateGpsDisplay(null, null, map[err.code] || 'error');
+    },
+    { enableHighAccuracy: false, maximumAge: 30 * 1000, timeout: 20000 }
+  );
+}
+
+// -- persistence --
+let saveTimer = null;
+let savedDotTimer = null;
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 400);
+}
+function save() {
+  try {
+    const data = {
+      v: 4,
+      home: [homeI, homeJ],
+      geo: (homeLat != null && homeLon != null) ? [homeLat, homeLon] : null,
+      cityName: homeCityName,
+      cityIdx,
+      world: [...world.entries()],
+      lights: [...lights.keys()],
+      cam: [camX, camY],
+      zoom: zoomIdx,
+      tool,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    flashSaved();
+  } catch (e) { console.warn('save failed', e); }
+}
+function flashSaved() {
+  savedDot.classList.add('show');
+  if (savedDotTimer) clearTimeout(savedDotTimer);
+  savedDotTimer = setTimeout(() => savedDot.classList.remove('show'), 600);
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.world || !Array.isArray(d.world)) return false;
+    world.clear(); lights.clear();
+    for (const [k, v] of d.world) world.set(k, v);
+    if (Array.isArray(d.lights)) for (const k of d.lights) lights.set(k, true);
+    if (Array.isArray(d.cam)) { camX = d.cam[0]; camY = d.cam[1]; }
+    if (typeof d.zoom === 'number' && ZOOM_LEVELS[d.zoom] != null) {
+      zoomIdx = d.zoom;
+      zoom = ZOOM_LEVELS[zoomIdx];
+      TW = TW_BASE * zoom; TH = TH_BASE * zoom; LIFT = LIFT_BASE * zoom;
+      zoomBtn.textContent = zoom + 'x';
+    }
+    if (typeof d.tool === 'string') {
+      tool = d.tool;
+      document.querySelectorAll('.btn').forEach(b => {
+        const bt = b.dataset.tool;
+        if (bt === 'reset') return;
+        b.classList.toggle('active', bt === tool);
+      });
+    }
+    if (Array.isArray(d.home)) { homeI = d.home[0]; homeJ = d.home[1]; }
+    if (Array.isArray(d.geo)) { homeLat = d.geo[0]; homeLon = d.geo[1]; }
+    if (typeof d.cityName === 'string' || d.cityName === null) homeCityName = d.cityName;
+    if (typeof d.cityIdx === 'number') cityIdx = d.cityIdx;
+    return true;
+  } catch (e) { console.warn('load failed', e); return false; }
+}
+
+// -- time keyframes --
+const KEYS = [
+  { t: 0,    sky1:'#050812', sky2:'#0a1428', tint:[0.30, 0.36, 0.58], stars:1.0 },
+  { t: 4.5,  sky1:'#0a0d20', sky2:'#1a1830', tint:[0.42, 0.42, 0.62], stars:0.7 },
+  { t: 6,    sky1:'#3a2540', sky2:'#d68a78', tint:[0.95, 0.82, 0.78], stars:0.15 },
+  { t: 7.5,  sky1:'#5a6a8a', sky2:'#f0c898', tint:[1.10, 1.00, 0.90], stars:0 },
+  { t: 9,    sky1:'#3a5a78', sky2:'#a8c8d8', tint:[1.05, 1.05, 1.02], stars:0 },
+  { t: 13,   sky1:'#365478', sky2:'#7ab0d8', tint:[1.05, 1.05, 1.00], stars:0 },
+  { t: 16,   sky1:'#4a5878', sky2:'#a8b8d0', tint:[1.05, 1.00, 0.95], stars:0 },
+  { t: 18,   sky1:'#5a3a4a', sky2:'#f0a050', tint:[1.22, 0.94, 0.68], stars:0 },
+  { t: 19,   sky1:'#2a1a3a', sky2:'#8a4a7a', tint:[0.85, 0.62, 0.85], stars:0.2 },
+  { t: 20,   sky1:'#0a0d20', sky2:'#1a1830', tint:[0.48, 0.45, 0.65], stars:0.6 },
+  { t: 22,   sky1:'#060914', sky2:'#0c1628', tint:[0.34, 0.38, 0.60], stars:0.9 },
+  { t: 24,   sky1:'#050812', sky2:'#0a1428', tint:[0.30, 0.36, 0.58], stars:1.0 },
+];
+
+let demoMode = false;
+let demoStart = 0;
+const DEMO_SECONDS = 20;
+function getHours() {
+  if (demoMode) {
+    const e = (performance.now() - demoStart) / 1000;
+    return (e * 24 / DEMO_SECONDS) % 24;
+  }
+  const d = new Date();
+  return d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600;
+}
+function phaseName(h) {
+  if (h < 5 || h >= 21) return 'night';
+  if (h < 6.5) return 'predawn';
+  if (h < 8.5) return 'dawn';
+  if (h < 16.5) return 'day';
+  if (h < 18.5) return 'golden';
+  if (h < 19.8) return 'dusk';
+  return 'night';
+}
+
+// -- color utils --
+function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [(n>>16)&255, (n>>8)&255, n&255]; }
+const cl = v => Math.max(0, Math.min(255, Math.round(v)));
+function rgb2hex(r, g, b) { return '#' + [cl(r),cl(g),cl(b)].map(v => v.toString(16).padStart(2,'0')).join(''); }
+const lerp = (a, b, t) => a + (b - a) * t;
+function lerpHex(c1, c2, t) {
+  const a = hex2rgb(c1), b = hex2rgb(c2);
+  return rgb2hex(lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t));
+}
+function tintHex(hex, [tr,tg,tb]) {
+  const [r,g,b] = hex2rgb(hex);
+  return rgb2hex(r*tr, g*tg, b*tb);
+}
+function tintRgba(r, g, b, a, [tr,tg,tb]) {
+  return `rgba(${cl(r*tr)},${cl(g*tg)},${cl(b*tb)},${a})`;
+}
+function addLightHex(hex, inf) {
+  if (!inf) return hex;
+  const [r,g,b] = hex2rgb(hex);
+  return rgb2hex(r + inf[0], g + inf[1], b + inf[2]);
+}
+
+function getLighting() {
+  const h = getHours();
+  let p = KEYS[0], n = KEYS[KEYS.length-1];
+  for (let i = 0; i < KEYS.length - 1; i++) {
+    if (h >= KEYS[i].t && h < KEYS[i+1].t) { p = KEYS[i]; n = KEYS[i+1]; break; }
+  }
+  const t = (n.t === p.t) ? 0 : (h - p.t) / (n.t - p.t);
+  const tint = [
+    lerp(p.tint[0], n.tint[0], t),
+    lerp(p.tint[1], n.tint[1], t),
+    lerp(p.tint[2], n.tint[2], t),
+  ];
+  const brightness = (tint[0] + tint[1] + tint[2]) / 3;
+  const lightStrength = Math.min(1, Math.max(0, (1 - brightness) * 1.7));
+  return {
+    hours: h,
+    skyTop: lerpHex(p.sky1, n.sky1, t),
+    skyBottom: lerpHex(p.sky2, n.sky2, t),
+    tint, stars: lerp(p.stars, n.stars, t), lightStrength,
+  };
+}
+
+function computeInfluence(lightStrength) {
+  const inf = new Map();
+  if (lightStrength <= 0.01 || lights.size === 0) return inf;
+  for (const lk of lights.keys()) {
+    if (!(world.get(lk) > 0)) continue;
+    const parts = lk.split(','); const li = +parts[0], lj = +parts[1];
+    for (let di = -2; di <= 2; di++) {
+      for (let dj = -2; dj <= 2; dj++) {
+        const d = Math.hypot(di, dj);
+        if (d > LIGHT_RADIUS) continue;
+        const ti = li + di, tj = lj + dj;
+        const intensity = Math.pow(1 - d/LIGHT_RADIUS, 1.6) * lightStrength;
+        if (intensity < 0.02) continue;
+        const k = ti + ',' + tj;
+        const cur = inf.get(k);
+        const add = [intensity * LIGHT_RGB[0] * 0.5,
+                     intensity * LIGHT_RGB[1] * 0.5,
+                     intensity * LIGHT_RGB[2] * 0.5];
+        if (cur) { cur[0] += add[0]; cur[1] += add[1]; cur[2] += add[2]; }
+        else inf.set(k, add);
+      }
+    }
+  }
+  return inf;
+}
+
+const STARS = [];
+function genStars() {
+  STARS.length = 0;
+  const count = Math.min(120, Math.floor((window.innerWidth * window.innerHeight) / 5500));
+  for (let i = 0; i < count; i++) {
+    STARS.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight * 0.7,
+      s: Math.random() * 1.5 + 0.4,
+      tw: Math.random() * 1000,
+    });
+  }
+}
+
+let W = 0, H = 0;
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  genStars();
+  draw();
+}
+window.addEventListener('resize', resize);
+
+function cycleZoom() {
+  const newIdx = (zoomIdx + 1) % ZOOM_LEVELS.length;
+  const newZoom = ZOOM_LEVELS[newIdx];
+  const f = newZoom / zoom;
+  zoomIdx = newIdx;
+  zoom = newZoom;
+  TW = TW_BASE * zoom;
+  TH = TH_BASE * zoom;
+  LIFT = LIFT_BASE * zoom;
+  camX *= f;
+  camY *= f;
+  zoomBtn.textContent = zoom + 'x';
+  draw();
+  scheduleSave();
+}
+
+function screenToTile(sx, sy) {
+  const x = sx - camX - W/2, y = sy - camY - H/2;
+  const ic = (x/(TW/2) + y/(TH/2)) / 2;
+  const jc = (y/(TH/2) - x/(TW/2)) / 2;
+  return { i: Math.round(ic), j: Math.round(jc) };
+}
+function centerOnTile(i, j) {
+  camX = -(i - j) * TW / 2;
+  camY = -(i + j) * TH / 2;
+}
+
+function travelTo(city) {
+  homeLat = city.lat; homeLon = city.lon; homeCityName = city.name;
+  const t = latLonToTile(city.lat, city.lon);
+  homeI = t.i; homeJ = t.j;
+  centerOnTile(homeI, homeJ);
+  updateGeoDisplay();
+  draw();
+  scheduleSave();
+}
+
+// -- draw --
+const BASE = {
+  waterFlat: '#2f5878',
+  waterHover: '#4a7ba8',
+  dirtLight: '#7a5a3d',
+  dirtDark: '#5a3f2a',
+  greens: ['#6b9039','#759a3f','#80a445','#8aae4b','#94b850','#9ec055'],
+  grassHover: '#b8d870',
+};
+
+function diamond(x, y, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - TH/2);
+  ctx.lineTo(x + TW/2, y);
+  ctx.lineTo(x, y + TH/2);
+  ctx.lineTo(x - TW/2, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+let P = null;
+let INF = null;
+let L_GLOBAL = null;
+
+function drawCell(i, j) {
+  const key = i + ',' + j;
+  const h = world.get(key) || 0;
+  const hovered = i === hoverI && j === hoverJ;
+  const cx = (i - j) * TW/2 + camX + W/2;
+  const baseY = (i + j) * TH/2 + camY + H/2;
+  const topY = baseY - h * LIFT;
+  const inf = INF.get(key);
+
+  if (h === 0) {
+    const base = hovered ? P.waterHover : P.waterFlat;
+    diamond(cx, baseY, addLightHex(base, inf), P.waterStroke);
+    return;
+  }
+  const liftPx = h * LIFT;
+  ctx.fillStyle = addLightHex(P.dirtLight, inf);
+  ctx.beginPath();
+  ctx.moveTo(cx - TW/2, topY);
+  ctx.lineTo(cx, topY + TH/2);
+  ctx.lineTo(cx, topY + TH/2 + liftPx);
+  ctx.lineTo(cx - TW/2, topY + liftPx);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = addLightHex(P.dirtDark, inf);
+  ctx.beginPath();
+  ctx.moveTo(cx + TW/2, topY);
+  ctx.lineTo(cx, topY + TH/2);
+  ctx.lineTo(cx, topY + TH/2 + liftPx);
+  ctx.lineTo(cx + TW/2, topY + liftPx);
+  ctx.closePath();
+  ctx.fill();
+  const gi = Math.min(h - 1, P.greens.length - 1);
+  const top = hovered ? P.grassHover : P.greens[gi];
+  diamond(cx, topY, addLightHex(top, inf), P.grassStroke);
+
+  if (lights.has(key)) drawLanternPost(cx, topY);
+}
+
+function drawLanternPost(cx, topY) {
+  const postH = LIFT * 1.3;
+  const postW = Math.max(1.2, LIFT * 0.13);
+  const lampR = Math.max(1.8, LIFT * 0.22);
+  ctx.fillStyle = '#2a1d12';
+  ctx.fillRect(cx - postW/2, topY - postH, postW, postH);
+  const lampY = topY - postH;
+  const ls = L_GLOBAL.lightStrength;
+  if (ls > 0.05) {
+    ctx.fillStyle = `rgba(255,${cl(220 + 35 * ls)},${cl(140 + 60 * ls)},1)`;
+    ctx.beginPath(); ctx.arc(cx, lampY, lampR, 0, Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle = '#3a2a1a';
+    ctx.beginPath(); ctx.arc(cx, lampY, lampR, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawGlows() {
+  const ls = L_GLOBAL.lightStrength;
+  if (ls < 0.05) return;
+  ctx.globalCompositeOperation = 'lighter';
+  for (const lk of lights.keys()) {
+    const h = world.get(lk) || 0;
+    if (h <= 0) continue;
+    const parts = lk.split(','); const i = +parts[0], j = +parts[1];
+    const cx = (i - j) * TW/2 + camX + W/2;
+    const baseY = (i + j) * TH/2 + camY + H/2;
+    const topY = baseY - h * LIFT;
+    const lampY = topY - LIFT * 1.3;
+    const r = TW * 1.6;
+    if (cx + r < 0 || cx - r > W || lampY + r < 0 || lampY - r > H) continue;
+    const grad = ctx.createRadialGradient(cx, lampY, 0, cx, lampY, r);
+    grad.addColorStop(0, `rgba(255,210,130,${0.35 * ls})`);
+    grad.addColorStop(0.5, `rgba(255,180,90,${0.12 * ls})`);
+    grad.addColorStop(1, 'rgba(255,180,90,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, lampY, r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function draw() {
+  const L = getLighting();
+  L_GLOBAL = L;
+  P = {
+    waterFlat: tintHex(BASE.waterFlat, L.tint),
+    waterHover: tintHex(BASE.waterHover, L.tint),
+    waterStroke: tintRgba(140, 190, 220, 0.18, L.tint),
+    dirtLight: tintHex(BASE.dirtLight, L.tint),
+    dirtDark: tintHex(BASE.dirtDark, L.tint),
+    greens: BASE.greens.map(g => tintHex(g, L.tint)),
+    grassHover: tintHex(BASE.grassHover, L.tint),
+    grassStroke: tintRgba(200, 220, 160, 0.22, L.tint),
+  };
+  INF = computeInfluence(L.lightStrength);
+
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, L.skyTop);
+  g.addColorStop(1, L.skyBottom);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  if (L.stars > 0.02) {
+    const now = performance.now();
+    for (const s of STARS) {
+      const tw = 0.7 + 0.3 * Math.sin((now / 900) + s.tw);
+      ctx.fillStyle = `rgba(255,250,230,${L.stars * 0.85 * tw})`;
+      ctx.fillRect(s.x, s.y, s.s, s.s);
+    }
+  }
+
+  const margin = 2;
+  const corners = [
+    screenToTile(-TW, -TH * 2 - LIFT * MAX_H),
+    screenToTile(W + TW, -TH * 2 - LIFT * MAX_H),
+    screenToTile(-TW, H + TH * 2),
+    screenToTile(W + TW, H + TH * 2),
+  ];
+  const minI = Math.min(...corners.map(c => c.i)) - margin;
+  const maxI = Math.max(...corners.map(c => c.i)) + margin;
+  const minJ = Math.min(...corners.map(c => c.j)) - margin;
+  const maxJ = Math.max(...corners.map(c => c.j)) + margin;
+
+  for (let s = minI + minJ; s <= maxI + maxJ; s++) {
+    const i0 = Math.max(minI, s - maxJ);
+    const i1 = Math.min(maxI, s - minJ);
+    for (let i = i0; i <= i1; i++) {
+      drawCell(i, s - i);
+    }
+  }
+
+  drawGlows();
+
+  const tm = Math.floor(L.hours * 60);
+  const hh = Math.floor(tm / 60).toString().padStart(2, '0');
+  const mm = (tm % 60).toString().padStart(2, '0');
+  timeEl.textContent = `${hh}:${mm}`;
+  phaseEl.textContent = phaseName(L.hours);
+
+  const lon = -2 * camX / (TW * TILE_SCALE);
+  const lat = 2 * camY / (TH * TILE_SCALE);
+  viewRow.innerHTML = `<span class="k">view</span> ${formatLat(lat)} ${formatLon(lon)}`;
+}
+
+// -- tools --
+function applyTool(i, j) {
+  const k = i + ',' + j;
+  const cur = world.get(k) || 0;
+  let changed = false;
+  if (tool === 'raise') {
+    if (cur < MAX_H) { world.set(k, cur + 1); changed = true; }
+  } else if (tool === 'lower') {
+    if (cur > 1) { world.set(k, cur - 1); changed = true; }
+    else if (cur === 1) { world.delete(k); lights.delete(k); changed = true; }
+  } else if (tool === 'lantern') {
+    if (cur > 0) {
+      if (lights.has(k)) lights.delete(k);
+      else lights.set(k, true);
+      changed = true;
+    }
+  }
+  if (changed) { draw(); scheduleSave(); }
+}
+
+function resetNearCamera() {
+  const center = screenToTile(W / 2, H / 2);
+  for (const k of [...world.keys()]) {
+    const [i, j] = k.split(',').map(Number);
+    if (Math.abs(i - center.i) <= RESET_RADIUS && Math.abs(j - center.j) <= RESET_RADIUS) {
+      world.delete(k); lights.delete(k);
+    }
+  }
+  for (const k of [...lights.keys()]) {
+    const [i, j] = k.split(',').map(Number);
+    if (Math.abs(i - center.i) <= RESET_RADIUS && Math.abs(j - center.j) <= RESET_RADIUS) {
+      lights.delete(k);
+    }
+  }
+}
+
+// -- input --
+let mode = 'idle';
+let tStartX, tStartY, tMoved, tPainted;
+let panStartX, panStartY, panSCX, panSCY;
+const midpoint = ts => ({ x:(ts[0].clientX+ts[1].clientX)/2, y:(ts[0].clientY+ts[1].clientY)/2 });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && mode === 'idle') {
+    mode = 'tool';
+    const t = e.touches[0];
+    tStartX = t.clientX; tStartY = t.clientY;
+    tMoved = false; tPainted = new Set();
+    const tt = screenToTile(t.clientX, t.clientY);
+    hoverI = tt.i; hoverJ = tt.j; draw();
+  } else if (e.touches.length >= 2) {
+    mode = 'pan';
+    const m = midpoint(e.touches);
+    panStartX = m.x; panStartY = m.y; panSCX = camX; panSCY = camY;
+    hoverI = null; hoverJ = null; draw();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (mode === 'tool' && e.touches.length === 1) {
+    const t = e.touches[0];
+    const dx = t.clientX - tStartX, dy = t.clientY - tStartY;
+    if (!tMoved && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) tMoved = true;
+    const tt = screenToTile(t.clientX, t.clientY);
+    if (tMoved && tool !== 'lantern') {
+      const k = tt.i + ',' + tt.j;
+      if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
+    }
+    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; draw(); }
+  } else if (mode === 'pan' && e.touches.length >= 2) {
+    const m = midpoint(e.touches);
+    camX = panSCX + (m.x - panStartX);
+    camY = panSCY + (m.y - panStartY);
+    draw();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  const wasPan = mode === 'pan';
+  if (mode === 'tool' && !tMoved && e.changedTouches.length > 0) {
+    const t = e.changedTouches[0];
+    const tt = screenToTile(t.clientX, t.clientY);
+    applyTool(tt.i, tt.j);
+  }
+  if (e.touches.length === 0) {
+    mode = 'idle'; hoverI = null; hoverJ = null; draw();
+    if (wasPan) scheduleSave();
+  } else mode = 'idle';
+}, { passive: false });
+
+let mDown = false, mMoved = false, mSX, mSY, mSCX, mSCY;
+canvas.addEventListener('mousedown', e => {
+  mDown = true; mMoved = false;
+  mSX = e.clientX; mSY = e.clientY; mSCX = camX; mSCY = camY;
+});
+canvas.addEventListener('mousemove', e => {
+  if (mDown) {
+    const dx = e.clientX - mSX, dy = e.clientY - mSY;
+    if (!mMoved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) mMoved = true;
+    if (mMoved) { camX = mSCX + dx; camY = mSCY + dy; }
+  }
+  const tt = screenToTile(e.clientX, e.clientY);
+  if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
+  draw();
+});
+window.addEventListener('mouseup', e => {
+  if (mDown && !mMoved) {
+    const tt = screenToTile(e.clientX, e.clientY);
+    applyTool(tt.i, tt.j);
+  } else if (mDown && mMoved) {
+    scheduleSave();
+  }
+  mDown = false;
+});
+
+// -- buttons --
+document.querySelectorAll('.btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.tool;
+    if (t === 'reset') {
+      if (!confirm('Clear tiles near current view? Builds elsewhere remain.')) return;
+      resetNearCamera();
+      draw(); scheduleSave();
+      return;
+    }
+    tool = t;
+    document.querySelectorAll('.btn').forEach(b => {
+      const bt = b.dataset.tool;
+      if (bt === 'reset') return;
+      b.classList.toggle('active', bt === t);
+    });
+    scheduleSave();
+  });
+});
+
+zoomBtn.addEventListener('click', cycleZoom);
+
+travelBtn.addEventListener('click', () => {
+  cityIdx = (cityIdx + 1) % CITIES.length;
+  travelTo(CITIES[cityIdx]);
+});
+
+hereBtn.addEventListener('click', async () => {
+  const orig = hereBtn.textContent;
+  hereBtn.textContent = '…';
+  hereBtn.disabled = true;
+  const res = await getCurrentPosition();
+  hereBtn.disabled = false;
+  if (res.error) {
+    console.warn('geolocation:', res.error, res.detail || '');
+    hereBtn.textContent = res.error;
+    setTimeout(() => { hereBtn.textContent = orig; }, 1800);
+    return;
+  }
+  hereBtn.textContent = orig;
+  cityIdx = -1;
+  travelTo({ name: 'Here', lat: res.pos.coords.latitude, lon: res.pos.coords.longitude });
+});
+
+let demoRAF = null;
+function demoTick() {
+  draw();
+  demoRAF = requestAnimationFrame(demoTick);
+}
+demoBtn.addEventListener('click', () => {
+  demoMode = !demoMode;
+  if (demoMode) {
+    demoStart = performance.now();
+    demoBtn.classList.add('active');
+    demoTick();
+  } else {
+    demoBtn.classList.remove('active');
+    if (demoRAF) { cancelAnimationFrame(demoRAF); demoRAF = null; }
+    draw();
+  }
+});
+
+setInterval(() => { if (!demoMode) draw(); }, 10000);
+
+function getCurrentPosition(opts = {}) {
+  const { timeoutMs = 15000, maximumAge = 60 * 60 * 1000 } = opts;
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve({ error: 'unsupported' }); return; }
+    if (!window.isSecureContext) { resolve({ error: 'insecure' }); return; }
+    const guard = setTimeout(() => resolve({ error: 'timeout' }), timeoutMs + 500);
+    navigator.geolocation.getCurrentPosition(
+      pos => { clearTimeout(guard); resolve({ pos }); },
+      err => {
+        clearTimeout(guard);
+        const map = { 1: 'denied', 2: 'unavailable', 3: 'timeout' };
+        resolve({ error: map[err.code] || 'error', detail: err.message });
+      },
+      { enableHighAccuracy: false, maximumAge, timeout: timeoutMs }
+    );
+  });
+}
+
+// -- init --
+(async function init() {
+  const loaded = load();
+  if (!loaded) {
+    const res = await getCurrentPosition();
+    if (res.pos) {
+      homeLat = res.pos.coords.latitude;
+      homeLon = res.pos.coords.longitude;
+      homeCityName = 'Here';
+      const t = latLonToTile(homeLat, homeLon);
+      homeI = t.i; homeJ = t.j;
+      cityIdx = -1;
+    } else {
+      cityIdx = 0;
+      const c = CITIES[cityIdx];
+      homeLat = c.lat; homeLon = c.lon; homeCityName = c.name;
+      const t = latLonToTile(c.lat, c.lon);
+      homeI = t.i; homeJ = t.j;
+    }
+    centerOnTile(homeI, homeJ);
+    save();
+  }
+  updateGeoDisplay();
+  startGpsWatch();
+  resize();
+})();
+</script>
+</body>
+</html>

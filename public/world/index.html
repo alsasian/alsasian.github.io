@@ -714,15 +714,37 @@ demoBtn.addEventListener('click', () => {
 
 setInterval(() => { if (!demoMode) draw(); }, 10000);
 
+function getCurrentPosition() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    const timeout = setTimeout(() => resolve(null), 6000);
+    navigator.geolocation.getCurrentPosition(
+      pos => { clearTimeout(timeout); resolve(pos); },
+      () => { clearTimeout(timeout); resolve(null); },
+      { enableHighAccuracy: false, maximumAge: 60 * 60 * 1000, timeout: 5000 }
+    );
+  });
+}
+
 // -- init --
 (async function init() {
   const loaded = load();
   if (!loaded) {
-    cityIdx = 0;
-    const c = CITIES[cityIdx];
-    homeLat = c.lat; homeLon = c.lon; homeCityName = c.name;
-    const t = latLonToTile(c.lat, c.lon);
-    homeI = t.i; homeJ = t.j;
+    const pos = await getCurrentPosition();
+    if (pos) {
+      homeLat = pos.coords.latitude;
+      homeLon = pos.coords.longitude;
+      homeCityName = 'Here';
+      const t = latLonToTile(homeLat, homeLon);
+      homeI = t.i; homeJ = t.j;
+      cityIdx = -1;
+    } else {
+      cityIdx = 0;
+      const c = CITIES[cityIdx];
+      homeLat = c.lat; homeLon = c.lon; homeCityName = c.name;
+      const t = latLonToTile(c.lat, c.lon);
+      homeI = t.i; homeJ = t.j;
+    }
     centerOnTile(homeI, homeJ);
     save();
   }

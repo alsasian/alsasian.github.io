@@ -873,7 +873,9 @@ function resetNearCamera() {
 let mode = 'idle';
 let tStartX, tStartY, tMoved, tPainted;
 let panStartX, panStartY, panSCX, panSCY;
+let pinchDist0 = 0;
 const midpoint = ts => ({ x:(ts[0].clientX+ts[1].clientX)/2, y:(ts[0].clientY+ts[1].clientY)/2 });
+const pinchDist = ts => Math.hypot(ts[0].clientX-ts[1].clientX, ts[0].clientY-ts[1].clientY);
 
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
@@ -888,6 +890,7 @@ canvas.addEventListener('touchstart', e => {
     mode = 'pan';
     const m = midpoint(e.touches);
     panStartX = m.x; panStartY = m.y; panSCX = camX; panSCY = camY;
+    pinchDist0 = pinchDist(e.touches);
     hoverI = null; hoverJ = null; draw();
   }
 }, { passive: false });
@@ -908,6 +911,23 @@ canvas.addEventListener('touchmove', e => {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
     camY = panSCY + (m.y - panStartY);
+    const d = pinchDist(e.touches);
+    const ratio = d / pinchDist0;
+    const targetIdx = ratio > 1.35 ? Math.min(zoomIdx + 1, ZOOM_LEVELS.length - 1)
+                    : ratio < 0.74 ? Math.max(zoomIdx - 1, 0)
+                    : -1;
+    if (targetIdx >= 0 && targetIdx !== zoomIdx) {
+      const f = ZOOM_LEVELS[targetIdx] / zoom;
+      zoomIdx = targetIdx; zoom = ZOOM_LEVELS[zoomIdx];
+      TW = TW_BASE * zoom; TH = TH_BASE * zoom; LIFT = LIFT_BASE * zoom;
+      camX = (m.x - W/2) * (1 - f) + camX * f;
+      camY = (m.y - H/2) * (1 - f) + camY * f;
+      panSCX = camX; panSCY = camY;
+      panStartX = m.x; panStartY = m.y;
+      pinchDist0 = d;
+      zoomBtn.textContent = zoom + 'x';
+      scheduleSave();
+    }
     scheduleDraw();
   }
   if (mode === 'pan') canvas.style.cursor = 'grabbing';

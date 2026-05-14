@@ -10,8 +10,17 @@
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #050810; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #e6e9ef; }
-  canvas { display: block; touch-action: none; }
+  canvas { display: block; touch-action: none; cursor: crosshair; }
   .hud { position: fixed; inset: 0; pointer-events: none; }
+  .tile-info {
+    pointer-events: none;
+    position: absolute; top: max(14px, env(safe-area-inset-top)); left: 14px;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(10, 13, 18, 0.7); border: 1px solid rgba(120, 160, 200, 0.18);
+    font-size: 11px; letter-spacing: 0.06em; color: #c8d3e2; white-space: nowrap;
+    opacity: 0; transition: opacity 0.12s; backdrop-filter: blur(8px);
+  }
+  .tile-info.show { opacity: 1; }
 
   .menu-toggle {
     pointer-events: auto;
@@ -96,6 +105,8 @@
   }
   .dock .mat.active { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); }
   .dock .mat.active::before { opacity: 1; }
+  .dock .mat.dim { pointer-events: none; }
+  .dock .mat.dim::before { opacity: 0.2; }
   /* decor slot */
   .dock .decor-slot { position: relative; display: flex; align-items: center; }
   .dock .decor-btn {
@@ -148,6 +159,7 @@
 <body>
 <canvas id="c"></canvas>
 <div class="hud">
+  <div class="tile-info" id="tileInfo"></div>
   <button class="menu-toggle" id="menuToggle" aria-label="menu" aria-expanded="false">
     <span class="saved" id="savedDot"></span>
     <span id="menuIcon">⋯</span>
@@ -200,6 +212,7 @@ const undoBtn = document.getElementById('undoBtn');
 const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
+const tileInfoEl = document.getElementById('tileInfo');
 const decorBtn = document.getElementById('decorBtn');
 const decorChevron = document.getElementById('decorChevron');
 const decorPicker = document.getElementById('decorPicker');
@@ -788,6 +801,18 @@ function draw() {
   const lon = -2 * camX / (TW * TILE_SCALE);
   const lat = 2 * camY / (TH * TILE_SCALE);
   viewRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
+
+  if (hoverI != null && hoverJ != null) {
+    const hc = world.get(hoverI + ',' + hoverJ);
+    if (hc && hc.h > 0) {
+      tileInfoEl.textContent = `${hc.h} · ${hc.m}`;
+      tileInfoEl.classList.add('show');
+    } else {
+      tileInfoEl.classList.remove('show');
+    }
+  } else {
+    tileInfoEl.classList.remove('show');
+  }
 }
 
 // -- tools --
@@ -885,6 +910,8 @@ canvas.addEventListener('touchmove', e => {
     camY = panSCY + (m.y - panStartY);
     scheduleDraw();
   }
+  if (mode === 'pan') canvas.style.cursor = 'grabbing';
+  else canvas.style.cursor = '';
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
@@ -910,13 +937,14 @@ canvas.addEventListener('mousemove', e => {
   if (mDown) {
     const dx = e.clientX - mSX, dy = e.clientY - mSY;
     if (!mMoved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) mMoved = true;
-    if (mMoved) { camX = mSCX + dx; camY = mSCY + dy; }
+    if (mMoved) { camX = mSCX + dx; camY = mSCY + dy; canvas.style.cursor = 'grabbing'; }
   }
   const tt = screenToTile(e.clientX, e.clientY);
   if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
   scheduleDraw();
 });
 window.addEventListener('mouseup', e => {
+  canvas.style.cursor = '';
   if (mDown && !mMoved) {
     const tt = screenToTile(e.clientX, e.clientY);
     applyTool(tt.i, tt.j);
@@ -930,6 +958,8 @@ window.addEventListener('mouseup', e => {
 function updateToolUI() {
   document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
   decorBtn.classList.toggle('active', tool === currentDecor);
+  const matActive = tool === 'raise' || tool === 'smooth';
+  document.querySelectorAll('.mat').forEach(c => c.classList.toggle('dim', !matActive));
 }
 function setTool(t) { tool = t; updateToolUI(); scheduleSave(); }
 function setMaterial(m) {

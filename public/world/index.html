@@ -69,32 +69,34 @@
   .menu .link.warn { color: #e08a8a; text-decoration-color: rgba(224, 138, 138, 0.32); }
   .menu .link.active { color: #ffd080; text-decoration-color: rgba(255, 208, 128, 0.4); }
 
+  /* dock — two rows on mobile, single pill on desktop */
   .dock {
     pointer-events: auto;
     position: absolute;
     left: 50%; bottom: max(20px, env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    display: flex; align-items: center; gap: 2px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 6px 8px;
     background: rgba(10, 13, 18, 0.68);
     border: 1px solid rgba(120, 160, 200, 0.22);
-    border-radius: 999px;
+    border-radius: 18px;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
+  .dock-row { display: flex; align-items: center; gap: 2px; }
   /* icon-only by default (mobile) */
   .dock .tool {
     pointer-events: auto;
-    width: 40px; height: 40px;
+    width: 40px; height: 38px;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     color: #8a9bb0; font: inherit; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 0;
   }
   .dock .tool .lbl { display: none; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
   .dock .tool.active { color: #9ecbff; border-color: rgba(158, 203, 255, 0.4); background: rgba(40, 70, 110, 0.4); }
-  .dock .sep { width: 1px; height: 22px; background: rgba(120, 160, 200, 0.22); margin: 0 4px; }
+  .dock .sep { width: 1px; height: 20px; background: rgba(120, 160, 200, 0.22); margin: 0 4px; }
   .dock .mat {
     pointer-events: auto;
-    width: 36px; height: 40px; padding: 0;
+    width: 36px; height: 38px; padding: 0;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: border-color 0.15s, background 0.15s;
@@ -111,7 +113,7 @@
   .dock .decor-slot { position: relative; display: flex; align-items: center; }
   .dock .decor-btn {
     pointer-events: auto;
-    width: 40px; height: 40px;
+    width: 40px; height: 38px;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     color: #8a9bb0; font: inherit; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 0;
@@ -120,7 +122,7 @@
   .dock .decor-btn.active { color: #ffd080; border-color: rgba(255, 208, 128, 0.4); background: rgba(110, 80, 40, 0.4); }
   .dock .decor-chevron {
     pointer-events: auto;
-    width: 18px; height: 40px; padding: 0; margin-left: -4px;
+    width: 18px; height: 38px; padding: 0; margin-left: -4px;
     background: transparent; border: none; color: #6e8aab;
     font: inherit; font-size: 10px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -146,8 +148,10 @@
   }
   .decor-picker .dpick:hover, .decor-picker .dpick.active { background: rgba(255, 255, 255, 0.08); }
   .decor-picker .dpick .di { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
-  /* labels on desktop */
+  /* single-row pill on desktop */
   @media (min-width: 640px) {
+    .dock { flex-direction: row; border-radius: 999px; }
+    .dock-row + .dock-row { border-left: 1px solid rgba(120, 160, 200, 0.18); padding-left: 8px; margin-left: 4px; }
     .dock .tool { width: auto; padding: 0 12px; gap: 6px; }
     .dock .tool .lbl { display: inline; }
     .dock .decor-btn { width: auto; padding: 0 12px; gap: 6px; }
@@ -176,22 +180,25 @@
     <div class="kv"><span class="lbl">undo</span><button class="link" id="undoBtn">↩ step</button></div>
   </div>
   <div class="dock">
-    <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
-    <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
-    <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
-    <button class="tool" data-tool="pick">◉<span class="lbl">pick</span></button>
-    <span class="sep"></span>
-    <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
-    <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
-    <button class="mat" data-mat="sand" aria-label="sand" style="--mat:#e4d09a"></button>
-    <button class="mat" data-mat="stone" aria-label="stone" style="--mat:#848484"></button>
-    <span class="sep"></span>
-    <div class="decor-slot">
-      <button class="decor-btn" id="decorBtn"><span id="decorIcon">✦</span><span class="lbl" id="decorName">light</span></button>
-      <button class="decor-chevron" id="decorChevron" aria-label="more decorations">▾</button>
-      <div class="decor-picker" id="decorPicker" hidden>
-        <button class="dpick active" data-decor="lantern"><span class="di">✦</span>light</button>
+    <div class="dock-row">
+      <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
+      <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
+      <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
+      <button class="tool" data-tool="pick">◉<span class="lbl">pick</span></button>
+      <span class="sep"></span>
+      <div class="decor-slot">
+        <button class="decor-btn" id="decorBtn"><span id="decorIcon">✦</span><span class="lbl" id="decorName">light</span></button>
+        <button class="decor-chevron" id="decorChevron" aria-label="more decorations">▾</button>
+        <div class="decor-picker" id="decorPicker" hidden>
+          <button class="dpick active" data-decor="lantern"><span class="di">✦</span>light</button>
+        </div>
       </div>
+    </div>
+    <div class="dock-row">
+      <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
+      <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
+      <button class="mat" data-mat="sand" aria-label="sand" style="--mat:#e4d09a"></button>
+      <button class="mat" data-mat="stone" aria-label="stone" style="--mat:#848484"></button>
     </div>
   </div>
 </div>

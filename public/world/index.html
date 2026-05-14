@@ -10,8 +10,17 @@
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #050810; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #e6e9ef; }
-  canvas { display: block; touch-action: none; }
+  canvas { display: block; touch-action: none; cursor: crosshair; }
   .hud { position: fixed; inset: 0; pointer-events: none; }
+  .tile-info {
+    pointer-events: none;
+    position: absolute; top: max(14px, env(safe-area-inset-top)); left: 14px;
+    padding: 5px 11px; border-radius: 999px;
+    background: rgba(10, 13, 18, 0.7); border: 1px solid rgba(120, 160, 200, 0.18);
+    font-size: 11px; letter-spacing: 0.06em; color: #c8d3e2; white-space: nowrap;
+    opacity: 0; transition: opacity 0.12s; backdrop-filter: blur(8px);
+  }
+  .tile-info.show { opacity: 1; }
 
   .menu-toggle {
     pointer-events: auto;
@@ -60,32 +69,34 @@
   .menu .link.warn { color: #e08a8a; text-decoration-color: rgba(224, 138, 138, 0.32); }
   .menu .link.active { color: #ffd080; text-decoration-color: rgba(255, 208, 128, 0.4); }
 
+  /* dock — two rows on mobile, single pill on desktop */
   .dock {
     pointer-events: auto;
     position: absolute;
     left: 50%; bottom: max(20px, env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    display: flex; align-items: center; gap: 2px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 6px 8px;
     background: rgba(10, 13, 18, 0.68);
     border: 1px solid rgba(120, 160, 200, 0.22);
-    border-radius: 999px;
+    border-radius: 18px;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
+  .dock-row { display: flex; align-items: center; gap: 2px; }
   /* icon-only by default (mobile) */
   .dock .tool {
     pointer-events: auto;
-    width: 40px; height: 40px;
+    width: 40px; height: 38px;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     color: #8a9bb0; font: inherit; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 0;
   }
   .dock .tool .lbl { display: none; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
   .dock .tool.active { color: #9ecbff; border-color: rgba(158, 203, 255, 0.4); background: rgba(40, 70, 110, 0.4); }
-  .dock .sep { width: 1px; height: 22px; background: rgba(120, 160, 200, 0.22); margin: 0 4px; }
+  .dock .sep { width: 1px; height: 20px; background: rgba(120, 160, 200, 0.22); margin: 0 4px; }
   .dock .mat {
     pointer-events: auto;
-    width: 36px; height: 40px; padding: 0;
+    width: 36px; height: 38px; padding: 0;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: border-color 0.15s, background 0.15s;
@@ -96,11 +107,13 @@
   }
   .dock .mat.active { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); }
   .dock .mat.active::before { opacity: 1; }
+  .dock .mat.dim { pointer-events: none; }
+  .dock .mat.dim::before { opacity: 0.2; }
   /* decor slot */
   .dock .decor-slot { position: relative; display: flex; align-items: center; }
   .dock .decor-btn {
     pointer-events: auto;
-    width: 40px; height: 40px;
+    width: 40px; height: 38px;
     background: transparent; border: 1px solid transparent; border-radius: 999px;
     color: #8a9bb0; font: inherit; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 0;
@@ -109,7 +122,7 @@
   .dock .decor-btn.active { color: #ffd080; border-color: rgba(255, 208, 128, 0.4); background: rgba(110, 80, 40, 0.4); }
   .dock .decor-chevron {
     pointer-events: auto;
-    width: 18px; height: 40px; padding: 0; margin-left: -4px;
+    width: 18px; height: 38px; padding: 0; margin-left: -4px;
     background: transparent; border: none; color: #6e8aab;
     font: inherit; font-size: 10px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -135,8 +148,10 @@
   }
   .decor-picker .dpick:hover, .decor-picker .dpick.active { background: rgba(255, 255, 255, 0.08); }
   .decor-picker .dpick .di { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
-  /* labels on desktop */
+  /* single-row pill on desktop */
   @media (min-width: 640px) {
+    .dock { flex-direction: row; border-radius: 999px; }
+    .dock-row + .dock-row { border-left: 1px solid rgba(120, 160, 200, 0.18); padding-left: 8px; margin-left: 4px; }
     .dock .tool { width: auto; padding: 0 12px; gap: 6px; }
     .dock .tool .lbl { display: inline; }
     .dock .decor-btn { width: auto; padding: 0 12px; gap: 6px; }
@@ -148,6 +163,7 @@
 <body>
 <canvas id="c"></canvas>
 <div class="hud">
+  <div class="tile-info" id="tileInfo"></div>
   <button class="menu-toggle" id="menuToggle" aria-label="menu" aria-expanded="false">
     <span class="saved" id="savedDot"></span>
     <span id="menuIcon">⋯</span>
@@ -164,22 +180,25 @@
     <div class="kv"><span class="lbl">undo</span><button class="link" id="undoBtn">↩ step</button></div>
   </div>
   <div class="dock">
-    <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
-    <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
-    <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
-    <button class="tool" data-tool="pick">◉<span class="lbl">pick</span></button>
-    <span class="sep"></span>
-    <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
-    <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
-    <button class="mat" data-mat="sand" aria-label="sand" style="--mat:#e4d09a"></button>
-    <button class="mat" data-mat="stone" aria-label="stone" style="--mat:#848484"></button>
-    <span class="sep"></span>
-    <div class="decor-slot">
-      <button class="decor-btn" id="decorBtn"><span id="decorIcon">✦</span><span class="lbl" id="decorName">light</span></button>
-      <button class="decor-chevron" id="decorChevron" aria-label="more decorations">▾</button>
-      <div class="decor-picker" id="decorPicker" hidden>
-        <button class="dpick active" data-decor="lantern"><span class="di">✦</span>light</button>
+    <div class="dock-row">
+      <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
+      <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
+      <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
+      <button class="tool" data-tool="pick">◉<span class="lbl">pick</span></button>
+      <span class="sep"></span>
+      <div class="decor-slot">
+        <button class="decor-btn" id="decorBtn"><span id="decorIcon">✦</span><span class="lbl" id="decorName">light</span></button>
+        <button class="decor-chevron" id="decorChevron" aria-label="more decorations">▾</button>
+        <div class="decor-picker" id="decorPicker" hidden>
+          <button class="dpick active" data-decor="lantern"><span class="di">✦</span>light</button>
+        </div>
       </div>
+    </div>
+    <div class="dock-row">
+      <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
+      <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
+      <button class="mat" data-mat="sand" aria-label="sand" style="--mat:#e4d09a"></button>
+      <button class="mat" data-mat="stone" aria-label="stone" style="--mat:#848484"></button>
     </div>
   </div>
 </div>
@@ -200,6 +219,7 @@ const undoBtn = document.getElementById('undoBtn');
 const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
+const tileInfoEl = document.getElementById('tileInfo');
 const decorBtn = document.getElementById('decorBtn');
 const decorChevron = document.getElementById('decorChevron');
 const decorPicker = document.getElementById('decorPicker');
@@ -788,6 +808,18 @@ function draw() {
   const lon = -2 * camX / (TW * TILE_SCALE);
   const lat = 2 * camY / (TH * TILE_SCALE);
   viewRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
+
+  if (hoverI != null && hoverJ != null) {
+    const hc = world.get(hoverI + ',' + hoverJ);
+    if (hc && hc.h > 0) {
+      tileInfoEl.textContent = `${hc.h} · ${hc.m}`;
+      tileInfoEl.classList.add('show');
+    } else {
+      tileInfoEl.classList.remove('show');
+    }
+  } else {
+    tileInfoEl.classList.remove('show');
+  }
 }
 
 // -- tools --
@@ -848,10 +880,30 @@ function resetNearCamera() {
 let mode = 'idle';
 let tStartX, tStartY, tMoved, tPainted;
 let panStartX, panStartY, panSCX, panSCY;
+let pinchDist0 = 0;
+let velX = 0, velY = 0, lastMidX = 0, lastMidY = 0, lastMidT = 0;
+let momentumRAF = null;
 const midpoint = ts => ({ x:(ts[0].clientX+ts[1].clientX)/2, y:(ts[0].clientY+ts[1].clientY)/2 });
+const pinchDist = ts => Math.hypot(ts[0].clientX-ts[1].clientX, ts[0].clientY-ts[1].clientY);
+
+function stopMomentum() { if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; } }
+function startMomentum() {
+  stopMomentum();
+  if (Math.abs(velX) < 0.05 && Math.abs(velY) < 0.05) return;
+  let vx = velX * 16, vy = velY * 16;
+  function tick() {
+    camX += vx; camY += vy;
+    vx *= 0.90; vy *= 0.90;
+    scheduleDraw();
+    if (Math.abs(vx) > 0.4 || Math.abs(vy) > 0.4) momentumRAF = requestAnimationFrame(tick);
+    else { momentumRAF = null; scheduleSave(); }
+  }
+  momentumRAF = requestAnimationFrame(tick);
+}
 
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
+  stopMomentum();
   if (e.touches.length === 1 && mode === 'idle') {
     mode = 'tool';
     const t = e.touches[0];
@@ -863,6 +915,7 @@ canvas.addEventListener('touchstart', e => {
     mode = 'pan';
     const m = midpoint(e.touches);
     panStartX = m.x; panStartY = m.y; panSCX = camX; panSCY = camY;
+    pinchDist0 = pinchDist(e.touches);
     hoverI = null; hoverJ = null; draw();
   }
 }, { passive: false });
@@ -883,8 +936,30 @@ canvas.addEventListener('touchmove', e => {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
     camY = panSCY + (m.y - panStartY);
+    const now = performance.now(); const dt = now - lastMidT;
+    if (dt > 0 && dt < 80) { velX = (m.x - lastMidX) / dt; velY = (m.y - lastMidY) / dt; }
+    lastMidX = m.x; lastMidY = m.y; lastMidT = now;
+    const d = pinchDist(e.touches);
+    const ratio = d / pinchDist0;
+    const targetIdx = ratio > 1.35 ? Math.min(zoomIdx + 1, ZOOM_LEVELS.length - 1)
+                    : ratio < 0.74 ? Math.max(zoomIdx - 1, 0)
+                    : -1;
+    if (targetIdx >= 0 && targetIdx !== zoomIdx) {
+      const f = ZOOM_LEVELS[targetIdx] / zoom;
+      zoomIdx = targetIdx; zoom = ZOOM_LEVELS[zoomIdx];
+      TW = TW_BASE * zoom; TH = TH_BASE * zoom; LIFT = LIFT_BASE * zoom;
+      camX = (m.x - W/2) * (1 - f) + camX * f;
+      camY = (m.y - H/2) * (1 - f) + camY * f;
+      panSCX = camX; panSCY = camY;
+      panStartX = m.x; panStartY = m.y;
+      pinchDist0 = d;
+      zoomBtn.textContent = zoom + 'x';
+      scheduleSave();
+    }
     scheduleDraw();
   }
+  if (mode === 'pan') canvas.style.cursor = 'grabbing';
+  else canvas.style.cursor = '';
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
@@ -897,31 +972,39 @@ canvas.addEventListener('touchend', e => {
   }
   if (e.touches.length === 0) {
     mode = 'idle'; hoverI = null; hoverJ = null; draw();
-    if (wasPan) scheduleSave();
+    if (wasPan) startMomentum();
   } else mode = 'idle';
 }, { passive: false });
 
-let mDown = false, mMoved = false, mSX, mSY, mSCX, mSCY;
+let mDown = false, mMoved = false, mSX, mSY, mSCX, mSCY, mLastX = 0, mLastY = 0, mLastT = 0;
 canvas.addEventListener('mousedown', e => {
+  stopMomentum();
   mDown = true; mMoved = false;
   mSX = e.clientX; mSY = e.clientY; mSCX = camX; mSCY = camY;
+  velX = 0; velY = 0; mLastX = e.clientX; mLastY = e.clientY; mLastT = performance.now();
 });
 canvas.addEventListener('mousemove', e => {
   if (mDown) {
     const dx = e.clientX - mSX, dy = e.clientY - mSY;
     if (!mMoved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) mMoved = true;
-    if (mMoved) { camX = mSCX + dx; camY = mSCY + dy; }
+    if (mMoved) {
+      camX = mSCX + dx; camY = mSCY + dy; canvas.style.cursor = 'grabbing';
+      const now = performance.now(); const dt = now - mLastT;
+      if (dt > 0 && dt < 80) { velX = (e.clientX - mLastX) / dt; velY = (e.clientY - mLastY) / dt; }
+      mLastX = e.clientX; mLastY = e.clientY; mLastT = now;
+    }
   }
   const tt = screenToTile(e.clientX, e.clientY);
   if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
   scheduleDraw();
 });
 window.addEventListener('mouseup', e => {
+  canvas.style.cursor = '';
   if (mDown && !mMoved) {
     const tt = screenToTile(e.clientX, e.clientY);
     applyTool(tt.i, tt.j);
   } else if (mDown && mMoved) {
-    scheduleSave();
+    startMomentum();
   }
   mDown = false;
 });
@@ -930,6 +1013,8 @@ window.addEventListener('mouseup', e => {
 function updateToolUI() {
   document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
   decorBtn.classList.toggle('active', tool === currentDecor);
+  const matActive = tool === 'raise' || tool === 'smooth';
+  document.querySelectorAll('.mat').forEach(c => c.classList.toggle('dim', !matActive));
 }
 function setTool(t) { tool = t; updateToolUI(); scheduleSave(); }
 function setMaterial(m) {

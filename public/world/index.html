@@ -11,107 +11,123 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #050810; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #e6e9ef; }
   canvas { display: block; touch-action: none; }
-  .hud {
-    position: fixed; inset: 0; pointer-events: none;
-    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
-    display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
-  .panel {
-    background: rgba(10, 13, 18, 0.78); border: 1px solid rgba(120, 160, 200, 0.18);
-    padding: 8px 12px; font-size: 11px; letter-spacing: 0.04em;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    color: #c8d3e2;
-  }
-  .panel .k { color: #6e8aab; }
-  .panel .v { color: #9ecbff; }
-  .title { font-size: 10px; color: #6e8aab; text-transform: uppercase; letter-spacing: 0.18em; margin-bottom: 4px; }
-  .title .saved { margin-left: 8px; color: #6ab880; opacity: 0; transition: opacity 0.2s; }
-  .title .saved.show { opacity: 1; }
-  .geo-row { font-size: 10px; color: #8a9bb0; margin-bottom: 4px; }
-  .time-row { display: flex; align-items: center; gap: 10px; }
-  .time-row + .time-row { margin-top: 6px; }
-  .mini-btn {
+  .hud { position: fixed; inset: 0; pointer-events: none; }
+
+  .menu-toggle {
     pointer-events: auto;
-    background: transparent; border: 1px solid rgba(120, 160, 200, 0.32);
-    color: #c8d3e2; font: inherit; font-size: 9px; letter-spacing: 0.12em;
-    text-transform: uppercase; padding: 5px 9px; cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-    min-width: 44px;
+    position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px;
+    width: 38px; height: 38px;
+    background: rgba(10, 13, 18, 0.68); color: #c8d3e2;
+    border: 1px solid rgba(120, 160, 200, 0.22);
+    border-radius: 50%;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    font: inherit; font-size: 18px; line-height: 1; letter-spacing: 2px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
   }
-  .mini-btn.demo.active { border-color: #ffd080; color: #ffd080; }
-  .tools { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-  .btn {
+  .menu-toggle .saved {
+    position: absolute; top: 7px; right: 7px;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #6ab880; opacity: 0; transition: opacity 0.25s;
+  }
+  .menu-toggle .saved.show { opacity: 1; }
+
+  .menu {
     pointer-events: auto;
-    background: rgba(10, 13, 18, 0.82); border: 1px solid rgba(120, 160, 200, 0.22);
-    color: #c8d3e2; font: inherit; font-size: 11px; font-weight: 500;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 12px 14px; cursor: pointer;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    min-width: 76px;
+    position: absolute;
+    top: calc(max(14px, env(safe-area-inset-top)) + 46px); right: 14px;
+    min-width: 220px;
+    background: rgba(10, 13, 18, 0.82);
+    border: 1px solid rgba(120, 160, 200, 0.22);
+    border-radius: 14px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 11px; letter-spacing: 0.04em; color: #c8d3e2;
   }
-  .btn.active { border-color: #9ecbff; color: #9ecbff; background: rgba(40, 70, 110, 0.5); }
-  .btn[data-tool="lantern"].active { border-color: #ffd080; color: #ffd080; background: rgba(110, 80, 40, 0.45); }
-  .btn:active { transform: translateY(1px); }
-  .chip {
+  .menu[hidden] { display: none; }
+  .menu .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; min-height: 22px; }
+  .menu .lbl { color: #6e8aab; text-transform: uppercase; letter-spacing: 0.18em; font-size: 10px; }
+  .menu .val { color: #c8d3e2; }
+  .menu .val .dim { color: #6e8aab; margin-left: 4px; }
+  .menu .link {
+    pointer-events: auto; background: none; border: none; padding: 0;
+    color: #9ecbff; font: inherit; cursor: pointer;
+    text-decoration: underline; text-decoration-color: rgba(158, 203, 255, 0.32);
+    text-underline-offset: 3px;
+  }
+  .menu .link.warn { color: #e08a8a; text-decoration-color: rgba(224, 138, 138, 0.32); }
+  .menu .link.active { color: #ffd080; text-decoration-color: rgba(255, 208, 128, 0.4); }
+
+  .dock {
     pointer-events: auto;
-    background: rgba(10, 13, 18, 0.78); border: 1px solid rgba(120, 160, 200, 0.22);
-    color: #c8d3e2; font: inherit; font-size: 10px; font-weight: 500;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 6px 10px; cursor: pointer;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    position: absolute;
+    left: 50%; bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center;
+    max-width: calc(100vw - 28px);
+    padding: 6px 8px;
+    background: rgba(10, 13, 18, 0.68);
+    border: 1px solid rgba(120, 160, 200, 0.22);
+    border-radius: 999px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
-  .chip.active { border-color: #9ecbff; color: #9ecbff; background: rgba(40, 70, 110, 0.4); }
-  .chip[data-mat="soil"].active  { border-color: #c89868; color: #c89868; background: rgba(80, 55, 30, 0.45); }
-  .chip[data-mat="sand"].active  { border-color: #f0d890; color: #f0d890; background: rgba(110, 90, 50, 0.45); }
-  .chip[data-mat="stone"].active { border-color: #b8b8b8; color: #b8b8b8; background: rgba(60, 60, 60, 0.45); }
-  .chip:active { transform: translateY(1px); }
-  .stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .dock .tool {
+    pointer-events: auto;
+    height: 36px; padding: 0 12px;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 999px;
+    color: #8a9bb0; font: inherit; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dock .tool .g { font-size: 14px; line-height: 1; }
+  .dock .tool.active { color: #9ecbff; border-color: rgba(158, 203, 255, 0.4); background: rgba(40, 70, 110, 0.4); }
+  .dock .tool[data-tool="lantern"].active { color: #ffd080; border-color: rgba(255, 208, 128, 0.4); background: rgba(110, 80, 40, 0.4); }
+  .dock .sep { width: 1px; height: 22px; background: rgba(120, 160, 200, 0.22); margin: 0 6px; }
+  .dock .mat {
+    pointer-events: auto;
+    width: 32px; height: 36px; padding: 0;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .dock .mat::before {
+    content: ''; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--mat); opacity: 0.6; transition: opacity 0.15s;
+  }
+  .dock .mat.active { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); }
+  .dock .mat.active::before { opacity: 1; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div class="hud">
-  <div class="row" style="align-items:flex-start">
-    <div class="panel">
-      <div class="title">Iso Sandbox<span class="saved" id="savedDot">●</span></div>
-      <div class="geo-row" id="gpsRow"><span class="k">gps</span> —</div>
-      <div class="geo-row" id="viewRow"><span class="k">view</span> —</div>
-    </div>
-    <div class="panel">
-      <div class="title">View</div>
-      <div class="time-row">
-        <span><span class="v" id="time">--:--</span> · <span class="k" id="phase">—</span></span>
-        <button class="mini-btn demo" id="demo">Demo</button>
-      </div>
-      <div class="time-row">
-        <span class="k">zoom</span>
-        <button class="mini-btn" id="zoomBtn">1x</button>
-      </div>
-      <div class="time-row">
-        <span class="k">travel</span>
-        <button class="mini-btn" id="travelBtn">→ Tokyo</button>
-        <button class="mini-btn" id="hereBtn">↻ Here</button>
-      </div>
-    </div>
+  <button class="menu-toggle" id="menuToggle" aria-label="menu" aria-expanded="false">
+    <span class="saved" id="savedDot"></span>
+    <span id="menuIcon">⋯</span>
+  </button>
+  <div class="menu" id="menu" hidden>
+    <div class="kv"><span class="lbl">time</span><span class="val"><span id="time">--:--</span><span class="dim" id="phase">—</span></span></div>
+    <div class="kv"><span class="lbl">gps</span><span class="val" id="gpsRow">—</span></div>
+    <div class="kv"><span class="lbl">view</span><span class="val" id="viewRow">—</span></div>
+    <div class="kv"><span class="lbl">zoom</span><button class="link" id="zoomBtn">1x</button></div>
+    <div class="kv"><span class="lbl">travel</span><button class="link" id="travelBtn">→ Tokyo</button></div>
+    <div class="kv"><span class="lbl">spawn</span><button class="link" id="hereBtn">↻ Here</button></div>
+    <div class="kv"><span class="lbl">demo</span><button class="link" id="demoBtn">play</button></div>
+    <div class="kv"><span class="lbl">reset</span><button class="link warn" id="resetBtn">clear near</button></div>
   </div>
-  <div class="row" style="justify-content:center">
-    <div class="stack">
-      <div class="tools" id="matRow">
-        <button class="chip active" data-mat="grass">Grass</button>
-        <button class="chip" data-mat="soil">Soil</button>
-        <button class="chip" data-mat="sand">Sand</button>
-        <button class="chip" data-mat="stone">Stone</button>
-      </div>
-      <div class="tools">
-        <button class="btn active" data-tool="raise">▲ Raise</button>
-        <button class="btn" data-tool="lower">▼ Lower</button>
-        <button class="btn" data-tool="lantern">✦ Light</button>
-        <button class="btn" data-tool="reset">↻ Reset</button>
-      </div>
-    </div>
+  <div class="dock">
+    <button class="tool active" data-tool="raise"><span class="g">▲</span><span>raise</span></button>
+    <button class="tool" data-tool="lower"><span class="g">▼</span><span>lower</span></button>
+    <button class="tool" data-tool="lantern"><span class="g">✦</span><span>light</span></button>
+    <span class="sep"></span>
+    <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
+    <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
+    <button class="mat" data-mat="sand" aria-label="sand" style="--mat:#e4d09a"></button>
+    <button class="mat" data-mat="stone" aria-label="stone" style="--mat:#848484"></button>
   </div>
 </div>
 <script>
@@ -119,13 +135,17 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 const timeEl = document.getElementById('time');
 const phaseEl = document.getElementById('phase');
-const demoBtn = document.getElementById('demo');
+const demoBtn = document.getElementById('demoBtn');
 const zoomBtn = document.getElementById('zoomBtn');
 const savedDot = document.getElementById('savedDot');
 const gpsRow = document.getElementById('gpsRow');
 const viewRow = document.getElementById('viewRow');
 const travelBtn = document.getElementById('travelBtn');
 const hereBtn = document.getElementById('hereBtn');
+const resetBtn = document.getElementById('resetBtn');
+const menuToggle = document.getElementById('menuToggle');
+const menuEl = document.getElementById('menu');
+const menuIcon = document.getElementById('menuIcon');
 
 // -- config --
 const TW_BASE = 32, TH_BASE = 16, LIFT_BASE = 6;
@@ -179,10 +199,10 @@ function updateGeoDisplay() {
 
 function updateGpsDisplay(lat, lon, label) {
   if (lat == null || lon == null) {
-    gpsRow.innerHTML = `<span class="k">gps</span> ${label || '—'}`;
+    gpsRow.textContent = label || '—';
     return;
   }
-  gpsRow.innerHTML = `<span class="k">gps</span> ${formatLat(lat)} ${formatLon(lon)}`;
+  gpsRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
 }
 
 let gpsWatchId = null;
@@ -249,15 +269,13 @@ function load() {
     }
     if (typeof d.tool === 'string') {
       tool = d.tool;
-      document.querySelectorAll('.btn').forEach(b => {
-        const bt = b.dataset.tool;
-        if (bt === 'reset') return;
-        b.classList.toggle('active', bt === tool);
+      document.querySelectorAll('.tool').forEach(b => {
+        b.classList.toggle('active', b.dataset.tool === tool);
       });
     }
     if (typeof d.material === 'string' && MATERIALS.includes(d.material)) {
       material = d.material;
-      document.querySelectorAll('.chip').forEach(c => {
+      document.querySelectorAll('.mat').forEach(c => {
         c.classList.toggle('active', c.dataset.mat === material);
       });
     }
@@ -394,7 +412,7 @@ function genStars() {
 let W = 0, H = 0;
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -486,6 +504,13 @@ function diamond(x, y, fill, stroke) {
 let P = null;
 let INF = null;
 let L_GLOBAL = null;
+
+let drawScheduled = false;
+function scheduleDraw() {
+  if (drawScheduled) return;
+  drawScheduled = true;
+  requestAnimationFrame(() => { drawScheduled = false; draw(); });
+}
 
 function drawCell(i, j) {
   const key = i + ',' + j;
@@ -604,23 +629,78 @@ function draw() {
     }
   }
 
-  const margin = 2;
-  const corners = [
-    screenToTile(-TW, -TH * 2 - LIFT * MAX_H),
-    screenToTile(W + TW, -TH * 2 - LIFT * MAX_H),
-    screenToTile(-TW, H + TH * 2),
-    screenToTile(W + TW, H + TH * 2),
-  ];
-  const minI = Math.min(...corners.map(c => c.i)) - margin;
-  const maxI = Math.max(...corners.map(c => c.i)) + margin;
-  const minJ = Math.min(...corners.map(c => c.j)) - margin;
-  const maxJ = Math.max(...corners.map(c => c.j)) + margin;
+  ctx.fillStyle = P.waterFlat;
+  ctx.fillRect(0, 0, W, H);
 
-  for (let s = minI + minJ; s <= maxI + maxJ; s++) {
-    const i0 = Math.max(minI, s - maxJ);
-    const i1 = Math.min(maxI, s - minJ);
-    for (let i = i0; i <= i1; i++) {
-      drawCell(i, s - i);
+  if (zoom >= 1) {
+    const offsX = camX + W/2;
+    const offsY = camY + H/2;
+    const slope = TH / TW;
+    ctx.strokeStyle = P.waterStroke;
+    ctx.lineWidth = 1;
+    const jLo = Math.floor((TH/2 - offsY - (W - offsX) * slope) / TH);
+    const jHi = Math.ceil((H - offsY + TH/2 + offsX * slope) / TH);
+    ctx.beginPath();
+    for (let j = jLo; j <= jHi; j++) {
+      const base = offsY - TH/2 + j * TH;
+      ctx.moveTo(0, base - offsX * slope);
+      ctx.lineTo(W, base + (W - offsX) * slope);
+    }
+    ctx.stroke();
+    const iLo = Math.floor((TH/2 - offsY - offsX * slope) / TH);
+    const iHi = Math.ceil((H - offsY + TH/2 + (W - offsX) * slope) / TH);
+    ctx.beginPath();
+    for (let i = iLo; i <= iHi; i++) {
+      const base = offsY - TH/2 + i * TH;
+      ctx.moveTo(0, base + offsX * slope);
+      ctx.lineTo(W, base - (W - offsX) * slope);
+    }
+    ctx.stroke();
+  }
+
+  const drawables = [];
+
+  for (const [k, inf] of INF) {
+    if (world.has(k)) continue;
+    const ci = k.indexOf(',');
+    const i = +k.slice(0, ci), j = +k.slice(ci + 1);
+    const cx = (i - j) * TW/2 + camX + W/2;
+    const baseY = (i + j) * TH/2 + camY + H/2;
+    if (cx + TW < 0 || cx - TW > W || baseY + TH < 0 || baseY - TH > H) continue;
+    drawables.push({ s: i + j, kind: 'wlit', i, j, inf });
+  }
+
+  const hk = (hoverI != null && hoverJ != null) ? (hoverI + ',' + hoverJ) : null;
+  if (hk && !world.has(hk) && !INF.has(hk)) {
+    const cx = (hoverI - hoverJ) * TW/2 + camX + W/2;
+    const baseY = (hoverI + hoverJ) * TH/2 + camY + H/2;
+    if (cx + TW >= 0 && cx - TW <= W && baseY + TH >= 0 && baseY - TH <= H) {
+      drawables.push({ s: hoverI + hoverJ, kind: 'whover', i: hoverI, j: hoverJ });
+    }
+  }
+
+  for (const [k, cell] of world) {
+    const ci = k.indexOf(',');
+    const i = +k.slice(0, ci), j = +k.slice(ci + 1);
+    const cx = (i - j) * TW/2 + camX + W/2;
+    const baseY = (i + j) * TH/2 + camY + H/2;
+    const topY = baseY - cell.h * LIFT;
+    if (cx + TW < 0 || cx - TW > W || baseY + TH < 0 || topY - TH > H) continue;
+    drawables.push({ s: i + j, kind: 'cell', i, j });
+  }
+
+  drawables.sort((a, b) => a.s - b.s);
+  for (const d of drawables) {
+    if (d.kind === 'cell') {
+      drawCell(d.i, d.j);
+    } else if (d.kind === 'wlit') {
+      const cx = (d.i - d.j) * TW/2 + camX + W/2;
+      const baseY = (d.i + d.j) * TH/2 + camY + H/2;
+      diamond(cx, baseY, addLightHex(P.waterFlat, d.inf), zoom >= 1 ? P.waterStroke : null);
+    } else {
+      const cx = (d.i - d.j) * TW/2 + camX + W/2;
+      const baseY = (d.i + d.j) * TH/2 + camY + H/2;
+      diamond(cx, baseY, P.waterHover, P.waterStroke);
     }
   }
 
@@ -634,7 +714,7 @@ function draw() {
 
   const lon = -2 * camX / (TW * TILE_SCALE);
   const lat = 2 * camY / (TH * TILE_SCALE);
-  viewRow.innerHTML = `<span class="k">view</span> ${formatLat(lat)} ${formatLon(lon)}`;
+  viewRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
 }
 
 // -- tools --
@@ -709,12 +789,12 @@ canvas.addEventListener('touchmove', e => {
       const k = tt.i + ',' + tt.j;
       if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
     }
-    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; draw(); }
+    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
   } else if (mode === 'pan' && e.touches.length >= 2) {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
     camY = panSCY + (m.y - panStartY);
-    draw();
+    scheduleDraw();
   }
 }, { passive: false });
 
@@ -745,7 +825,7 @@ canvas.addEventListener('mousemove', e => {
   }
   const tt = screenToTile(e.clientX, e.clientY);
   if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
-  draw();
+  scheduleDraw();
 });
 window.addEventListener('mouseup', e => {
   if (mDown && !mMoved) {
@@ -758,33 +838,43 @@ window.addEventListener('mouseup', e => {
 });
 
 // -- buttons --
-document.querySelectorAll('.btn').forEach(btn => {
+document.querySelectorAll('.tool').forEach(btn => {
   btn.addEventListener('click', () => {
-    const t = btn.dataset.tool;
-    if (t === 'reset') {
-      if (!confirm('Clear tiles near current view? Builds elsewhere remain.')) return;
-      resetNearCamera();
-      draw(); scheduleSave();
-      return;
-    }
-    tool = t;
-    document.querySelectorAll('.btn').forEach(b => {
-      const bt = b.dataset.tool;
-      if (bt === 'reset') return;
-      b.classList.toggle('active', bt === t);
+    tool = btn.dataset.tool;
+    document.querySelectorAll('.tool').forEach(b => {
+      b.classList.toggle('active', b.dataset.tool === tool);
     });
     scheduleSave();
   });
 });
 
-document.querySelectorAll('.chip').forEach(chip => {
+document.querySelectorAll('.mat').forEach(chip => {
   chip.addEventListener('click', () => {
     material = chip.dataset.mat;
-    document.querySelectorAll('.chip').forEach(c => {
+    document.querySelectorAll('.mat').forEach(c => {
       c.classList.toggle('active', c.dataset.mat === material);
     });
     scheduleSave();
   });
+});
+
+resetBtn.addEventListener('click', () => {
+  if (!confirm('Clear tiles near current view? Builds elsewhere remain.')) return;
+  resetNearCamera();
+  draw(); scheduleSave();
+});
+
+menuToggle.addEventListener('click', () => {
+  const open = menuEl.hasAttribute('hidden');
+  if (open) {
+    menuEl.removeAttribute('hidden');
+    menuIcon.textContent = '×';
+    menuToggle.setAttribute('aria-expanded', 'true');
+  } else {
+    menuEl.setAttribute('hidden', '');
+    menuIcon.textContent = '⋯';
+    menuToggle.setAttribute('aria-expanded', 'false');
+  }
 });
 
 zoomBtn.addEventListener('click', cycleZoom);
@@ -821,9 +911,11 @@ demoBtn.addEventListener('click', () => {
   if (demoMode) {
     demoStart = performance.now();
     demoBtn.classList.add('active');
+    demoBtn.textContent = 'stop';
     demoTick();
   } else {
     demoBtn.classList.remove('active');
+    demoBtn.textContent = 'play';
     if (demoRAF) { cancelAnimationFrame(demoRAF); demoRAF = null; }
     draw();
   }

@@ -967,7 +967,17 @@ function resetNearCamera() {
 // -- input --
 let mode = 'idle';
 let tStartX, tStartY, tMoved, tPainted;
+let lastPaintI = null, lastPaintJ = null;
 let panStartX, panStartY, panSCX, panSCY;
+
+function bresenhamTiles(x0, y0, x1, y1) {
+  const tiles = []; const dx = Math.abs(x1-x0), dy = Math.abs(y1-y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx - dy, x = x0, y = y0;
+  for (;;) { tiles.push([x, y]); if (x === x1 && y === y1) break;
+    const e2 = 2*err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+  return tiles;
+}
 let pinchDist0 = 0;
 let velX = 0, velY = 0, lastMidX = 0, lastMidY = 0, lastMidT = 0;
 let momentumRAF = null;
@@ -996,7 +1006,7 @@ canvas.addEventListener('touchstart', e => {
     mode = 'tool';
     const t = e.touches[0];
     tStartX = t.clientX; tStartY = t.clientY;
-    tMoved = false; tPainted = new Set();
+    tMoved = false; tPainted = new Set(); lastPaintI = null; lastPaintJ = null;
     if (tool === 'pan') {
       panSCX = camX; panSCY = camY;
       velX = 0; velY = 0; lastMidX = t.clientX; lastMidY = t.clientY; lastMidT = performance.now();
@@ -1028,8 +1038,14 @@ canvas.addEventListener('touchmove', e => {
     } else {
       const tt = screenToTile(t.clientX, t.clientY);
       if (tMoved && tool !== 'lantern' && tool !== 'pick') {
-        const k = tt.i + ',' + tt.j;
-        if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
+        const tiles = (lastPaintI !== null && (Math.abs(tt.i - lastPaintI) > 1 || Math.abs(tt.j - lastPaintJ) > 1))
+          ? bresenhamTiles(lastPaintI, lastPaintJ, tt.i, tt.j)
+          : [[tt.i, tt.j]];
+        for (const [bi, bj] of tiles) {
+          const bk = bi + ',' + bj;
+          if (!tPainted.has(bk)) { tPainted.add(bk); applyTool(bi, bj); }
+        }
+        lastPaintI = tt.i; lastPaintJ = tt.j;
       }
       if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
     }
@@ -1283,6 +1299,7 @@ demoBtn.addEventListener('click', () => {
 });
 
 setInterval(() => { if (!demoMode) draw(); }, 10000);
+window.addEventListener('beforeunload', save);
 
 function getCurrentPosition(opts = {}) {
   const { timeoutMs = 15000, maximumAge = 60 * 60 * 1000 } = opts;

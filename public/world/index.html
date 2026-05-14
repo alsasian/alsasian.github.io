@@ -874,11 +874,29 @@ let mode = 'idle';
 let tStartX, tStartY, tMoved, tPainted;
 let panStartX, panStartY, panSCX, panSCY;
 let pinchDist0 = 0;
+let velX = 0, velY = 0, lastMidX = 0, lastMidY = 0, lastMidT = 0;
+let momentumRAF = null;
 const midpoint = ts => ({ x:(ts[0].clientX+ts[1].clientX)/2, y:(ts[0].clientY+ts[1].clientY)/2 });
 const pinchDist = ts => Math.hypot(ts[0].clientX-ts[1].clientX, ts[0].clientY-ts[1].clientY);
 
+function stopMomentum() { if (momentumRAF) { cancelAnimationFrame(momentumRAF); momentumRAF = null; } }
+function startMomentum() {
+  stopMomentum();
+  if (Math.abs(velX) < 0.05 && Math.abs(velY) < 0.05) return;
+  let vx = velX * 16, vy = velY * 16;
+  function tick() {
+    camX += vx; camY += vy;
+    vx *= 0.90; vy *= 0.90;
+    scheduleDraw();
+    if (Math.abs(vx) > 0.4 || Math.abs(vy) > 0.4) momentumRAF = requestAnimationFrame(tick);
+    else { momentumRAF = null; scheduleSave(); }
+  }
+  momentumRAF = requestAnimationFrame(tick);
+}
+
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
+  stopMomentum();
   if (e.touches.length === 1 && mode === 'idle') {
     mode = 'tool';
     const t = e.touches[0];
@@ -911,6 +929,9 @@ canvas.addEventListener('touchmove', e => {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
     camY = panSCY + (m.y - panStartY);
+    const now = performance.now(); const dt = now - lastMidT;
+    if (dt > 0 && dt < 80) { velX = (m.x - lastMidX) / dt; velY = (m.y - lastMidY) / dt; }
+    lastMidX = m.x; lastMidY = m.y; lastMidT = now;
     const d = pinchDist(e.touches);
     const ratio = d / pinchDist0;
     const targetIdx = ratio > 1.35 ? Math.min(zoomIdx + 1, ZOOM_LEVELS.length - 1)
@@ -944,20 +965,27 @@ canvas.addEventListener('touchend', e => {
   }
   if (e.touches.length === 0) {
     mode = 'idle'; hoverI = null; hoverJ = null; draw();
-    if (wasPan) scheduleSave();
+    if (wasPan) startMomentum();
   } else mode = 'idle';
 }, { passive: false });
 
-let mDown = false, mMoved = false, mSX, mSY, mSCX, mSCY;
+let mDown = false, mMoved = false, mSX, mSY, mSCX, mSCY, mLastX = 0, mLastY = 0, mLastT = 0;
 canvas.addEventListener('mousedown', e => {
+  stopMomentum();
   mDown = true; mMoved = false;
   mSX = e.clientX; mSY = e.clientY; mSCX = camX; mSCY = camY;
+  velX = 0; velY = 0; mLastX = e.clientX; mLastY = e.clientY; mLastT = performance.now();
 });
 canvas.addEventListener('mousemove', e => {
   if (mDown) {
     const dx = e.clientX - mSX, dy = e.clientY - mSY;
     if (!mMoved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) mMoved = true;
-    if (mMoved) { camX = mSCX + dx; camY = mSCY + dy; canvas.style.cursor = 'grabbing'; }
+    if (mMoved) {
+      camX = mSCX + dx; camY = mSCY + dy; canvas.style.cursor = 'grabbing';
+      const now = performance.now(); const dt = now - mLastT;
+      if (dt > 0 && dt < 80) { velX = (e.clientX - mLastX) / dt; velY = (e.clientY - mLastY) / dt; }
+      mLastX = e.clientX; mLastY = e.clientY; mLastT = now;
+    }
   }
   const tt = screenToTile(e.clientX, e.clientY);
   if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
@@ -969,7 +997,7 @@ window.addEventListener('mouseup', e => {
     const tt = screenToTile(e.clientX, e.clientY);
     applyTool(tt.i, tt.j);
   } else if (mDown && mMoved) {
-    scheduleSave();
+    startMomentum();
   }
   mDown = false;
 });

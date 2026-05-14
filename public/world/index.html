@@ -394,7 +394,7 @@ function genStars() {
 let W = 0, H = 0;
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -486,6 +486,13 @@ function diamond(x, y, fill, stroke) {
 let P = null;
 let INF = null;
 let L_GLOBAL = null;
+
+let drawScheduled = false;
+function scheduleDraw() {
+  if (drawScheduled) return;
+  drawScheduled = true;
+  requestAnimationFrame(() => { drawScheduled = false; draw(); });
+}
 
 function drawCell(i, j) {
   const key = i + ',' + j;
@@ -604,23 +611,78 @@ function draw() {
     }
   }
 
-  const margin = 2;
-  const corners = [
-    screenToTile(-TW, -TH * 2 - LIFT * MAX_H),
-    screenToTile(W + TW, -TH * 2 - LIFT * MAX_H),
-    screenToTile(-TW, H + TH * 2),
-    screenToTile(W + TW, H + TH * 2),
-  ];
-  const minI = Math.min(...corners.map(c => c.i)) - margin;
-  const maxI = Math.max(...corners.map(c => c.i)) + margin;
-  const minJ = Math.min(...corners.map(c => c.j)) - margin;
-  const maxJ = Math.max(...corners.map(c => c.j)) + margin;
+  ctx.fillStyle = P.waterFlat;
+  ctx.fillRect(0, 0, W, H);
 
-  for (let s = minI + minJ; s <= maxI + maxJ; s++) {
-    const i0 = Math.max(minI, s - maxJ);
-    const i1 = Math.min(maxI, s - minJ);
-    for (let i = i0; i <= i1; i++) {
-      drawCell(i, s - i);
+  if (zoom >= 1) {
+    const offsX = camX + W/2;
+    const offsY = camY + H/2;
+    const slope = TH / TW;
+    ctx.strokeStyle = P.waterStroke;
+    ctx.lineWidth = 1;
+    const jLo = Math.floor((TH/2 - offsY - (W - offsX) * slope) / TH);
+    const jHi = Math.ceil((H - offsY + TH/2 + offsX * slope) / TH);
+    ctx.beginPath();
+    for (let j = jLo; j <= jHi; j++) {
+      const base = offsY - TH/2 + j * TH;
+      ctx.moveTo(0, base - offsX * slope);
+      ctx.lineTo(W, base + (W - offsX) * slope);
+    }
+    ctx.stroke();
+    const iLo = Math.floor((TH/2 - offsY - offsX * slope) / TH);
+    const iHi = Math.ceil((H - offsY + TH/2 + (W - offsX) * slope) / TH);
+    ctx.beginPath();
+    for (let i = iLo; i <= iHi; i++) {
+      const base = offsY - TH/2 + i * TH;
+      ctx.moveTo(0, base + offsX * slope);
+      ctx.lineTo(W, base - (W - offsX) * slope);
+    }
+    ctx.stroke();
+  }
+
+  const drawables = [];
+
+  for (const [k, inf] of INF) {
+    if (world.has(k)) continue;
+    const ci = k.indexOf(',');
+    const i = +k.slice(0, ci), j = +k.slice(ci + 1);
+    const cx = (i - j) * TW/2 + camX + W/2;
+    const baseY = (i + j) * TH/2 + camY + H/2;
+    if (cx + TW < 0 || cx - TW > W || baseY + TH < 0 || baseY - TH > H) continue;
+    drawables.push({ s: i + j, kind: 'wlit', i, j, inf });
+  }
+
+  const hk = (hoverI != null && hoverJ != null) ? (hoverI + ',' + hoverJ) : null;
+  if (hk && !world.has(hk) && !INF.has(hk)) {
+    const cx = (hoverI - hoverJ) * TW/2 + camX + W/2;
+    const baseY = (hoverI + hoverJ) * TH/2 + camY + H/2;
+    if (cx + TW >= 0 && cx - TW <= W && baseY + TH >= 0 && baseY - TH <= H) {
+      drawables.push({ s: hoverI + hoverJ, kind: 'whover', i: hoverI, j: hoverJ });
+    }
+  }
+
+  for (const [k, cell] of world) {
+    const ci = k.indexOf(',');
+    const i = +k.slice(0, ci), j = +k.slice(ci + 1);
+    const cx = (i - j) * TW/2 + camX + W/2;
+    const baseY = (i + j) * TH/2 + camY + H/2;
+    const topY = baseY - cell.h * LIFT;
+    if (cx + TW < 0 || cx - TW > W || baseY + TH < 0 || topY - TH > H) continue;
+    drawables.push({ s: i + j, kind: 'cell', i, j });
+  }
+
+  drawables.sort((a, b) => a.s - b.s);
+  for (const d of drawables) {
+    if (d.kind === 'cell') {
+      drawCell(d.i, d.j);
+    } else if (d.kind === 'wlit') {
+      const cx = (d.i - d.j) * TW/2 + camX + W/2;
+      const baseY = (d.i + d.j) * TH/2 + camY + H/2;
+      diamond(cx, baseY, addLightHex(P.waterFlat, d.inf), zoom >= 1 ? P.waterStroke : null);
+    } else {
+      const cx = (d.i - d.j) * TW/2 + camX + W/2;
+      const baseY = (d.i + d.j) * TH/2 + camY + H/2;
+      diamond(cx, baseY, P.waterHover, P.waterStroke);
     }
   }
 
@@ -709,12 +771,12 @@ canvas.addEventListener('touchmove', e => {
       const k = tt.i + ',' + tt.j;
       if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
     }
-    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; draw(); }
+    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
   } else if (mode === 'pan' && e.touches.length >= 2) {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
     camY = panSCY + (m.y - panStartY);
-    draw();
+    scheduleDraw();
   }
 }, { passive: false });
 
@@ -745,7 +807,7 @@ canvas.addEventListener('mousemove', e => {
   }
   const tt = screenToTile(e.clientX, e.clientY);
   if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; }
-  draw();
+  scheduleDraw();
 });
 window.addEventListener('mouseup', e => {
   if (mDown && !mMoved) {

@@ -41,6 +41,20 @@
   }
   .menu-toggle .saved.show { opacity: 1; }
 
+  .gps-center-btn {
+    pointer-events: auto;
+    position: absolute; top: calc(max(14px, env(safe-area-inset-top)) + 46px); right: 14px;
+    width: 38px; height: 38px;
+    background: rgba(10, 13, 18, 0.68); color: #8a9bb0;
+    border: 1px solid rgba(120, 160, 200, 0.22); border-radius: 50%;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    font: inherit; font-size: 17px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .gps-center-btn.has-gps { color: #9ecbff; border-color: rgba(158, 203, 255, 0.3); }
+  .gps-center-btn.flash { color: #ffd080; border-color: rgba(255, 208, 128, 0.5); }
+
   .menu {
     pointer-events: auto;
     position: absolute;
@@ -164,6 +178,7 @@
 <canvas id="c"></canvas>
 <div class="hud">
   <div class="tile-info" id="tileInfo"></div>
+  <button class="gps-center-btn" id="gpsCenterBtn" aria-label="go to GPS location">◉</button>
   <button class="menu-toggle" id="menuToggle" aria-label="menu" aria-expanded="false">
     <span class="saved" id="savedDot"></span>
     <span id="menuIcon">⋯</span>
@@ -181,6 +196,8 @@
   </div>
   <div class="dock">
     <div class="dock-row">
+      <button class="tool" data-tool="pan">⊕<span class="lbl">move</span></button>
+      <span class="sep"></span>
       <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
       <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
       <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
@@ -220,6 +237,7 @@ const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
 const tileInfoEl = document.getElementById('tileInfo');
+const gpsCenterBtn = document.getElementById('gpsCenterBtn');
 const decorBtn = document.getElementById('decorBtn');
 const decorChevron = document.getElementById('decorChevron');
 const decorPicker = document.getElementById('decorPicker');
@@ -257,6 +275,7 @@ let camX = 0, camY = 0;
 let hoverI = null, hoverJ = null;
 let tool = 'raise';
 let currentDecor = 'lantern';
+let gpsLat = null, gpsLon = null;
 let homeI = 0, homeJ = 0;
 let homeLat = null, homeLon = null;
 let homeCityName = null;
@@ -295,9 +314,12 @@ function updateGeoDisplay() {
 function updateGpsDisplay(lat, lon, label) {
   if (lat == null || lon == null) {
     gpsRow.textContent = label || '—';
+    gpsCenterBtn.classList.remove('has-gps');
     return;
   }
+  gpsLat = lat; gpsLon = lon;
   gpsRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
+  gpsCenterBtn.classList.add('has-gps');
 }
 
 let gpsWatchId = null;
@@ -827,10 +849,8 @@ function applyTool(i, j) {
   const k = i + ',' + j;
   const cur = world.get(k);
   let changed = false;
-  if (tool === 'pick') {
-    if (cur && cur.h > 0) setMaterial(cur.m);
-    return;
-  }
+  if (tool === 'pick') { if (cur && cur.h > 0) setMaterial(cur.m); return; }
+  if (tool === 'pan') return;
   pushUndo();
   if (tool === 'raise') {
     if (!cur) { world.set(k, { h: 1, m: material }); changed = true; }
@@ -909,8 +929,13 @@ canvas.addEventListener('touchstart', e => {
     const t = e.touches[0];
     tStartX = t.clientX; tStartY = t.clientY;
     tMoved = false; tPainted = new Set();
-    const tt = screenToTile(t.clientX, t.clientY);
-    hoverI = tt.i; hoverJ = tt.j; draw();
+    if (tool === 'pan') {
+      panSCX = camX; panSCY = camY;
+      velX = 0; velY = 0; lastMidX = t.clientX; lastMidY = t.clientY; lastMidT = performance.now();
+    } else {
+      const tt = screenToTile(t.clientX, t.clientY);
+      hoverI = tt.i; hoverJ = tt.j; draw();
+    }
   } else if (e.touches.length >= 2) {
     mode = 'pan';
     const m = midpoint(e.touches);
@@ -925,13 +950,21 @@ canvas.addEventListener('touchmove', e => {
   if (mode === 'tool' && e.touches.length === 1) {
     const t = e.touches[0];
     const dx = t.clientX - tStartX, dy = t.clientY - tStartY;
-    if (!tMoved && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) tMoved = true;
-    const tt = screenToTile(t.clientX, t.clientY);
-    if (tMoved && tool !== 'lantern' && tool !== 'pick') {
-      const k = tt.i + ',' + tt.j;
-      if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
+    if (!tMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) tMoved = true;
+    if (tool === 'pan') {
+      camX = panSCX + dx; camY = panSCY + dy;
+      const now = performance.now(); const dt = now - lastMidT;
+      if (dt > 0 && dt < 80) { velX = (t.clientX - lastMidX) / dt; velY = (t.clientY - lastMidY) / dt; }
+      lastMidX = t.clientX; lastMidY = t.clientY; lastMidT = now;
+      scheduleDraw();
+    } else {
+      const tt = screenToTile(t.clientX, t.clientY);
+      if (tMoved && tool !== 'lantern' && tool !== 'pick') {
+        const k = tt.i + ',' + tt.j;
+        if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
+      }
+      if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
     }
-    if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
   } else if (mode === 'pan' && e.touches.length >= 2) {
     const m = midpoint(e.touches);
     camX = panSCX + (m.x - panStartX);
@@ -972,7 +1005,8 @@ canvas.addEventListener('touchend', e => {
   }
   if (e.touches.length === 0) {
     mode = 'idle'; hoverI = null; hoverJ = null; draw();
-    if (wasPan) startMomentum();
+    if (wasPan || tool === 'pan') startMomentum();
+    else if (wasPan) scheduleSave();
   } else mode = 'idle';
 }, { passive: false });
 
@@ -1015,6 +1049,7 @@ function updateToolUI() {
   decorBtn.classList.toggle('active', tool === currentDecor);
   const matActive = tool === 'raise' || tool === 'smooth';
   document.querySelectorAll('.mat').forEach(c => c.classList.toggle('dim', !matActive));
+  canvas.style.cursor = tool === 'pan' ? 'grab' : 'crosshair';
 }
 function setTool(t) { tool = t; updateToolUI(); scheduleSave(); }
 function setMaterial(m) {
@@ -1065,6 +1100,17 @@ resetBtn.addEventListener('click', () => {
 
 undoBtn.addEventListener('click', undo);
 
+gpsCenterBtn.addEventListener('click', () => {
+  if (gpsLat == null) {
+    gpsCenterBtn.classList.add('flash');
+    setTimeout(() => gpsCenterBtn.classList.remove('flash'), 600);
+    return;
+  }
+  const t = latLonToTile(gpsLat, gpsLon);
+  centerOnTile(t.i, t.j);
+  draw(); scheduleSave();
+});
+
 document.addEventListener('pointerdown', e => {
   if (!decorPicker.hidden && !decorPicker.contains(e.target) && e.target !== decorChevron)
     decorPicker.setAttribute('hidden', '');
@@ -1082,6 +1128,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   switch (e.key.toLowerCase()) {
+    case 'm': setTool('pan'); break;
     case 'r': setTool('raise'); break;
     case 'l': setTool('lower'); break;
     case 's': setTool('smooth'); break;

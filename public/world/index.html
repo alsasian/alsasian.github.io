@@ -41,19 +41,54 @@
   }
   .menu-toggle .saved.show { opacity: 1; }
 
+  .quick-undo-btn {
+    pointer-events: auto;
+    position: absolute; top: max(14px, env(safe-area-inset-top)); right: 106px;
+    width: 38px; height: 38px;
+    background: rgba(10, 13, 18, 0.68); color: #8a9bb0;
+    border: 1px solid rgba(120, 160, 200, 0.22); border-radius: 50%;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    font: inherit; font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .quick-undo-btn:active, .quick-undo-btn.flash-warn { color: #ffd080; border-color: rgba(255,208,128,0.4); }
+
   .gps-center-btn {
     pointer-events: auto;
-    position: absolute; top: calc(max(14px, env(safe-area-inset-top)) + 46px); right: 14px;
+    position: absolute; top: max(14px, env(safe-area-inset-top)); right: 60px;
     width: 38px; height: 38px;
     background: rgba(10, 13, 18, 0.68); color: #8a9bb0;
     border: 1px solid rgba(120, 160, 200, 0.22); border-radius: 50%;
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     font: inherit; font-size: 17px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s, border-color 0.15s, opacity 0.4s;
   }
   .gps-center-btn.has-gps { color: #9ecbff; border-color: rgba(158, 203, 255, 0.3); }
   .gps-center-btn.flash { color: #ffd080; border-color: rgba(255, 208, 128, 0.5); }
+
+  /* hint overlay — shown once on first visit */
+  .hint-overlay {
+    pointer-events: none; position: fixed; inset: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: calc(max(20px, env(safe-area-inset-bottom)) + 130px);
+    opacity: 0; transition: opacity 0.6s;
+  }
+  .hint-overlay.show { opacity: 1; }
+  .hint-text {
+    background: rgba(10, 13, 18, 0.72); border: 1px solid rgba(120, 160, 200, 0.2);
+    border-radius: 999px; padding: 7px 16px;
+    font-size: 11px; letter-spacing: 0.08em; color: #a8b8c8; white-space: nowrap;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* demo mode — dim HUD for cinematic view */
+  .hud.demo-active .dock,
+  .hud.demo-active .gps-center-btn,
+  .hud.demo-active .quick-undo-btn,
+  .hud.demo-active .tile-info { opacity: 0; pointer-events: none; transition: opacity 0.8s; }
+  .hud.demo-active .menu-toggle { opacity: 0.25; transition: opacity 0.8s; }
 
   .menu {
     pointer-events: auto;
@@ -82,6 +117,8 @@
   }
   .menu .link.warn { color: #e08a8a; text-decoration-color: rgba(224, 138, 138, 0.32); }
   .menu .link.active { color: #ffd080; text-decoration-color: rgba(255, 208, 128, 0.4); }
+  .menu .link.flash-warn { color: #e08a8a; }
+  .menu-sep { height: 1px; background: rgba(120, 160, 200, 0.12); margin: 2px -14px; }
 
   /* dock — two rows on mobile, single pill on desktop */
   .dock {
@@ -178,6 +215,8 @@
 <canvas id="c"></canvas>
 <div class="hud">
   <div class="tile-info" id="tileInfo"></div>
+  <div class="hint-overlay" id="hintOverlay"><span class="hint-text">tap to raise · ⊕ to move · pinch to zoom</span></div>
+  <button class="quick-undo-btn" id="quickUndoBtn" aria-label="undo">↩</button>
   <button class="gps-center-btn" id="gpsCenterBtn" aria-label="go to GPS location">◉</button>
   <button class="menu-toggle" id="menuToggle" aria-label="menu" aria-expanded="false">
     <span class="saved" id="savedDot"></span>
@@ -187,12 +226,16 @@
     <div class="kv"><span class="lbl">time</span><span class="val"><span id="time">--:--</span><span class="dim" id="phase">—</span></span></div>
     <div class="kv"><span class="lbl">gps</span><span class="val" id="gpsRow">—</span></div>
     <div class="kv"><span class="lbl">view</span><span class="val" id="viewRow">—</span></div>
+    <div class="kv"><span class="lbl">tiles</span><span class="val" id="tileCount">0</span></div>
+    <div class="menu-sep"></div>
     <div class="kv"><span class="lbl">zoom</span><button class="link" id="zoomBtn">1x</button></div>
     <div class="kv"><span class="lbl">travel</span><button class="link" id="travelBtn">→ Tokyo</button></div>
     <div class="kv"><span class="lbl">spawn</span><button class="link" id="hereBtn">↻ Here</button></div>
     <div class="kv"><span class="lbl">demo</span><button class="link" id="demoBtn">play</button></div>
-    <div class="kv"><span class="lbl">reset</span><button class="link warn" id="resetBtn">clear near</button></div>
+    <div class="menu-sep"></div>
     <div class="kv"><span class="lbl">undo</span><button class="link" id="undoBtn">↩ step</button></div>
+    <div class="kv"><span class="lbl">redo</span><button class="link" id="redoBtn">↪ step</button></div>
+    <div class="kv"><span class="lbl">reset</span><button class="link warn" id="resetBtn">clear near</button></div>
   </div>
   <div class="dock">
     <div class="dock-row">
@@ -233,10 +276,16 @@ const travelBtn = document.getElementById('travelBtn');
 const hereBtn = document.getElementById('hereBtn');
 const resetBtn = document.getElementById('resetBtn');
 const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const tileCountEl = document.getElementById('tileCount');
 const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
 const tileInfoEl = document.getElementById('tileInfo');
+const hintOverlay = document.getElementById('hintOverlay');
+const quickUndoBtn = document.getElementById('quickUndoBtn');
+const hud = document.querySelector('.hud');
+const haptic = (ms = 10) => { try { navigator.vibrate?.(ms); } catch(e) {} };
 const gpsCenterBtn = document.getElementById('gpsCenterBtn');
 const decorBtn = document.getElementById('decorBtn');
 const decorChevron = document.getElementById('decorChevron');
@@ -282,15 +331,33 @@ let homeCityName = null;
 let cityIdx = 0;
 let material = 'grass';
 
-// -- undo --
+// -- undo / redo --
 const undoStack = [];
+const redoStack = [];
 function pushUndo() {
   undoStack.push({ world: new Map(world), lights: new Map(lights) });
   if (undoStack.length > 20) undoStack.shift();
+  redoStack.length = 0;
 }
 function undo() {
+  if (!undoStack.length) {
+    undoBtn.classList.add('flash-warn'); setTimeout(() => undoBtn.classList.remove('flash-warn'), 500);
+    return;
+  }
+  redoStack.push({ world: new Map(world), lights: new Map(lights) });
   const state = undoStack.pop();
-  if (!state) return;
+  world.clear(); lights.clear();
+  for (const [k, v] of state.world) world.set(k, v);
+  for (const [k, v] of state.lights) lights.set(k, v);
+  draw(); scheduleSave();
+}
+function redo() {
+  if (!redoStack.length) {
+    redoBtn.classList.add('flash-warn'); setTimeout(() => redoBtn.classList.remove('flash-warn'), 500);
+    return;
+  }
+  undoStack.push({ world: new Map(world), lights: new Map(lights) });
+  const state = redoStack.pop();
   world.clear(); lights.clear();
   for (const [k, v] of state.world) world.set(k, v);
   for (const [k, v] of state.lights) lights.set(k, v);
@@ -830,6 +897,7 @@ function draw() {
   const lon = -2 * camX / (TW * TILE_SCALE);
   const lat = 2 * camY / (TH * TILE_SCALE);
   viewRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
+  tileCountEl.textContent = world.size;
 
   if (hoverI != null && hoverJ != null) {
     const hc = world.get(hoverI + ',' + hoverJ);
@@ -876,7 +944,7 @@ function applyTool(i, j) {
       changed = true;
     }
   }
-  if (changed) { draw(); scheduleSave(); }
+  if (changed) { haptic(); draw(); scheduleSave(); }
   else undoStack.pop();
 }
 
@@ -899,7 +967,17 @@ function resetNearCamera() {
 // -- input --
 let mode = 'idle';
 let tStartX, tStartY, tMoved, tPainted;
+let lastPaintI = null, lastPaintJ = null;
 let panStartX, panStartY, panSCX, panSCY;
+
+function bresenhamTiles(x0, y0, x1, y1) {
+  const tiles = []; const dx = Math.abs(x1-x0), dy = Math.abs(y1-y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx - dy, x = x0, y = y0;
+  for (;;) { tiles.push([x, y]); if (x === x1 && y === y1) break;
+    const e2 = 2*err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+  return tiles;
+}
 let pinchDist0 = 0;
 let velX = 0, velY = 0, lastMidX = 0, lastMidY = 0, lastMidT = 0;
 let momentumRAF = null;
@@ -928,7 +1006,7 @@ canvas.addEventListener('touchstart', e => {
     mode = 'tool';
     const t = e.touches[0];
     tStartX = t.clientX; tStartY = t.clientY;
-    tMoved = false; tPainted = new Set();
+    tMoved = false; tPainted = new Set(); lastPaintI = null; lastPaintJ = null;
     if (tool === 'pan') {
       panSCX = camX; panSCY = camY;
       velX = 0; velY = 0; lastMidX = t.clientX; lastMidY = t.clientY; lastMidT = performance.now();
@@ -960,8 +1038,14 @@ canvas.addEventListener('touchmove', e => {
     } else {
       const tt = screenToTile(t.clientX, t.clientY);
       if (tMoved && tool !== 'lantern' && tool !== 'pick') {
-        const k = tt.i + ',' + tt.j;
-        if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
+        const tiles = (lastPaintI !== null && (Math.abs(tt.i - lastPaintI) > 1 || Math.abs(tt.j - lastPaintJ) > 1))
+          ? bresenhamTiles(lastPaintI, lastPaintJ, tt.i, tt.j)
+          : [[tt.i, tt.j]];
+        for (const [bi, bj] of tiles) {
+          const bk = bi + ',' + bj;
+          if (!tPainted.has(bk)) { tPainted.add(bk); applyTool(bi, bj); }
+        }
+        lastPaintI = tt.i; lastPaintJ = tt.j;
       }
       if (tt.i !== hoverI || tt.j !== hoverJ) { hoverI = tt.i; hoverJ = tt.j; scheduleDraw(); }
     }
@@ -1099,6 +1183,11 @@ resetBtn.addEventListener('click', () => {
 });
 
 undoBtn.addEventListener('click', undo);
+redoBtn.addEventListener('click', redo);
+quickUndoBtn.addEventListener('click', () => {
+  undo();
+  quickUndoBtn.classList.add('flash-warn'); setTimeout(() => quickUndoBtn.classList.remove('flash-warn'), 300);
+});
 
 gpsCenterBtn.addEventListener('click', () => {
   if (gpsLat == null) {
@@ -1124,7 +1213,8 @@ document.addEventListener('pointerdown', e => {
 document.addEventListener('keydown', e => {
   if (e.target !== document.body && e.target.tagName !== 'CANVAS') return;
   if (e.metaKey || e.ctrlKey) {
-    if (e.key === 'z') { e.preventDefault(); undo(); }
+    if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); redo(); }
     return;
   }
   switch (e.key.toLowerCase()) {
@@ -1197,16 +1287,19 @@ demoBtn.addEventListener('click', () => {
     demoStart = performance.now();
     demoBtn.classList.add('active');
     demoBtn.textContent = 'stop';
+    hud.classList.add('demo-active');
     demoTick();
   } else {
     demoBtn.classList.remove('active');
     demoBtn.textContent = 'play';
+    hud.classList.remove('demo-active');
     if (demoRAF) { cancelAnimationFrame(demoRAF); demoRAF = null; }
     draw();
   }
 });
 
 setInterval(() => { if (!demoMode) draw(); }, 10000);
+window.addEventListener('beforeunload', save);
 
 function getCurrentPosition(opts = {}) {
   const { timeoutMs = 15000, maximumAge = 60 * 60 * 1000 } = opts;
@@ -1251,6 +1344,14 @@ function getCurrentPosition(opts = {}) {
   updateGeoDisplay();
   startGpsWatch();
   resize();
+
+  if (!localStorage.getItem('iso-hint-v1')) {
+    localStorage.setItem('iso-hint-v1', '1');
+    setTimeout(() => hintOverlay.classList.add('show'), 900);
+    setTimeout(() => hintOverlay.classList.remove('show'), 5000);
+    canvas.addEventListener('touchstart', () => hintOverlay.classList.remove('show'), { once: true, passive: true });
+    canvas.addEventListener('mousedown', () => hintOverlay.classList.remove('show'), { once: true });
+  }
 })();
 </script>
 </body>

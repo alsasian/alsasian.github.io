@@ -46,6 +46,7 @@
     font-size: 11px; letter-spacing: 0.04em; color: #c8d3e2;
   }
   .menu[hidden] { display: none; }
+  .menu { max-height: calc(100dvh - max(14px, env(safe-area-inset-top)) - 70px); overflow-y: auto; }
   .menu .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; min-height: 22px; }
   .menu .lbl { color: #6e8aab; text-transform: uppercase; letter-spacing: 0.18em; font-size: 10px; }
   .menu .val { color: #c8d3e2; }
@@ -160,11 +161,13 @@
     <div class="kv"><span class="lbl">spawn</span><button class="link" id="hereBtn">↻ Here</button></div>
     <div class="kv"><span class="lbl">demo</span><button class="link" id="demoBtn">play</button></div>
     <div class="kv"><span class="lbl">reset</span><button class="link warn" id="resetBtn">clear near</button></div>
+    <div class="kv"><span class="lbl">undo</span><button class="link" id="undoBtn">↩ step</button></div>
   </div>
   <div class="dock">
     <button class="tool active" data-tool="raise">▲<span class="lbl">raise</span></button>
     <button class="tool" data-tool="lower">▼<span class="lbl">lower</span></button>
     <button class="tool" data-tool="smooth">≈<span class="lbl">smooth</span></button>
+    <button class="tool" data-tool="pick">◉<span class="lbl">pick</span></button>
     <span class="sep"></span>
     <button class="mat active" data-mat="grass" aria-label="grass" style="--mat:#80a445"></button>
     <button class="mat" data-mat="soil" aria-label="soil" style="--mat:#7f6244"></button>
@@ -193,6 +196,7 @@ const viewRow = document.getElementById('viewRow');
 const travelBtn = document.getElementById('travelBtn');
 const hereBtn = document.getElementById('hereBtn');
 const resetBtn = document.getElementById('resetBtn');
+const undoBtn = document.getElementById('undoBtn');
 const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
@@ -238,6 +242,21 @@ let homeLat = null, homeLon = null;
 let homeCityName = null;
 let cityIdx = 0;
 let material = 'grass';
+
+// -- undo --
+const undoStack = [];
+function pushUndo() {
+  undoStack.push({ world: new Map(world), lights: new Map(lights) });
+  if (undoStack.length > 20) undoStack.shift();
+}
+function undo() {
+  const state = undoStack.pop();
+  if (!state) return;
+  world.clear(); lights.clear();
+  for (const [k, v] of state.world) world.set(k, v);
+  for (const [k, v] of state.lights) lights.set(k, v);
+  draw(); scheduleSave();
+}
 
 // -- geo --
 function latLonToTile(lat, lon) {
@@ -776,6 +795,11 @@ function applyTool(i, j) {
   const k = i + ',' + j;
   const cur = world.get(k);
   let changed = false;
+  if (tool === 'pick') {
+    if (cur && cur.h > 0) setMaterial(cur.m);
+    return;
+  }
+  pushUndo();
   if (tool === 'raise') {
     if (!cur) { world.set(k, { h: 1, m: material }); changed = true; }
     else if (cur.h < MAX_H) { world.set(k, { h: cur.h + 1, m: material }); changed = true; }
@@ -801,6 +825,7 @@ function applyTool(i, j) {
     }
   }
   if (changed) { draw(); scheduleSave(); }
+  else undoStack.pop();
 }
 
 function resetNearCamera() {
@@ -849,7 +874,7 @@ canvas.addEventListener('touchmove', e => {
     const dx = t.clientX - tStartX, dy = t.clientY - tStartY;
     if (!tMoved && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) tMoved = true;
     const tt = screenToTile(t.clientX, t.clientY);
-    if (tMoved && tool !== 'lantern') {
+    if (tMoved && tool !== 'lantern' && tool !== 'pick') {
       const k = tt.i + ',' + tt.j;
       if (!tPainted.has(k)) { tPainted.add(k); applyTool(tt.i, tt.j); }
     }
@@ -906,13 +931,15 @@ function updateToolUI() {
   document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
   decorBtn.classList.toggle('active', tool === currentDecor);
 }
+function setTool(t) { tool = t; updateToolUI(); scheduleSave(); }
+function setMaterial(m) {
+  material = m;
+  document.querySelectorAll('.mat').forEach(c => c.classList.toggle('active', c.dataset.mat === m));
+  scheduleSave();
+}
 
 document.querySelectorAll('.tool').forEach(btn => {
-  btn.addEventListener('click', () => {
-    tool = btn.dataset.tool;
-    updateToolUI();
-    scheduleSave();
-  });
+  btn.addEventListener('click', () => setTool(btn.dataset.tool));
 });
 
 decorBtn.addEventListener('click', () => {
@@ -942,13 +969,7 @@ document.querySelectorAll('.dpick').forEach(btn => {
 });
 
 document.querySelectorAll('.mat').forEach(chip => {
-  chip.addEventListener('click', () => {
-    material = chip.dataset.mat;
-    document.querySelectorAll('.mat').forEach(c => {
-      c.classList.toggle('active', c.dataset.mat === material);
-    });
-    scheduleSave();
-  });
+  chip.addEventListener('click', () => setMaterial(chip.dataset.mat));
 });
 
 resetBtn.addEventListener('click', () => {
@@ -957,9 +978,42 @@ resetBtn.addEventListener('click', () => {
   draw(); scheduleSave();
 });
 
+undoBtn.addEventListener('click', undo);
+
 document.addEventListener('pointerdown', e => {
-  if (!decorPicker.hidden && !decorPicker.contains(e.target) && e.target !== decorChevron) {
+  if (!decorPicker.hidden && !decorPicker.contains(e.target) && e.target !== decorChevron)
     decorPicker.setAttribute('hidden', '');
+  if (!menuEl.hasAttribute('hidden') && !menuEl.contains(e.target) && !menuToggle.contains(e.target)) {
+    menuEl.setAttribute('hidden', '');
+    menuIcon.textContent = '⋯';
+    menuToggle.setAttribute('aria-expanded', 'false');
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.target !== document.body && e.target.tagName !== 'CANVAS') return;
+  if (e.metaKey || e.ctrlKey) {
+    if (e.key === 'z') { e.preventDefault(); undo(); }
+    return;
+  }
+  switch (e.key.toLowerCase()) {
+    case 'r': setTool('raise'); break;
+    case 'l': setTool('lower'); break;
+    case 's': setTool('smooth'); break;
+    case 'p': setTool('pick'); break;
+    case 'd': setTool(currentDecor); break;
+    case '1': setMaterial('grass'); break;
+    case '2': setMaterial('soil'); break;
+    case '3': setMaterial('sand'); break;
+    case '4': setMaterial('stone'); break;
+    case 'escape':
+      decorPicker.setAttribute('hidden', '');
+      if (!menuEl.hasAttribute('hidden')) {
+        menuEl.setAttribute('hidden', '');
+        menuIcon.textContent = '⋯';
+        menuToggle.setAttribute('aria-expanded', 'false');
+      }
+      break;
   }
 });
 

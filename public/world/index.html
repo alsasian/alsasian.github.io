@@ -103,6 +103,7 @@
   }
   .menu .link.warn { color: #e08a8a; text-decoration-color: rgba(224, 138, 138, 0.32); }
   .menu .link.active { color: #ffd080; text-decoration-color: rgba(255, 208, 128, 0.4); }
+  .menu .link.flash-warn { color: #e08a8a; }
 
   /* dock — two rows on mobile, single pill on desktop */
   .dock {
@@ -214,7 +215,9 @@
     <div class="kv"><span class="lbl">spawn</span><button class="link" id="hereBtn">↻ Here</button></div>
     <div class="kv"><span class="lbl">demo</span><button class="link" id="demoBtn">play</button></div>
     <div class="kv"><span class="lbl">reset</span><button class="link warn" id="resetBtn">clear near</button></div>
+    <div class="kv"><span class="lbl">tiles</span><span class="val" id="tileCount">0</span></div>
     <div class="kv"><span class="lbl">undo</span><button class="link" id="undoBtn">↩ step</button></div>
+    <div class="kv"><span class="lbl">redo</span><button class="link" id="redoBtn">↪ step</button></div>
   </div>
   <div class="dock">
     <div class="dock-row">
@@ -255,6 +258,8 @@ const travelBtn = document.getElementById('travelBtn');
 const hereBtn = document.getElementById('hereBtn');
 const resetBtn = document.getElementById('resetBtn');
 const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const tileCountEl = document.getElementById('tileCount');
 const menuToggle = document.getElementById('menuToggle');
 const menuEl = document.getElementById('menu');
 const menuIcon = document.getElementById('menuIcon');
@@ -306,15 +311,33 @@ let homeCityName = null;
 let cityIdx = 0;
 let material = 'grass';
 
-// -- undo --
+// -- undo / redo --
 const undoStack = [];
+const redoStack = [];
 function pushUndo() {
   undoStack.push({ world: new Map(world), lights: new Map(lights) });
   if (undoStack.length > 20) undoStack.shift();
+  redoStack.length = 0;
 }
 function undo() {
+  if (!undoStack.length) {
+    undoBtn.classList.add('flash-warn'); setTimeout(() => undoBtn.classList.remove('flash-warn'), 500);
+    return;
+  }
+  redoStack.push({ world: new Map(world), lights: new Map(lights) });
   const state = undoStack.pop();
-  if (!state) return;
+  world.clear(); lights.clear();
+  for (const [k, v] of state.world) world.set(k, v);
+  for (const [k, v] of state.lights) lights.set(k, v);
+  draw(); scheduleSave();
+}
+function redo() {
+  if (!redoStack.length) {
+    redoBtn.classList.add('flash-warn'); setTimeout(() => redoBtn.classList.remove('flash-warn'), 500);
+    return;
+  }
+  undoStack.push({ world: new Map(world), lights: new Map(lights) });
+  const state = redoStack.pop();
   world.clear(); lights.clear();
   for (const [k, v] of state.world) world.set(k, v);
   for (const [k, v] of state.lights) lights.set(k, v);
@@ -854,6 +877,7 @@ function draw() {
   const lon = -2 * camX / (TW * TILE_SCALE);
   const lat = 2 * camY / (TH * TILE_SCALE);
   viewRow.textContent = `${formatLat(lat)} ${formatLon(lon)}`;
+  tileCountEl.textContent = world.size;
 
   if (hoverI != null && hoverJ != null) {
     const hc = world.get(hoverI + ',' + hoverJ);
@@ -1123,6 +1147,7 @@ resetBtn.addEventListener('click', () => {
 });
 
 undoBtn.addEventListener('click', undo);
+redoBtn.addEventListener('click', redo);
 
 gpsCenterBtn.addEventListener('click', () => {
   if (gpsLat == null) {
@@ -1148,7 +1173,8 @@ document.addEventListener('pointerdown', e => {
 document.addEventListener('keydown', e => {
   if (e.target !== document.body && e.target.tagName !== 'CANVAS') return;
   if (e.metaKey || e.ctrlKey) {
-    if (e.key === 'z') { e.preventDefault(); undo(); }
+    if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); redo(); }
     return;
   }
   switch (e.key.toLowerCase()) {

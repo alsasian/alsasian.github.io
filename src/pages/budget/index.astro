@@ -1,0 +1,8 @@
+---
+import BudgetAppLayout from '../../layouts/BudgetAppLayout.astro';
+import BudgetApp from '../../components/budget/BudgetApp';
+---
+
+<BudgetAppLayout title="Budget">
+  <BudgetApp client:only="react" />
+</BudgetAppLayout>

@@ -8,14 +8,19 @@ import {
   goHomeAtom,
   navAtom,
 } from '@/lib/budget/atoms';
-import { buildBurndown } from '@/lib/budget/engine';
+import {
+  buildYearShape,
+  effectivePlan,
+  monthlyBaseFor,
+  drift as driftFor,
+} from '@/lib/budget/engine';
 import { formatMoney, formatMoneyCompact } from '@/lib/budget/money';
-import { effectivePlan, monthlyBaseFor } from '@/lib/budget/engine';
 import { parseYMD, monthLong, monthShort, formatDayMonth, todayYMD } from '@/lib/budget/dates';
-import type { Transaction } from '@/lib/budget/types';
-import BurndownChart from './shared/Burndown';
+import type { Item, Transaction } from '@/lib/budget/types';
+import YearShapeChart from './shared/YearShape';
 import BudgetEditor from './BudgetEditor';
 import { paceLabel } from './shared/paceLabel';
+import Money from './shared/Money';
 
 export default function ItemScreen() {
   const nav = useAtomValue(navAtom);
@@ -32,15 +37,15 @@ export default function ItemScreen() {
     [item, txnsByItem]
   );
   const ref = todayYMD();
-  const burndown = useMemo(() => (item ? buildBurndown(item, txns, ref) : null), [item, txns, ref]);
+  const shape = useMemo(() => (item ? buildYearShape(item, txns, ref) : null), [item, txns, ref]);
 
   if (!item) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-8">
-        <button type="button" onClick={goHome} className="text-sm no-underline">
+      <div className="b-view">
+        <button type="button" className="b-back" onClick={goHome}>
           ← Back
         </button>
-        <p className="mt-4 text-gray-500">Item not found.</p>
+        <p className="b-empty">Item not found.</p>
       </div>
     );
   }
@@ -48,134 +53,126 @@ export default function ItemScreen() {
   const s = stats.get(item.id);
   const pace = paceLabel(s?.pace ?? null);
   const yearly = item.period === 'yearly';
+  const hasChart = item.base != null || txns.length > 0;
 
   // Group transactions by year-month, newest first.
   const groups = new Map<string, Transaction[]>();
   for (const t of [...txns].sort((a, b) => b.date.localeCompare(a.date))) {
     const d = parseYMD(t.date);
     const key = `${d.year}-${d.month.toString().padStart(2, '0')}`;
-    const list = groups.get(key) ?? [];
-    list.push(t);
-    groups.set(key, list);
+    (groups.get(key) ?? groups.set(key, []).get(key)!).push(t);
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-12 pt-3">
-      {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={goHome}
-            className="rounded-md px-1 py-1 text-lg text-gray-500 no-underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-            aria-label="Back"
-          >
-            ←
-          </button>
-          <h1 className="text-xl font-bold">{item.name}</h1>
-        </div>
-        <span className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
-          {item.period}
-        </span>
+    <div className="b-view">
+      <div className="b-ihead">
+        <button type="button" className="b-back" aria-label="Back" onClick={goHome}>
+          ←
+        </button>
+        <span className="t">{item.name}</span>
+        <span className="per">{item.period}</span>
       </div>
 
-      {/* Burn-down */}
-      {burndown && (item.base != null || txns.length > 0) && (
-        <div className="mb-3 rounded-xl border border-gray-200 p-2 dark:border-gray-800">
-          <BurndownChart data={burndown} />
-          <div className="flex justify-between px-1 text-[10px] text-gray-400 dark:text-gray-500">
-            <span>{yearly ? 'Jan' : '1'}</span>
-            <span>today</span>
-            <span>{yearly ? 'Dec' : monthShort(ref.month)}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
+      {/* Hero: the one number that matters, plus pace */}
       {s && (
-        <div className="mb-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {formatMoney(s.spent)} spent
-            {s.planned !== 0 && <> · {formatMoney(s.planned)} planned</>}
-          </div>
-          <div className="mt-0.5 flex items-baseline gap-3">
-            {s.free != null && (
-              <span className="text-2xl font-bold">{formatMoney(s.free)} free</span>
-            )}
-            {pace && (
-              <span
-                className={
-                  pace.ahead
-                    ? 'text-sm font-semibold text-gray-900 dark:text-gray-100'
-                    : 'text-sm text-gray-500 dark:text-gray-400'
-                }
-              >
-                {pace.text}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Budget */}
-      {!item.system && (
-        <div className="mb-4">
-          {editing ? (
-            <BudgetEditor item={item} onClose={() => setEditing(false)} />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="flex w-full items-center justify-between rounded-xl border border-gray-200 px-3 py-2.5 text-left text-sm no-underline dark:border-gray-800"
-            >
-              <span>
-                <span className="text-gray-500 dark:text-gray-400">Budget </span>
-                <span className="font-semibold">
-                  {item.base != null
-                    ? `${formatMoneyCompact(s?.cap ?? item.base)} / ${yearly ? 'year' : 'month'}`
-                    : 'not limited'}
-                </span>
-                {yearly && item.base != null && (
-                  <span className="block text-xs text-gray-400 dark:text-gray-500">
-                    base {formatMoneyCompact(monthlyBaseFor(item, ref.year) ?? 0)}/mo
-                    {overridesSummary(item, ref.year)}
-                  </span>
-                )}
-              </span>
-              <span aria-hidden>✎</span>
-            </button>
+        <div className="b-statline">
+          <span className="free">
+            {s.free != null ? <Money cents={s.free} /> : <Money cents={s.spent} />}
+            <span className="lbl">{s.free != null ? 'free' : 'spent'}</span>
+          </span>
+          {pace && (
+            <span className={`pace b-pace ${pace.ahead ? 'ahead' : 'behind'}`}>
+              <span className="arw">{pace.ahead ? '▲' : '▼'}</span>
+              {pace.text} of plan
+            </span>
           )}
         </div>
       )}
 
-      {/* Transactions */}
-      <div className="flex flex-col gap-4">
+      {/* Stat strip: the inputs behind the free number */}
+      {s && !item.system && (
+        <div className="b-stats">
+          <div className="cell">
+            <span className="k">Spent</span>
+            <span className="v">{formatMoney(s.spent)}</span>
+          </div>
+          <div className="cell">
+            <span className="k">Planned</span>
+            <span className="v">{formatMoney(s.planned)}</span>
+          </div>
+          <div className="cell">
+            <span className="k">{yearly ? 'Year cap' : 'Cap'}</span>
+            <span className="v">{s.cap != null ? formatMoneyCompact(s.cap) : '—'}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Year shape */}
+      {shape && hasChart && <YearShapeChart data={shape} />}
+
+      {/* Budget (editable) — drift lives here, where you'd act on it */}
+      {!item.system &&
+        (editing ? (
+          <div style={{ marginBottom: 22 }}>
+            <BudgetEditor item={item} onClose={() => setEditing(false)} />
+          </div>
+        ) : (
+          <button type="button" className="b-budget" onClick={() => setEditing(true)}>
+            <span>
+              <span className="k">Budget </span>
+              <span className="v">
+                {item.base != null
+                  ? `${formatMoneyCompact(s?.cap ?? item.base)} / ${yearly ? 'year' : 'month'}`
+                  : 'not limited'}
+              </span>
+              {yearly && item.base != null && (
+                <span className="base">
+                  base {formatMoneyCompact(monthlyBaseFor(item, ref.year) ?? 0)}/mo
+                  {overridesSummary(item, ref.year)}
+                </span>
+              )}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {yearly && item.base != null && <DriftTag item={item} year={ref.year} />}
+              <span className="b-edit" aria-hidden>
+                ✎
+              </span>
+            </span>
+          </button>
+        ))}
+
+      {/* Ledger */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {[...groups.entries()].map(([key, list]) => {
           const [gy, gm] = key.split('-').map((n) => Number.parseInt(n, 10));
           return (
             <div key={key}>
-              <div className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              <p className="b-ledger-h">
                 {monthLong(gm)} {gy}
-              </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {list.map((t) => (
-                  <TxnRow key={t.id} txn={t} onDelete={() => delTxn(t.id)} />
-                ))}
-              </div>
+              </p>
+              {list.map((t) => (
+                <TxnRow key={t.id} txn={t} onDelete={() => delTxn(t.id)} />
+              ))}
             </div>
           );
         })}
-        {txns.length === 0 && (
-          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No transactions yet.
-          </p>
-        )}
+        {txns.length === 0 && <p className="b-empty">No transactions yet.</p>}
       </div>
     </div>
   );
 }
 
-function overridesSummary(item: Parameters<typeof effectivePlan>[0], year: number): string {
+function DriftTag({ item, year }: { item: Item; year: number }) {
+  const d = driftFor(item, year);
+  if (d == null) return null;
+  return (
+    <span className="drift">
+      {d === 0 ? <span className="ok">✓</span> : formatMoney(d, { sign: true })}
+    </span>
+  );
+}
+
+function overridesSummary(item: Item, year: number): string {
   const base = monthlyBaseFor(item, year);
   const parts: string[] = [];
   for (let m = 1; m <= 12; m += 1) {
@@ -188,43 +185,29 @@ function overridesSummary(item: Parameters<typeof effectivePlan>[0], year: numbe
 function TxnRow({ txn, onDelete }: { txn: Transaction; onDelete: () => void }) {
   const [confirming, setConfirming] = useState(false);
   return (
-    <div className="flex items-center justify-between py-2 text-sm">
-      <div className="flex items-center gap-2">
-        <span className="w-12 tabular-nums text-gray-400 dark:text-gray-500">
-          {formatDayMonth(txn.date)}
-        </span>
-        <span className={txn.status === 'planned' ? 'text-gray-500 dark:text-gray-400' : ''}>
-          {txn.note || '—'}
-          {txn.status === 'planned' && (
-            <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-500">planned</span>
-          )}
-          {txn.recurrence && (
-            <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-500">↻</span>
-          )}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="tabular-nums">{formatMoney(txn.amount)}</span>
-        {confirming ? (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="text-xs text-gray-500 no-underline dark:text-gray-400"
-          >
-            delete?
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            onBlur={() => setConfirming(false)}
-            className="text-gray-300 no-underline hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-300"
-            aria-label="Delete transaction"
-          >
-            ×
-          </button>
-        )}
-      </div>
+    <div className={`b-tx ${txn.status === 'planned' ? 'planned' : ''}`}>
+      <span className="d">{formatDayMonth(txn.date)}</span>
+      <span className="n">
+        {txn.note || '—'}
+        {txn.status === 'planned' && <span className="tag">planned</span>}
+        {txn.recurrence && <span className="tag">↻</span>}
+      </span>
+      <span className="a">{formatMoney(txn.amount)}</span>
+      {confirming ? (
+        <button type="button" className="del" style={{ opacity: 1 }} onClick={onDelete}>
+          delete?
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="del"
+          aria-label="Delete transaction"
+          onClick={() => setConfirming(true)}
+          onBlur={() => setConfirming(false)}
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }

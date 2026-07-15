@@ -9,7 +9,6 @@ import {
 } from '@/lib/budget/atoms';
 import { parseMoney, formatMoney } from '@/lib/budget/money';
 import { todayISO } from '@/lib/budget/dates';
-import type { Item } from '@/lib/budget/types';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
 
@@ -38,7 +37,6 @@ export default function EntryScreen() {
     setRaw((prev) => {
       if (k === '⌫') return prev.slice(0, -1);
       if (k === '.') return prev.includes('.') ? prev : prev === '' ? '0.' : `${prev}.`;
-      // Limit to 2 decimal places.
       if (prev.includes('.') && prev.split('.')[1]?.length >= 2) return prev;
       return prev + k;
     });
@@ -46,9 +44,8 @@ export default function EntryScreen() {
 
   const save = async () => {
     if (cents == null || cents === 0) return;
-    const itemId = selected ?? 'uncategorized';
     await addTxn({
-      itemId,
+      itemId: selected ?? 'uncategorized',
       amount: cents,
       date,
       status: effectivePlanned ? 'planned' : 'actual',
@@ -58,51 +55,37 @@ export default function EntryScreen() {
   };
 
   const display = raw === '' ? '0' : raw;
+  const target = selected ? items.find((i) => i.id === selected)?.name : 'Uncategorized';
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-4 pt-3">
-      {/* Top bar */}
-      <div className="mb-2 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={goHome}
-          className="rounded-md px-2 py-1 text-lg text-gray-500 no-underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-          aria-label="Cancel"
-        >
+    <div className="b-view">
+      <div className="b-entry-top">
+        <button type="button" className="b-cancel" aria-label="Cancel" onClick={goHome}>
           ×
         </button>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!canSave}
-          className="rounded-lg px-4 py-1.5 text-sm font-bold no-underline disabled:opacity-30"
-        >
+        <button type="button" className="b-save" disabled={!canSave} onClick={save}>
           Save
         </button>
       </div>
 
-      {/* Amount */}
-      <div className="py-6 text-center">
-        <span className="text-5xl font-bold tabular-nums">
-          <span className="text-gray-400 dark:text-gray-500">$</span> {display}
+      <div className="b-amount">
+        <span className="v">
+          <span className="u">$</span> {display}
         </span>
       </div>
 
-      {/* Chips */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="b-chips">
         {items.map((item) => (
-          <ChipButton
+          <button
             key={item.id}
-            item={item}
-            selected={selected === item.id}
-            onSelect={() => setSelected(item.id)}
-          />
+            type="button"
+            className={`b-chip ${selected === item.id ? 'sel' : ''}`}
+            onClick={() => setSelected(item.id)}
+          >
+            {item.name}
+          </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setCreating((c) => !c)}
-          className="rounded-full border border-dashed border-gray-400 px-4 py-2 text-sm text-gray-600 no-underline dark:border-gray-600 dark:text-gray-400"
-        >
+        <button type="button" className="b-chip new" onClick={() => setCreating((c) => !c)}>
           + New
         </button>
       </div>
@@ -118,84 +101,54 @@ export default function EntryScreen() {
         />
       )}
 
-      {/* Date + status row */}
-      <div className="mb-3 flex items-center justify-between gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          <span className="text-gray-500 dark:text-gray-400">When</span>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-md border border-gray-300 bg-transparent px-2 py-1 dark:border-gray-700"
-          />
-        </label>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 14,
+        }}
+      >
+        <input
+          type="date"
+          className="b-date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          aria-label="Date"
+        />
         <button
           type="button"
-          onClick={() => !futureDate && setPlanned((p) => !p)}
+          className={`b-toggle ${effectivePlanned ? 'on' : ''}`}
           disabled={futureDate}
-          className={`rounded-full border px-3 py-1 no-underline ${
-            effectivePlanned
-              ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-              : 'border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-400'
-          }`}
+          onClick={() => !futureDate && setPlanned((p) => !p)}
         >
           {effectivePlanned ? '○ planned' : 'actual'}
         </button>
       </div>
 
-      {/* Note */}
       <input
         type="text"
+        className="b-input"
+        style={{ marginBottom: 18 }}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Note…"
-        className="mb-4 w-full border-b border-gray-300 bg-transparent pb-1 text-sm outline-none placeholder:text-gray-400 dark:border-gray-700"
       />
 
-      {/* Keypad */}
-      <div className="mt-auto grid grid-cols-3 gap-2">
+      <div className="b-keys">
         {KEYS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => press(k)}
-            className="rounded-xl bg-gray-100 py-4 text-2xl font-semibold no-underline active:bg-gray-200 dark:bg-gray-800 dark:active:bg-gray-700"
-          >
+          <button key={k} type="button" className="b-key" onClick={() => press(k)}>
             {k}
           </button>
         ))}
       </div>
       {canSave && (
-        <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-          {formatMoney(cents!)} →{' '}
-          {selected ? items.find((i) => i.id === selected)?.name : 'Uncategorized'}
+        <p className="b-label" style={{ marginTop: 12, textAlign: 'center' }}>
+          {formatMoney(cents)} → {target}
         </p>
       )}
     </div>
-  );
-}
-
-function ChipButton({
-  item,
-  selected,
-  onSelect,
-}: {
-  item: Item;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`rounded-full border px-4 py-2 text-sm no-underline ${
-        selected
-          ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-          : 'border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-300'
-      }`}
-    >
-      {item.name}
-    </button>
   );
 }
 
@@ -216,26 +169,23 @@ function NewItemForm({
   }, []);
 
   return (
-    <div className="mb-4 rounded-xl border border-gray-300 p-3 dark:border-gray-700">
+    <div className="b-card" style={{ marginBottom: 18 }}>
       <input
         ref={nameRef}
         type="text"
+        className="b-input"
+        style={{ marginBottom: 12 }}
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Item name (e.g. Steam)"
-        className="mb-2 w-full border-b border-gray-300 bg-transparent pb-1 text-sm outline-none dark:border-gray-700"
       />
-      <div className="mb-2 flex items-center gap-2 text-sm">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         {(['monthly', 'yearly'] as const).map((p) => (
           <button
             key={p}
             type="button"
+            className={`b-toggle ${period === p ? 'on' : ''}`}
             onClick={() => setPeriod(p)}
-            className={`rounded-full border px-3 py-1 no-underline ${
-              period === p
-                ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-                : 'border-gray-300 text-gray-600 dark:border-gray-700 dark:text-gray-400'
-            }`}
           >
             {p}
           </button>
@@ -243,21 +193,22 @@ function NewItemForm({
         <input
           type="text"
           inputMode="decimal"
+          className="b-input mono"
+          style={{ marginLeft: 'auto', width: '7rem', textAlign: 'right' }}
           value={budget}
           onChange={(e) => setBudget(e.target.value)}
           placeholder={period === 'yearly' ? '$ / year' : '$ / month'}
-          className="ml-auto w-28 border-b border-gray-300 bg-transparent pb-1 text-right text-sm outline-none dark:border-gray-700"
         />
       </div>
-      <div className="flex justify-end gap-2 text-sm">
-        <button type="button" onClick={onCancel} className="px-3 py-1 text-gray-500 no-underline">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button type="button" className="b-btn ghost" onClick={onCancel}>
           Cancel
         </button>
         <button
           type="button"
+          className="b-btn primary"
           disabled={!name.trim()}
           onClick={() => onCreate({ name, period, base })}
-          className="rounded-lg px-3 py-1 font-bold no-underline disabled:opacity-30"
         >
           Create
         </button>

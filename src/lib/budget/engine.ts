@@ -7,7 +7,7 @@
  */
 
 import type { Item, Transaction } from './types';
-import { daysInMonth, daysInYear, dayOfYear, parseYMD, todayYMD, type YMD } from './dates';
+import { daysInMonth, parseYMD, todayYMD, type YMD } from './dates';
 
 /* ------------------------------------------------------------------ */
 /* Cap resolution (the headline budget)                                */
@@ -226,87 +226,47 @@ export function computeItemStats(
 }
 
 /* ------------------------------------------------------------------ */
-/* Burn-down curve (Item screen)                                       */
+/* Year shape (Item screen) — 12 columns, the plan's lumpiness         */
 /* ------------------------------------------------------------------ */
 
-export interface BurndownPoint {
-  t: number; // 0..1 position across the period
-  v: number; // cumulative cents
+export interface MonthBar {
+  month: number; // 1-12
+  plan: number; // planned amount for the month
+  actual: number; // actual spent that month
+  planned: number; // planned (future) txns landing that month
+  isNow: boolean;
 }
 
-export interface Burndown {
-  cap: number | null;
-  todayT: number;
-  planLine: BurndownPoint[]; // the plan's shape
-  actualLine: BurndownPoint[]; // cumulative actual up to today
-  committedLine: BurndownPoint[]; // actual + future planned (the cliff you've committed to)
-  maxV: number;
+export interface YearShape {
+  bars: MonthBar[];
+  max: number; // scale ceiling in cents
+  year: number;
 }
 
-export function buildBurndown(item: Item, txns: Transaction[], ref: YMD = todayYMD()): Burndown {
-  const cap =
-    item.period === 'yearly'
-      ? effectiveCap(item, ref.year, 1)
-      : effectiveCap(item, ref.year, ref.month);
-
-  const yearly = item.period === 'yearly';
-  const periodDays = yearly ? daysInYear(ref.year) : daysInMonth(ref.year, ref.month);
-
-  // Fraction of the period elapsed as of `ref`.
-  const elapsed = yearly ? dayOfYear(ref) : ref.day;
-  const todayT = Math.min(1, elapsed / periodDays);
-
-  // Plan line: cumulative plan at each month boundary (yearly) or linear (monthly).
-  const planLine: BurndownPoint[] = [{ t: 0, v: 0 }];
-  if (yearly) {
-    let cum = 0;
-    let dayCursor = 0;
-    for (let m = 1; m <= 12; m += 1) {
-      cum += effectivePlan(item, ref.year, m);
-      dayCursor += daysInMonth(ref.year, m);
-      planLine.push({ t: dayCursor / periodDays, v: cum });
+/**
+ * Build the 12-month shape for the Item screen. For yearly items `plan` is the
+ * per-month plan; for monthly items it's that month's cap (a flat reference),
+ * which turns the chart into a tidy year-at-a-glance history.
+ */
+export function buildYearShape(item: Item, txns: Transaction[], ref: YMD = todayYMD()): YearShape {
+  const bars: MonthBar[] = [];
+  let max = 1;
+  for (let m = 1; m <= 12; m += 1) {
+    const plan =
+      item.period === 'yearly'
+        ? effectivePlan(item, ref.year, m)
+        : (effectiveCap(item, ref.year, m) ?? 0);
+    let actual = 0;
+    let planned = 0;
+    for (const t of txns) {
+      const d = parseYMD(t.date);
+      if (d.year !== ref.year || d.month !== m) continue;
+      if (t.status === 'planned') planned += t.amount;
+      else actual += t.amount;
     }
-  } else {
-    planLine.push({ t: 1, v: cap ?? 0 });
+    const isNow = m === ref.month;
+    max = Math.max(max, plan, actual, actual + planned);
+    bars.push({ month: m, plan, actual, planned, isNow });
   }
-
-  const dateT = (iso: string): number => {
-    const d = parseYMD(iso);
-    const day = yearly ? dayOfYear(d) : d.day;
-    return Math.min(1, Math.max(0, day / periodDays));
-  };
-
-  const inPeriod = (t: Transaction) =>
-    yearly ? parseYMD(t.date).year === ref.year : inMonth(t, ref.year, ref.month);
-
-  const refISO = `${ref.year}-${ref.month.toString().padStart(2, '0')}-${ref.day
-    .toString()
-    .padStart(2, '0')}`;
-
-  const actualTxns = txns
-    .filter((t) => inPeriod(t) && t.status === 'actual' && t.date <= refISO)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const futureTxns = txns
-    .filter((t) => inPeriod(t) && (t.status === 'planned' || t.date > refISO))
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const actualLine: BurndownPoint[] = [{ t: 0, v: 0 }];
-  let cum = 0;
-  for (const t of actualTxns) {
-    cum += t.amount;
-    actualLine.push({ t: dateT(t.date), v: cum });
-  }
-  // Extend the actual line flat to "today" so the marker sits on the curve.
-  actualLine.push({ t: todayT, v: cum });
-
-  const committedLine: BurndownPoint[] = [{ t: todayT, v: cum }];
-  let cum2 = cum;
-  for (const t of futureTxns) {
-    cum2 += t.amount;
-    committedLine.push({ t: Math.max(todayT, dateT(t.date)), v: cum2 });
-  }
-
-  const maxV = Math.max(cap ?? 0, cum2, ...planLine.map((p) => p.v), 1);
-
-  return { cap, todayT, planLine, actualLine, committedLine, maxV };
+  return { bars, max, year: ref.year };
 }

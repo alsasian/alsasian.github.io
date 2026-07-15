@@ -9,20 +9,22 @@ import { monthShort, todayYMD } from '@/lib/budget/dates';
 type Scope = 'once' | 'onward';
 
 function upsertCap(list: CapOverride[], next: CapOverride): CapOverride[] {
-  const rest = list.filter(
-    (o) => !(o.year === next.year && o.month === next.month && o.scope === next.scope)
-  );
-  return [...rest, next];
+  return [
+    ...list.filter(
+      (o) => !(o.year === next.year && o.month === next.month && o.scope === next.scope)
+    ),
+    next,
+  ];
 }
-
 function upsertPlan(list: PlanOverride[], next: PlanOverride): PlanOverride[] {
-  const rest = list.filter(
-    (o) => !(o.year === next.year && o.month === next.month && o.scope === next.scope)
-  );
-  return [...rest, next];
+  return [
+    ...list.filter(
+      (o) => !(o.year === next.year && o.month === next.month && o.scope === next.scope)
+    ),
+    next,
+  ];
 }
 
-/** A value field with the two calendar-style scope choices. */
 function ScopedField({
   initial,
   onceLabel,
@@ -41,32 +43,32 @@ function ScopedField({
   }, []);
   const cents = parseMoney(val);
   return (
-    <div className="rounded-lg border border-gray-300 p-2 dark:border-gray-700">
-      <div className="mb-2 flex items-center gap-1">
-        <span className="text-gray-400 dark:text-gray-500">$</span>
+    <div className="b-card" style={{ marginTop: 8, padding: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <span className="b-muted">$</span>
         <input
           ref={inputRef}
           type="text"
           inputMode="decimal"
+          className="b-input mono"
           value={val}
           onChange={(e) => setVal(e.target.value)}
-          className="w-full border-b border-gray-300 bg-transparent pb-0.5 tabular-nums outline-none dark:border-gray-700"
         />
       </div>
-      <div className="flex gap-2 text-xs">
+      <div style={{ display: 'flex', gap: 8 }}>
         <button
           type="button"
+          className="b-btn block"
           disabled={cents == null}
           onClick={() => cents != null && onApply(cents, 'once')}
-          className="flex-1 rounded-md border border-gray-300 py-1.5 no-underline disabled:opacity-30 dark:border-gray-700"
         >
           {onceLabel}
         </button>
         <button
           type="button"
+          className="b-btn primary block"
           disabled={cents == null}
           onClick={() => cents != null && onApply(cents, 'onward')}
-          className="flex-1 rounded-md border border-gray-900 py-1.5 font-semibold no-underline disabled:opacity-30 dark:border-gray-100"
         >
           {onwardLabel}
         </button>
@@ -95,47 +97,55 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
   };
 
   const applyCap = (cents: number, scope: Scope) => {
-    const override: CapOverride = {
-      year,
-      month: yearly ? 1 : month,
-      amount: cents,
-      scope,
-    };
-    void commit({ ...draft, capOverrides: upsertCap(draft.capOverrides, override) });
+    void commit({
+      ...draft,
+      capOverrides: upsertCap(draft.capOverrides, {
+        year,
+        month: yearly ? 1 : month,
+        amount: cents,
+        scope,
+      }),
+    });
     setEditingCap(false);
   };
 
   const applyPlan = (m: number, cents: number, scope: Scope) => {
-    const override: PlanOverride = { year, month: m, amount: cents, scope };
-    void commit({ ...draft, planOverrides: upsertPlan(draft.planOverrides, override) });
+    void commit({
+      ...draft,
+      planOverrides: upsertPlan(draft.planOverrides, { year, month: m, amount: cents, scope }),
+    });
     setEditingMonth(null);
   };
 
   const periodWord = yearly ? `${year}` : `${monthShort(month)} ${year}`;
 
   return (
-    <div className="rounded-xl border border-gray-300 p-3 dark:border-gray-700">
-      {/* Name */}
+    <div className="b-card">
       <input
         type="text"
+        className="b-input"
+        style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}
         value={draft.name}
         disabled={draft.system}
         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         onBlur={() => commit(draft)}
-        className="mb-3 w-full border-b border-gray-300 bg-transparent pb-1 text-lg font-bold outline-none disabled:opacity-60 dark:border-gray-700"
       />
 
-      {/* Cap */}
       {!draft.system && (
-        <div className="mb-3">
-          <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">
-              Budget per {yearly ? 'year' : 'month'}
-            </span>
+        <div style={{ marginBottom: 14 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: 13,
+            }}
+          >
+            <span className="b-muted">Budget per {yearly ? 'year' : 'month'}</span>
             <button
               type="button"
+              style={{ fontWeight: 600 }}
               onClick={() => setEditingCap((v) => !v)}
-              className="font-semibold no-underline"
             >
               {cap == null ? 'Set' : formatMoneyCompact(cap)} ✎
             </button>
@@ -151,45 +161,54 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
         </div>
       )}
 
-      {/* Yearly plan shape */}
       {yearly && !draft.system && (
-        <div className="mb-3">
-          <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Plan shape · {year}</span>
-            <span
-              className={
-                d && d !== 0
-                  ? 'text-gray-500 dark:text-gray-400'
-                  : 'text-gray-400 dark:text-gray-500'
-              }
-            >
+        <div style={{ marginBottom: 14 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+            }}
+          >
+            <span className="b-label">Plan shape · {year}</span>
+            <span className="drift b-mono" style={{ fontSize: 11 }}>
               plan {total != null ? formatMoneyCompact(total) : '—'}
               {cap != null &&
                 d != null &&
-                (d === 0 ? ' ✓' : ` · ${formatMoney(d, { sign: true })}`)}
+                (d === 0 ? (
+                  <span style={{ color: 'var(--accent)' }}> ✓</span>
+                ) : (
+                  ` · ${formatMoney(d, { sign: true })}`
+                ))}
             </span>
           </div>
 
-          {/* base per month */}
-          <label className="mb-2 flex items-center justify-between gap-2 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">base / month</span>
-            <span className="flex items-center gap-1">
-              <span className="text-gray-400 dark:text-gray-500">$</span>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              fontSize: 13,
+              marginBottom: 12,
+            }}
+          >
+            <span className="b-muted">base / month</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span className="b-muted">$</span>
               <input
                 type="text"
                 inputMode="decimal"
+                className="b-input mono"
+                style={{ width: '5rem', textAlign: 'right' }}
                 defaultValue={centsToInput(monthlyBaseFor(draft, year) ?? 0)}
-                onBlur={(e) => {
-                  const v = parseMoney(e.target.value);
-                  void commit({ ...draft, monthlyBase: v });
-                }}
-                className="w-20 border-b border-gray-300 bg-transparent pb-0.5 text-right tabular-nums outline-none dark:border-gray-700"
+                onBlur={(e) => void commit({ ...draft, monthlyBase: parseMoney(e.target.value) })}
               />
             </span>
           </label>
 
-          {/* 12 months */}
-          <div className="grid grid-cols-3 gap-1.5">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
               const amt = effectivePlan(draft, year, m);
               const overridden = draft.planOverrides.some((o) => o.month === m && o.year <= year);
@@ -198,27 +217,31 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
                   key={m}
                   type="button"
                   onClick={() => setEditingMonth(editingMonth === m ? null : m)}
-                  className={`rounded-md border px-2 py-1 text-left text-xs no-underline ${
-                    editingMonth === m
-                      ? 'border-gray-900 dark:border-gray-100'
-                      : 'border-gray-200 dark:border-gray-800'
-                  }`}
+                  style={{
+                    textAlign: 'left',
+                    padding: '6px 8px',
+                    borderRadius: 8,
+                    border: `1px solid ${editingMonth === m ? 'var(--ink)' : 'var(--line)'}`,
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{monthShort(m)}</span>
-                    {overridden && <span className="text-gray-400">•</span>}
-                  </div>
-                  <div className="tabular-nums">{formatMoneyCompact(amt)}</div>
+                  <span
+                    className="b-label"
+                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9 }}
+                  >
+                    {monthShort(m)}
+                    {overridden && <span style={{ color: 'var(--accent)' }}>•</span>}
+                  </span>
+                  <span className="b-mono" style={{ fontSize: 13 }}>
+                    {formatMoneyCompact(amt)}
+                  </span>
                 </button>
               );
             })}
           </div>
 
           {editingMonth != null && (
-            <div className="mt-2">
-              <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                {monthShort(editingMonth)} plan
-              </div>
+            <div style={{ marginTop: 8 }}>
+              <span className="b-label">{monthShort(editingMonth)} plan</span>
               <ScopedField
                 initial={centsToInput(effectivePlan(draft, year, editingMonth))}
                 onceLabel={`Just ${monthShort(editingMonth)} ${year}`}
@@ -230,27 +253,29 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
         </div>
       )}
 
-      {/* Actions */}
-      <div className="mt-3 flex items-center justify-between">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 14,
+        }}
+      >
         {!draft.system ? (
           <button
             type="button"
+            className="b-btn ghost"
             onClick={async () => {
               await archive(draft.id);
               onClose();
             }}
-            className="text-xs text-gray-500 no-underline dark:text-gray-400"
           >
             Archive item
           </button>
         ) : (
           <span />
         )}
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg border border-gray-900 px-4 py-1.5 text-sm font-bold no-underline dark:border-gray-100"
-        >
+        <button type="button" className="b-btn accent" onClick={onClose}>
           Done
         </button>
       </div>

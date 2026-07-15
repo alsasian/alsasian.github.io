@@ -16,27 +16,30 @@ function BudgetAppContent() {
     void init();
   }, [init]);
 
+  let screen;
   if (!loaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-        Loading…
-      </div>
-    );
+    screen = <div className="b-empty">Loading…</div>;
+  } else {
+    switch (nav.screen) {
+      case 'entry':
+        screen = <EntryScreen />;
+        break;
+      case 'item':
+        screen = <ItemScreen />;
+        break;
+      case 'confirm':
+        screen = <ConfirmScreen />;
+        break;
+      case 'settings':
+        screen = <SettingsScreen />;
+        break;
+      case 'home':
+      default:
+        screen = <HomeScreen />;
+    }
   }
 
-  switch (nav.screen) {
-    case 'entry':
-      return <EntryScreen />;
-    case 'item':
-      return <ItemScreen />;
-    case 'confirm':
-      return <ConfirmScreen />;
-    case 'settings':
-      return <SettingsScreen />;
-    case 'home':
-    default:
-      return <HomeScreen />;
-  }
+  return <div className="budget-app">{screen}</div>;
 }
 
 export default function BudgetApp() {

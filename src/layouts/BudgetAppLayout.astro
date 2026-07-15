@@ -24,8 +24,13 @@ const { title = 'Budget' } = Astro.props;
     <meta name="apple-mobile-web-app-title" content="Budget" />
     <meta name="mobile-web-app-capable" content="yes" />
 
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
+    <!-- PWA -->
+    <link rel="manifest" href="/budget-manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="/icons/budget-icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icons/budget-apple-touch-icon.png" />
+
+    <meta name="theme-color" content="#eceeec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1012" media="(prefers-color-scheme: dark)" />
 
     <script is:inline>
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -43,5 +48,15 @@ const { title = 'Budget' } = Astro.props;
   </head>
   <body>
     <slot />
+
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/budget-sw.js', { scope: '/budget/' })
+            .catch((err) => console.log('Budget SW registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>

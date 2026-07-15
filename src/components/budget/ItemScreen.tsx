@@ -4,7 +4,6 @@ import {
   itemsByIdAtom,
   transactionsByItemAtom,
   statsByItemAtom,
-  deleteTransactionAtom,
   goHomeAtom,
   navAtom,
 } from '@/lib/budget/atoms';
@@ -28,7 +27,7 @@ export default function ItemScreen() {
   const txnsByItem = useAtomValue(transactionsByItemAtom);
   const stats = useAtomValue(statsByItemAtom);
   const goHome = useSetAtom(goHomeAtom);
-  const delTxn = useSetAtom(deleteTransactionAtom);
+  const setNav = useSetAtom(navAtom);
   const [editing, setEditing] = useState(false);
 
   const item = nav.itemId ? itemsById.get(nav.itemId) : undefined;
@@ -151,7 +150,11 @@ export default function ItemScreen() {
                 {monthLong(gm)} {gy}
               </p>
               {list.map((t) => (
-                <TxnRow key={t.id} txn={t} onDelete={() => delTxn(t.id)} />
+                <TxnRow
+                  key={t.id}
+                  txn={t}
+                  onEdit={() => setNav({ screen: 'entry', editTxnId: t.id })}
+                />
               ))}
             </div>
           );
@@ -182,10 +185,13 @@ function overridesSummary(item: Item, year: number): string {
   return parts.length ? ` · ${parts.join(' · ')}` : '';
 }
 
-function TxnRow({ txn, onDelete }: { txn: Transaction; onDelete: () => void }) {
-  const [confirming, setConfirming] = useState(false);
+function TxnRow({ txn, onEdit }: { txn: Transaction; onEdit: () => void }) {
   return (
-    <div className={`b-tx ${txn.status === 'planned' ? 'planned' : ''}`}>
+    <button
+      type="button"
+      className={`b-tx b-tx-row ${txn.status === 'planned' ? 'planned' : ''}`}
+      onClick={onEdit}
+    >
       <span className="d">{formatDayMonth(txn.date)}</span>
       <span className="n">
         {txn.note || '—'}
@@ -193,21 +199,9 @@ function TxnRow({ txn, onDelete }: { txn: Transaction; onDelete: () => void }) {
         {txn.recurrence && <span className="tag">↻</span>}
       </span>
       <span className="a">{formatMoney(txn.amount)}</span>
-      {confirming ? (
-        <button type="button" className="del" style={{ opacity: 1 }} onClick={onDelete}>
-          delete?
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="del"
-          aria-label="Delete transaction"
-          onClick={() => setConfirming(true)}
-          onBlur={() => setConfirming(false)}
-        >
-          ×
-        </button>
-      )}
-    </div>
+      <span className="del" aria-hidden>
+        ✎
+      </span>
+    </button>
   );
 }

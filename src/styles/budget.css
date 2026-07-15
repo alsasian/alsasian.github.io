@@ -893,3 +893,32 @@ html.dark .budget-app,
   margin: 0 0 16px;
   max-width: 44ch;
 }
+
+/* ---- add-budget row + reorder + editable ledger rows ---- */
+.b-newrow {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.b-newrow:hover {
+  color: var(--ink);
+}
+.b-icon.on {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.b-tx-row {
+  width: 100%;
+  text-align: left;
+  border-radius: var(--r-sm);
+  transition: background 0.12s ease;
+}
+.b-tx-row:hover {
+  background: var(--hover);
+}
+.b-tx-row .del {
+  opacity: 0.3;
+}
+.b-tx-row:hover .del {
+  opacity: 0.85;
+}

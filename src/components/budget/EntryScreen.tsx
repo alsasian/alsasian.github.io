@@ -1,36 +1,56 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   mruItemsAtom,
+  transactionsAtom,
   addTransactionAtom,
+  updateTransactionAtom,
+  deleteTransactionAtom,
   createItemAtom,
   goHomeAtom,
   navAtom,
 } from '@/lib/budget/atoms';
-import { parseMoney, formatMoney } from '@/lib/budget/money';
+import { parseMoney, formatMoney, centsToInput } from '@/lib/budget/money';
 import { todayISO } from '@/lib/budget/dates';
+import type { RecurrenceUnit } from '@/lib/budget/types';
+import NewItemForm from './shared/NewItemForm';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
+type Repeat = 'none' | 'monthly' | 'yearly';
 
 export default function EntryScreen() {
+  const nav = useAtomValue(navAtom);
   const items = useAtomValue(mruItemsAtom);
+  const txns = useAtomValue(transactionsAtom);
   const addTxn = useSetAtom(addTransactionAtom);
+  const updateTxn = useSetAtom(updateTransactionAtom);
+  const deleteTxn = useSetAtom(deleteTransactionAtom);
   const createItem = useSetAtom(createItemAtom);
   const goHome = useSetAtom(goHomeAtom);
-  const nav = useAtomValue(navAtom);
+  const setNav = useSetAtom(navAtom);
 
-  const [raw, setRaw] = useState('');
-  const [selected, setSelected] = useState<string | null>(nav.prefillItemId ?? null);
-  const [date, setDate] = useState(todayISO());
-  const [planned, setPlanned] = useState(false);
-  const [note, setNote] = useState('');
+  const editing = nav.editTxnId ? txns.find((t) => t.id === nav.editTxnId) : undefined;
+  const isEdit = !!editing;
+
+  const [raw, setRaw] = useState(editing ? centsToInput(Math.abs(editing.amount)) : '');
+  const [sign, setSign] = useState<1 | -1>(editing && editing.amount < 0 ? -1 : 1);
+  const [selected, setSelected] = useState<string | null>(
+    editing?.itemId ?? nav.prefillItemId ?? null
+  );
+  const [date, setDate] = useState(editing?.date ?? todayISO());
+  const [planned, setPlanned] = useState(editing ? editing.status === 'planned' : false);
+  const [note, setNote] = useState(editing?.note ?? '');
+  const [repeat, setRepeat] = useState<Repeat>(
+    editing?.recurrence ? (editing.recurrence.every === 'year' ? 'yearly' : 'monthly') : 'none'
+  );
   const [creating, setCreating] = useState(false);
 
   const today = todayISO();
   const futureDate = date > today;
   const effectivePlanned = planned || futureDate;
 
-  const cents = parseMoney(raw);
+  const magnitude = parseMoney(raw);
+  const cents = magnitude == null ? null : magnitude * sign;
   const canSave = cents != null && cents !== 0;
 
   const press = (k: string) => {
@@ -44,14 +64,35 @@ export default function EntryScreen() {
 
   const save = async () => {
     if (cents == null || cents === 0) return;
-    await addTxn({
-      itemId: selected ?? 'uncategorized',
-      amount: cents,
-      date,
-      status: effectivePlanned ? 'planned' : 'actual',
-      note: note || undefined,
-    });
-    goHome();
+    const itemId = selected ?? 'uncategorized';
+    const status = effectivePlanned ? 'planned' : 'actual';
+    const recurrence =
+      effectivePlanned && repeat !== 'none'
+        ? { every: (repeat === 'yearly' ? 'year' : 'month') as RecurrenceUnit, interval: 1 }
+        : null;
+    if (isEdit && editing) {
+      await updateTxn({
+        id: editing.id,
+        amount: cents,
+        itemId,
+        date,
+        status,
+        note: note.trim() || undefined,
+        recurrence,
+      });
+      // Return to the item you were viewing rather than jumping home.
+      setNav({ screen: 'item', itemId });
+    } else {
+      await addTxn({ itemId, amount: cents, date, status, note: note || undefined, recurrence });
+      goHome();
+    }
+  };
+
+  const remove = async () => {
+    if (!editing) return goHome();
+    const itemId = editing.itemId;
+    await deleteTxn(editing.id);
+    setNav({ screen: 'item', itemId });
   };
 
   const display = raw === '' ? '0' : raw;
@@ -63,14 +104,19 @@ export default function EntryScreen() {
         <button type="button" className="b-cancel" aria-label="Cancel" onClick={goHome}>
           ×
         </button>
+        {isEdit && (
+          <button type="button" className="b-btn ghost" onClick={remove}>
+            Delete
+          </button>
+        )}
         <button type="button" className="b-save" disabled={!canSave} onClick={save}>
-          Save
+          {isEdit ? 'Save' : 'Add'}
         </button>
       </div>
 
       <div className="b-amount">
         <span className="v">
-          <span className="u">$</span> {display}
+          <span className="u">{sign < 0 ? '−$' : '$'}</span> {display}
         </span>
       </div>
 
@@ -92,6 +138,7 @@ export default function EntryScreen() {
 
       {creating && (
         <NewItemForm
+          style={{ marginBottom: 20 }}
           onCreate={async (input) => {
             const item = await createItem(input);
             setSelected(item.id);
@@ -105,9 +152,9 @@ export default function EntryScreen() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          marginBottom: 16,
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 12,
         }}
       >
         <input
@@ -119,6 +166,14 @@ export default function EntryScreen() {
         />
         <button
           type="button"
+          className={`b-toggle ${sign < 0 ? 'on' : ''}`}
+          onClick={() => setSign((s) => (s < 0 ? 1 : -1))}
+          style={{ marginLeft: 'auto' }}
+        >
+          refund
+        </button>
+        <button
+          type="button"
           className={`b-toggle ${effectivePlanned ? 'on' : ''}`}
           disabled={futureDate}
           onClick={() => !futureDate && setPlanned((p) => !p)}
@@ -126,6 +181,22 @@ export default function EntryScreen() {
           {effectivePlanned ? '○ planned' : 'actual'}
         </button>
       </div>
+
+      {effectivePlanned && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span className="b-label">Repeats</span>
+          {(['none', 'monthly', 'yearly'] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={`b-toggle ${repeat === r ? 'on' : ''}`}
+              onClick={() => setRepeat(r)}
+            >
+              {r === 'none' ? 'one-off' : r}
+            </button>
+          ))}
+        </div>
+      )}
 
       <input
         type="text"
@@ -148,71 +219,6 @@ export default function EntryScreen() {
           {formatMoney(cents)} → {target}
         </p>
       )}
-    </div>
-  );
-}
-
-function NewItemForm({
-  onCreate,
-  onCancel,
-}: {
-  onCreate: (input: { name: string; period: 'monthly' | 'yearly'; base: number | null }) => void;
-  onCancel: () => void;
-}) {
-  const [name, setName] = useState('');
-  const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [budget, setBudget] = useState('');
-  const base = useMemo(() => parseMoney(budget), [budget]);
-  const nameRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, []);
-
-  return (
-    <div className="b-card" style={{ marginBottom: 20 }}>
-      <input
-        ref={nameRef}
-        type="text"
-        className="b-input"
-        style={{ marginBottom: 12 }}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Item name (e.g. Steam)"
-      />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        {(['monthly', 'yearly'] as const).map((p) => (
-          <button
-            key={p}
-            type="button"
-            className={`b-toggle ${period === p ? 'on' : ''}`}
-            onClick={() => setPeriod(p)}
-          >
-            {p}
-          </button>
-        ))}
-        <input
-          type="text"
-          inputMode="decimal"
-          className="b-input mono"
-          style={{ marginLeft: 'auto', width: '7rem', textAlign: 'right' }}
-          value={budget}
-          onChange={(e) => setBudget(e.target.value)}
-          placeholder={period === 'yearly' ? '$ / year' : '$ / month'}
-        />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button type="button" className="b-btn ghost" onClick={onCancel}>
-          Cancel
-        </button>
-        <button
-          type="button"
-          className="b-btn primary"
-          disabled={!name.trim()}
-          onClick={() => onCreate({ name, period, base })}
-        >
-          Create
-        </button>
-      </div>
     </div>
   );
 }

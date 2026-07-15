@@ -6,9 +6,11 @@ import {
   goHomeAtom,
   saveItemAtom,
   importSnapshotAtom,
+  installPromptAtom,
 } from '@/lib/budget/atoms';
 import { serializeExport, parseImport } from '@/lib/budget/exchange';
 import { requestPersistence } from '@/lib/budget/db';
+import { markExported, daysSinceExport } from '@/lib/budget/meta';
 
 export default function SettingsScreen() {
   const snapshot = useAtomValue(snapshotAtom);
@@ -16,11 +18,14 @@ export default function SettingsScreen() {
   const goHome = useSetAtom(goHomeAtom);
   const saveItem = useSetAtom(saveItemAtom);
   const importSnapshot = useSetAtom(importSnapshotAtom);
+  const installPrompt = useAtomValue(installPromptAtom);
+  const setInstallPrompt = useSetAtom(installPromptAtom);
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [persisted, setPersisted] = useState<boolean | null>(null);
 
   const archived = items.filter((i) => i.archived);
+  const stale = daysSinceExport();
 
   const doExport = () => {
     const json = serializeExport(snapshot);
@@ -32,6 +37,7 @@ export default function SettingsScreen() {
     a.download = `budget-${stamp}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    markExported();
     setMsg('Exported.');
   };
 
@@ -80,12 +86,36 @@ export default function SettingsScreen() {
             }}
           />
         </div>
-        {msg && (
-          <p className="b-label" style={{ marginTop: 8, marginBottom: 0 }}>
-            {msg}
-          </p>
-        )}
+        <p className="b-label" style={{ marginTop: 10, marginBottom: 0 }}>
+          {msg ??
+            (stale === null
+              ? 'Not backed up yet.'
+              : stale === 0
+                ? 'Backed up today.'
+                : `Last backup ${stale} day${stale === 1 ? '' : 's'} ago.`)}
+        </p>
       </section>
+
+      {installPrompt && (
+        <section className="b-section">
+          <h2>Install</h2>
+          <p>
+            Install to your home screen — it makes stored data far more durable and lets the tool
+            open full-screen and offline.
+          </p>
+          <button
+            type="button"
+            className="b-btn primary"
+            onClick={async () => {
+              await installPrompt.prompt();
+              await installPrompt.userChoice;
+              setInstallPrompt(null);
+            }}
+          >
+            Install app
+          </button>
+        </section>
+      )}
 
       <section className="b-section">
         <h2>Storage</h2>

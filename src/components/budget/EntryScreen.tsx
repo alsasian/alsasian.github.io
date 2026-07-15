@@ -107,7 +107,7 @@ export default function EntryScreen() {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          marginBottom: 14,
+          marginBottom: 16,
         }}
       >
         <input
@@ -130,7 +130,7 @@ export default function EntryScreen() {
       <input
         type="text"
         className="b-input"
-        style={{ marginBottom: 18 }}
+        style={{ marginBottom: 20 }}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="Note…"
@@ -169,7 +169,7 @@ function NewItemForm({
   }, []);
 
   return (
-    <div className="b-card" style={{ marginBottom: 18 }}>
+    <div className="b-card" style={{ marginBottom: 20 }}>
       <input
         ref={nameRef}
         type="text"

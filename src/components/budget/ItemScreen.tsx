@@ -113,7 +113,7 @@ export default function ItemScreen() {
       {/* Budget (editable) — drift lives here, where you'd act on it */}
       {!item.system &&
         (editing ? (
-          <div style={{ marginBottom: 22 }}>
+          <div style={{ marginBottom: 24 }}>
             <BudgetEditor item={item} onClose={() => setEditing(false)} />
           </div>
         ) : (

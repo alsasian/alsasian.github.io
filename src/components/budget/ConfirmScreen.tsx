@@ -57,7 +57,7 @@ function ConfirmRow({ txn, itemName }: { txn: Transaction; itemName: string }) {
       >
         <div>
           <div style={{ fontWeight: 600 }}>{txn.note || itemName}</div>
-          <div className="b-label" style={{ marginTop: 3 }}>
+          <div className="b-label" style={{ marginTop: 4 }}>
             {itemName} · planned {formatDayMonth(txn.date)}
           </div>
         </div>

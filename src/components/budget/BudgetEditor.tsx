@@ -43,7 +43,7 @@ function ScopedField({
   }, []);
   const cents = parseMoney(val);
   return (
-    <div className="b-card" style={{ marginTop: 8, padding: 10 }}>
+    <div className="b-card" style={{ marginTop: 8, padding: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
         <span className="b-muted">$</span>
         <input
@@ -124,7 +124,7 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
       <input
         type="text"
         className="b-input"
-        style={{ fontSize: 18, fontWeight: 700, marginBottom: 14 }}
+        style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}
         value={draft.name}
         disabled={draft.system}
         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
@@ -132,7 +132,7 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
       />
 
       {!draft.system && (
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ marginBottom: 16 }}>
           <div
             style={{
               display: 'flex',
@@ -162,7 +162,7 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
       )}
 
       {yearly && !draft.system && (
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ marginBottom: 16 }}>
           <div
             style={{
               display: 'flex',
@@ -221,7 +221,7 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
                     textAlign: 'left',
                     padding: '6px 8px',
                     borderRadius: 8,
-                    border: `1px solid ${editingMonth === m ? 'var(--ink)' : 'var(--line)'}`,
+                    border: `1px solid ${editingMonth === m ? 'var(--ink)' : 'var(--edge)'}`,
                   }}
                 >
                   <span
@@ -258,7 +258,7 @@ export default function BudgetEditor({ item, onClose }: { item: Item; onClose: (
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: 14,
+          marginTop: 16,
         }}
       >
         {!draft.system ? (

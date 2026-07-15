@@ -1,8 +1,12 @@
 /*
  * Budget — design system.
  * Scoped under .budget-app so it never leaks into the rest of the site.
- * Simplified palette: bg · surface · ink · muted · line · accent.
- * One accent (marigold) — only ever marks "the plan / now".
+ *
+ * Foundations (used everywhere, no ad-hoc values):
+ *   palette  bg · surface · ink · muted · line · accent   (accent = "plan / now")
+ *   type     mono figures lead · sans labels · one 4-step weight ramp
+ *   scale    space 4/8/12/16/20/24/32 · radius 8/12/14/pill
+ *   controls one 40px control height, shared hover / active / focus-visible
  */
 
 .budget-app {
@@ -11,19 +15,34 @@
   --ink: #1a1d20;
   --muted: #626b70;
   --line: #dcdfdd;
+  --edge: #c3c8c4;
   --accent: #c1810a;
   --accent-soft: rgba(193, 129, 10, 0.13);
   --ghost: rgba(26, 29, 32, 0.2);
+  --hover: rgba(26, 29, 32, 0.055);
+  --press: rgba(26, 29, 32, 0.1);
 
   --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, Consolas, monospace;
   --ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
+  /* radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+  /* control height */
+  --ctrl: 40px;
+  --ctrl-sm: 34px;
+
   background: var(--bg);
   color: var(--ink);
   font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
   min-height: 100vh;
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 html.dark .budget-app,
 .dark .budget-app {
@@ -32,9 +51,12 @@ html.dark .budget-app,
   --ink: #e9eceb;
   --muted: #8b9599;
   --line: #262c2f;
+  --edge: #3a4145;
   --accent: #f2b63a;
   --accent-soft: rgba(242, 182, 58, 0.15);
   --ghost: rgba(233, 236, 235, 0.22);
+  --hover: rgba(233, 236, 235, 0.06);
+  --press: rgba(233, 236, 235, 0.11);
   color-scheme: dark;
 }
 
@@ -43,20 +65,38 @@ html.dark .budget-app,
 .budget-app *::after {
   box-sizing: border-box;
 }
-.budget-app button {
+/* Low-specificity reset via :where() so control classes (.b-btn, .b-chip …)
+   keep their own borders instead of being overridden by an element selector. */
+:where(.budget-app) button {
   font-family: inherit;
+  font-size: inherit;
   color: inherit;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
 }
-.budget-app a {
+:where(.budget-app) a {
   color: inherit;
   text-decoration: none;
 }
 
-/* ---- primitives ---- */
+/* one keyboard-focus treatment for everything interactive */
+.budget-app :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.budget-app button:focus:not(:focus-visible) {
+  outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .budget-app * {
+    transition: none !important;
+  }
+}
+
+/* ---- type primitives ---- */
 .b-mono {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
@@ -67,7 +107,8 @@ html.dark .budget-app,
 .b-label {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.15em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -75,10 +116,13 @@ html.dark .budget-app,
 .b-view {
   max-width: 30rem;
   margin: 0 auto;
-  padding: 20px 18px 120px;
+  padding: 20px 20px 48px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+.b-view.fab {
+  padding-bottom: 112px;
 }
 
 /* ---- top bar ---- */
@@ -86,33 +130,51 @@ html.dark .budget-app,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .b-top .month {
   font-family: var(--mono);
   font-size: 12px;
-  letter-spacing: 0.16em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 .b-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: -6px;
+  border-radius: var(--r-md);
   color: var(--muted);
   font-size: 16px;
-  line-height: 1;
-  padding: 6px;
-  border-radius: 8px;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .b-icon:hover {
   color: var(--ink);
+  background: var(--hover);
 }
 .b-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  border-radius: var(--r-md);
   color: var(--muted);
-  font-size: 18px;
-  line-height: 1;
-  padding: 4px 6px;
+  font-size: 20px;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .b-back:hover {
   color: var(--ink);
+  background: var(--hover);
 }
 
 /* ---- confirm nudge ---- */
@@ -121,13 +183,18 @@ html.dark .budget-app,
   align-items: center;
   gap: 8px;
   align-self: flex-start;
+  min-height: var(--ctrl-sm);
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  margin-bottom: 24px;
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   color: var(--ink);
   background: var(--accent-soft);
-  padding: 7px 13px;
-  border-radius: 999px;
-  margin-bottom: 22px;
+  transition: filter 0.12s ease;
+}
+.b-confirm:hover {
+  filter: brightness(0.97);
 }
 .b-confirm .dot {
   width: 7px;
@@ -141,13 +208,13 @@ html.dark .budget-app,
 
 /* ---- hero (free number) ---- */
 .b-hero {
-  margin-bottom: 26px;
+  margin-bottom: 28px;
 }
 .b-hero .val {
   position: relative;
   display: inline-block;
   font-family: var(--mono);
-  font-size: clamp(44px, 13vw, 54px);
+  font-size: 48px;
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1;
@@ -160,22 +227,17 @@ html.dark .budget-app,
 .b-hero .val::after {
   content: '';
   position: absolute;
-  left: 2px;
-  width: 44%;
-  bottom: -9px;
+  left: 3px;
+  width: 46px;
+  bottom: -10px;
   height: 3px;
   background: var(--accent);
   border-radius: 2px;
 }
 .b-hero .sub {
-  margin-top: 17px;
+  margin-top: 20px;
   font-size: 13px;
   color: var(--muted);
-}
-
-.b-rule {
-  height: 1px;
-  background: var(--line);
 }
 
 /* ---- item rows (home) ---- */
@@ -187,8 +249,14 @@ html.dark .budget-app,
   display: block;
   width: 100%;
   text-align: left;
-  padding: 17px 2px;
+  padding: 18px 10px;
+  margin: 0 -10px;
   border-top: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: background 0.12s ease;
+}
+.b-row:hover {
+  background: var(--hover);
 }
 .b-row:first-child {
   border-top: 0;
@@ -197,7 +265,8 @@ html.dark .budget-app,
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 11px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .b-row .name {
   font-size: 16px;
@@ -207,6 +276,7 @@ html.dark .budget-app,
 .b-row .per {
   font-family: var(--mono);
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -216,14 +286,15 @@ html.dark .budget-app,
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: 12px;
+  gap: 12px;
+  margin-top: 13px;
 }
 
 /* ---- meter ---- */
 .b-meter {
   position: relative;
   height: 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--line);
 }
 .b-meter .spent {
@@ -231,14 +302,14 @@ html.dark .budget-app,
   top: 0;
   bottom: 0;
   left: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--ink);
 }
 .b-meter .planned {
   position: absolute;
   top: 0;
   bottom: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: repeating-linear-gradient(-45deg, var(--ghost) 0 3px, transparent 3px 6px);
 }
 .b-meter .notch {
@@ -249,6 +320,9 @@ html.dark .budget-app,
   border-radius: 2px;
   background: var(--accent);
   box-shadow: 0 0 0 2px var(--bg);
+}
+.b-row:hover .b-meter .notch {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg), var(--ink) 6%);
 }
 .b-fig {
   font-family: var(--mono);
@@ -262,12 +336,13 @@ html.dark .budget-app,
 .b-pace {
   font-family: var(--mono);
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .b-pace .arw {
   font-family: var(--ui);
-  margin-right: 3px;
+  margin-right: 4px;
 }
 .b-pace.ahead {
   color: var(--ink);
@@ -293,6 +368,15 @@ html.dark .budget-app,
   font-size: 26px;
   box-shadow: 0 8px 22px -6px rgba(0, 0, 0, 0.35);
   z-index: 30;
+  transition:
+    transform 0.12s ease,
+    opacity 0.12s ease;
+}
+.b-fab:hover {
+  opacity: 0.9;
+}
+.b-fab:active {
+  transform: translateX(-50%) scale(0.94);
 }
 
 /* ---- item header ---- */
@@ -300,17 +384,18 @@ html.dark .budget-app,
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .b-ihead .t {
-  font-size: 22px;
-  font-weight: 640;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 .b-ihead .per {
   margin-left: auto;
   font-family: var(--mono);
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -323,13 +408,14 @@ html.dark .budget-app,
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .b-statline .free {
   font-family: var(--mono);
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 600;
   letter-spacing: -0.03em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .b-statline .free .u {
@@ -342,25 +428,23 @@ html.dark .budget-app,
   font-weight: 500;
   letter-spacing: 0;
   color: var(--muted);
-  margin-left: 7px;
+  margin-left: 8px;
 }
 .b-statline .pace {
-  font-family: var(--mono);
-  font-size: 13.5px;
-  font-weight: 550;
+  font-size: 13px;
 }
 
 /* item stat strip — declutters the run-on line */
 .b-stats {
   display: flex;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   overflow: hidden;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 .b-stats .cell {
   flex: 1;
-  padding: 11px 13px;
+  padding: 12px 14px;
 }
 .b-stats .cell + .cell {
   border-left: 1px solid var(--line);
@@ -369,10 +453,11 @@ html.dark .budget-app,
   display: block;
   font-family: var(--mono);
   font-size: 9px;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 .b-stats .v {
   font-family: var(--mono);
@@ -385,31 +470,15 @@ html.dark .budget-app,
 .b-chart {
   position: relative;
   height: 148px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   padding-top: 6px;
-}
-.b-capline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-top: 1px dashed var(--line);
-}
-.b-capline span {
-  position: absolute;
-  right: 0;
-  top: -8px;
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--muted);
-  background: var(--bg);
-  padding-left: 5px;
 }
 .b-cols {
   position: absolute;
   inset: 6px 0 0;
   display: flex;
   align-items: flex-end;
-  gap: 4px;
+  gap: 5px;
 }
 .b-col {
   flex: 1;
@@ -449,20 +518,20 @@ html.dark .budget-app,
 }
 .b-axis {
   display: flex;
-  gap: 4px;
-  margin-bottom: 22px;
+  gap: 5px;
+  margin-bottom: 24px;
 }
 .b-axis span {
   flex: 1;
   text-align: center;
   font-family: var(--mono);
   font-size: 9px;
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
 }
 .b-axis span.now {
   color: var(--accent);
-  font-weight: 700;
 }
 
 /* ---- budget row / editor ---- */
@@ -473,10 +542,15 @@ html.dark .budget-app,
   gap: 12px;
   width: 100%;
   text-align: left;
-  padding: 13px 15px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  margin-bottom: 22px;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  margin-bottom: 24px;
+  transition: background 0.12s ease;
+}
+.b-budget:hover {
+  background: var(--hover);
 }
 .b-budget .k {
   color: var(--muted);
@@ -492,7 +566,7 @@ html.dark .budget-app,
   font-size: 11px;
   color: var(--muted);
   opacity: 0.85;
-  margin-top: 4px;
+  margin-top: 5px;
   font-variant-numeric: tabular-nums;
 }
 .b-budget .drift {
@@ -511,24 +585,25 @@ html.dark .budget-app,
 .b-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: var(--r-lg);
+  padding: 16px;
 }
 
 /* ---- ledger ---- */
 .b-ledger-h {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.15em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 2px;
+  margin: 0 0 4px;
 }
 .b-tx {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
+  gap: 10px;
+  padding: 11px 0;
   border-top: 1px solid var(--line);
 }
 .b-tx .d {
@@ -536,6 +611,7 @@ html.dark .budget-app,
   font-size: 12px;
   color: var(--muted);
   width: 52px;
+  flex: none;
   font-variant-numeric: tabular-nums;
 }
 .b-tx .n {
@@ -545,7 +621,8 @@ html.dark .budget-app,
 .b-tx .tag {
   font-family: var(--mono);
   font-size: 9px;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
   margin-left: 8px;
@@ -562,9 +639,11 @@ html.dark .budget-app,
 .b-tx .del {
   color: var(--muted);
   opacity: 0.35;
-  padding-left: 10px;
   font-size: 15px;
   line-height: 1;
+  padding: 4px;
+  margin: -4px;
+  transition: opacity 0.12s ease;
 }
 .b-tx .del:hover {
   opacity: 1;
@@ -578,27 +657,30 @@ html.dark .budget-app,
   margin-bottom: 4px;
 }
 .b-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  border-radius: var(--r-md);
   color: var(--muted);
-  font-size: 20px;
-  line-height: 1;
-  padding: 4px 8px;
+  font-size: 22px;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
-.b-save {
-  font-size: 14px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 9px;
-}
-.b-save:disabled {
-  opacity: 0.3;
+.b-cancel:hover {
+  color: var(--ink);
+  background: var(--hover);
 }
 .b-amount {
   text-align: center;
-  padding: 28px 0;
+  padding: 30px 0;
 }
 .b-amount .v {
   font-family: var(--mono);
-  font-size: 52px;
+  font-size: 48px;
   font-weight: 600;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -611,23 +693,7 @@ html.dark .budget-app,
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 18px;
-}
-.b-chip {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 8px 15px;
-  font-size: 14px;
-  color: var(--ink);
-}
-.b-chip.sel {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
-}
-.b-chip.new {
-  border-style: dashed;
-  color: var(--muted);
+  margin-bottom: 20px;
 }
 .b-keys {
   display: grid;
@@ -637,65 +703,42 @@ html.dark .budget-app,
 }
 .b-key {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
   padding: 15px 0;
   font-family: var(--mono);
   font-size: 22px;
   font-weight: 600;
+  transition: background 0.1s ease;
+}
+.b-key:hover {
+  background: var(--hover);
 }
 .b-key:active {
-  background: var(--line);
+  background: var(--press);
 }
 
-/* ---- inputs, toggles, buttons ---- */
-.b-input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--line);
-  padding: 4px 0;
-  color: var(--ink);
-  font-family: var(--ui);
-  outline: none;
-  width: 100%;
-}
-.b-input:focus {
-  border-color: var(--ink);
-}
-.b-input.mono {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-.b-date {
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 5px 9px;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--mono);
-  font-size: 13px;
-}
-.b-toggle {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 5px 13px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.b-toggle.on {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
-}
-.b-toggle:disabled {
-  opacity: 0.6;
-}
+/* ---- controls: buttons, pills, toggles, inputs ---- */
 .b-btn {
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--ctrl);
+  padding: 0 16px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
   font-size: 14px;
+  font-weight: 500;
   color: var(--ink);
+  white-space: nowrap;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    opacity 0.12s ease;
+}
+.b-btn:hover {
+  background: var(--hover);
 }
 .b-btn.primary {
   border-color: var(--ink);
@@ -707,20 +750,124 @@ html.dark .budget-app,
   border-color: var(--ink);
   font-weight: 600;
 }
+.b-btn.accent:hover {
+  background: var(--ink);
+  opacity: 0.86;
+}
 .b-btn.ghost {
-  border: none;
+  border-color: transparent;
   color: var(--muted);
 }
-.b-btn:disabled {
-  opacity: 0.35;
+.b-btn.ghost:hover {
+  color: var(--ink);
+  background: var(--hover);
 }
 .b-btn.block {
   flex: 1;
-  text-align: center;
+}
+.b-btn:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* pill controls (chips + toggles share one shape) */
+.b-chip,
+.b-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--ctrl-sm);
+  padding: 0 15px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+.b-toggle {
+  font-size: 13px;
+  color: var(--muted);
+}
+.b-chip:hover,
+.b-toggle:hover {
+  background: var(--hover);
+}
+.b-chip.sel,
+.b-toggle.on {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+.b-chip.new {
+  border-style: dashed;
+  color: var(--muted);
+}
+.b-toggle:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Save (entry top action) — the one primary on the screen */
+.b-save {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ctrl-sm);
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.12s ease;
+}
+.b-save:hover {
+  opacity: 0.86;
+}
+.b-save:disabled {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.b-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 5px 0;
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.12s ease;
+}
+.b-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+.b-input:focus {
+  border-color: var(--ink);
+}
+.b-input.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.b-date {
+  min-height: var(--ctrl-sm);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  padding: 0 10px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
 }
 
 .b-empty {
-  padding: 48px 0;
+  padding: 56px 0;
   text-align: center;
   font-size: 14px;
   color: var(--muted);
@@ -728,20 +875,21 @@ html.dark .budget-app,
 
 /* ---- settings ---- */
 .b-section {
-  margin-bottom: 26px;
+  margin-bottom: 28px;
 }
 .b-section h2 {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.16em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
   margin: 0 0 12px;
-  font-weight: 600;
 }
 .b-section p {
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--muted);
-  margin: 0 0 14px;
+  margin: 0 0 16px;
+  max-width: 44ch;
 }

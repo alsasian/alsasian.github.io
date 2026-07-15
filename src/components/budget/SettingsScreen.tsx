@@ -81,7 +81,7 @@ export default function SettingsScreen() {
           />
         </div>
         {msg && (
-          <p className="b-label" style={{ marginTop: 10, marginBottom: 0 }}>
+          <p className="b-label" style={{ marginTop: 8, marginBottom: 0 }}>
             {msg}
           </p>
         )}
@@ -97,7 +97,7 @@ export default function SettingsScreen() {
           Request persistent storage
         </button>
         {persisted != null && (
-          <p className="b-label" style={{ marginTop: 10, marginBottom: 0 }}>
+          <p className="b-label" style={{ marginTop: 8, marginBottom: 0 }}>
             {persisted ? 'Granted — storage is persistent.' : 'Not granted by the browser.'}
           </p>
         )}

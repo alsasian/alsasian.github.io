@@ -27,7 +27,7 @@ export default function HomeScreen() {
   const uncatStats = uncategorized ? stats.get(uncategorized.id) : undefined;
 
   return (
-    <div className="b-view">
+    <div className="b-view fab">
       <div className="b-top">
         <span className="month">{formatMonthYear(year, month)}</span>
         <button
@@ -79,9 +79,6 @@ export default function HomeScreen() {
                 <span className="b-fig">
                   {formatMoney(s.spent)}
                   {s.cap != null && <span className="c"> / {formatMoneyCompact(s.cap)}</span>}
-                  {s.planned !== 0 && (
-                    <span className="c"> · {formatMoney(s.planned)} planned</span>
-                  )}
                 </span>
                 {pace && (
                   <span className={`b-pace ${pace.ahead ? 'ahead' : 'behind'}`}>

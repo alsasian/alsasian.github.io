@@ -40,6 +40,7 @@ export default [
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLDivElement: 'readonly',
+        Event: 'readonly',
         // TypeScript globals
         BufferSource: 'readonly',
         CryptoKey: 'readonly',
@@ -47,6 +48,7 @@ export default [
         process: 'readonly',
         module: 'readonly',
         require: 'readonly',
+        Buffer: 'readonly',
       },
     },
     plugins: {

@@ -1,0 +1,26 @@
+{
+  "name": "Budget",
+  "short_name": "Budget",
+  "description": "A local-first budget tool — feel in control before you spend.",
+  "start_url": "/budget/",
+  "scope": "/budget/",
+  "display": "standalone",
+  "background_color": "#16191c",
+  "theme_color": "#eceeec",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/budget-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/budget-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"]
+}

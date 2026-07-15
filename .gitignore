@@ -4,6 +4,7 @@ dist/
 
 # generated files
 public/streak-sw.js
+public/budget-sw.js
 
 # dependencies
 node_modules/

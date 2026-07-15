@@ -20,15 +20,13 @@ const minute = String(now.getUTCMinutes()).padStart(2, '0');
 
 const version = `${year}.${month}${day}.${hour}${minute}`;
 
-// Read template
-const templatePath = path.join(__dirname, '../public/streak-sw-template.js');
-const swTemplate = fs.readFileSync(templatePath, 'utf8');
-
-// Replace version placeholder
-const swContent = swTemplate.replace('__CACHE_VERSION__', version);
-
-// Write final service worker
-const outputPath = path.join(__dirname, '../public/streak-sw.js');
-fs.writeFileSync(outputPath, swContent);
-
-console.log(`✅ Generated service worker with version: ${version}`);
+// Generate one service worker per app from its template.
+const apps = ['streak', 'budget'];
+for (const app of apps) {
+  const templatePath = path.join(__dirname, `../public/${app}-sw-template.js`);
+  const swTemplate = fs.readFileSync(templatePath, 'utf8');
+  const swContent = swTemplate.replace('__CACHE_VERSION__', version);
+  const outputPath = path.join(__dirname, `../public/${app}-sw.js`);
+  fs.writeFileSync(outputPath, swContent);
+  console.log(`✅ Generated ${app}-sw.js with version: ${version}`);
+}

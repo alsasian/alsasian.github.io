@@ -114,6 +114,14 @@ export const confirmInboxAtom = atom((get) => {
     .sort((a, b) => a.date.localeCompare(b.date));
 });
 
+/** Planned transactions still in the future — the wishlist / upcoming view. */
+export const upcomingAtom = atom((get) => {
+  const today = todayISO();
+  return get(transactionsAtom)
+    .filter((t) => t.status === 'planned' && t.date > today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+});
+
 /**
  * Entry-screen chips, most-recently-used first. Ranked by the latest txn date
  * for each item, falling back to creation order. Uncategorized always available.
@@ -140,15 +148,30 @@ export const mruItemsAtom = atom((get) => {
 /* Navigation                                                          */
 /* ------------------------------------------------------------------ */
 
-export type ScreenName = 'home' | 'entry' | 'item' | 'confirm' | 'settings';
+export type ScreenName =
+  | 'home'
+  | 'entry'
+  | 'item'
+  | 'confirm'
+  | 'settings'
+  | 'newItem'
+  | 'upcoming';
 
 export interface NavState {
   screen: ScreenName;
   itemId?: string;
   prefillItemId?: string;
+  editTxnId?: string; // when set on the entry screen, edit this txn instead of adding
 }
 
 export const navAtom = atom<NavState>({ screen: 'home' });
+
+/** The captured `beforeinstallprompt` event, if the browser offered one. */
+export interface InstallPrompt {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+}
+export const installPromptAtom = atom<InstallPrompt | null>(null);
 
 export const goHomeAtom = atom(null, (_get, set) => set(navAtom, { screen: 'home' }));
 
@@ -268,6 +291,25 @@ export const createItemAtom = atom(null, async (get, set, input: NewItemInput) =
   await reload(set);
   return item;
 });
+
+/** Move a budgeted item up/down in the Home order, persisting sortKeys. */
+export const reorderItemAtom = atom(
+  null,
+  async (get, set, input: { id: string; direction: -1 | 1 }) => {
+    const ordered = get(budgetedItemsAtom);
+    const idx = ordered.findIndex((i) => i.id === input.id);
+    const swapWith = idx + input.direction;
+    if (idx < 0 || swapWith < 0 || swapWith >= ordered.length) return;
+    // Normalize every item's sortKey to its position, then swap the pair.
+    const positions = ordered.map((it, i) => ({ it, key: i }));
+    positions[idx].key = swapWith;
+    positions[swapWith].key = idx;
+    for (const { it, key } of positions) {
+      if (it.sortKey !== key) await putItem({ ...it, sortKey: key });
+    }
+    await reload(set);
+  }
+);
 
 export const importSnapshotAtom = atom(null, async (_get, set, snapshot: Snapshot) => {
   await replaceAll(snapshot);
